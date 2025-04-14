@@ -1,7 +1,7 @@
 "use client"
 import React from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import "../globals.css";
 
 export default function DashboardLayout({
   children,
@@ -9,69 +9,113 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   return (
+    <html lang="en" className="h-full">
+    <body className="h-full">
     <div className="flex flex-col min-h-screen bg-white">
-      {/* Main content area */}
-      <main className="flex-1 pb-16">
+      {/* Main content area with increased bottom padding to accommodate taller navbar */}
+      <main className="flex-1 pb-24">
         {children}
       </main>
       
-      {/* Fixed bottom navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-10">
-        <div className="flex justify-around">
-          <Link 
-            href="/dashboard" 
-            className="flex flex-col items-center py-2 px-3 text-blue-500"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-            </svg>
-            <span className="text-xs mt-1">Home</span>
-          </Link>
-          
-          <Link 
-            href="/activities" 
-            className="flex flex-col items-center py-2 px-3 text-gray-500"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 12h16.5m-16.5 3.75h16.5M3.75 19.5h16.5M5.625 4.5h12.75a1.875 1.875 0 010 3.75H5.625a1.875 1.875 0 010-3.75z" />
-            </svg>
-            <span className="text-xs mt-1">Activities</span>
-          </Link>
-          
-          <div className="relative flex flex-col items-center">
-            <Link 
-              href="/scan"
-              className="absolute -top-5 bg-yellow-400 w-14 h-14 rounded-full flex items-center justify-center text-white"
-              aria-label="Scan QR code"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-7 h-7">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+      {/* Fixed bottom navigation with shadow effect on horizontal line */}
+      <div className="fixed bottom-0 left-0 right-0 z-10">
+        {/* Border with shadow effect */}
+        <div className="h-px w-full bg-gradient-to-b from-gray-200 to-transparent shadow-sm"></div>
+        
+        {/* Navigation container with increased height */}
+        <div className="bg-white py-4">
+          <div className="flex justify-around items-end">
+            {/* Home button */}
+            <Link href="/dashboard" className="flex flex-col items-center w-16">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2 text-gray-500">
+                <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
+              <span className="text-xs text-gray-500">Home</span>
+              <div className="w-1 h-1 bg-gray-900 rounded-full mt-1"></div>
             </Link>
-            <span className="text-xs mt-7">Scan</span>
+            
+            {/* Activities button */}
+            <Link href="/activities" className="flex flex-col items-center w-16">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
+                <path d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/>
+                <path d="M17.657 8.343a7 7 0 1 1-9.9-9.9 7 7 0 0 1 9.9 9.9z" strokeWidth="1.5" strokeDasharray="0.5 3"/>
+              </svg>
+              <span className="text-xs text-gray-500">Activities</span>
+            </Link>
+            
+            {/* Centered QR Code Button with inset effect */}
+            <div className="flex flex-col items-center -mt-10 relative">
+              {/* Recessed area/inset effect */}
+              <div className="absolute -top-5 w-24 h-24 bg-gray-100 rounded-full shadow-inner flex items-center justify-center">
+                {/* QR Code Button in center of recessed area */}
+                <div className="relative">
+                  {/* White outer glow/shadow effect */}
+                  <div className="absolute -inset-2 bg-white rounded-full blur-md"></div>
+                  
+                  {/* Yellow circle with QR code */}
+                  <Link href="/scan" className="relative flex items-center justify-center">
+                    <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center z-10 shadow-lg">
+                      {/* QR Code SVG */}
+                      <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="15" y="15" width="20" height="20" fill="white" />
+                        <rect x="40" y="15" width="5" height="20" fill="white" />
+                        <rect x="50" y="15" width="5" height="5" fill="white" />
+                        <rect x="60" y="15" width="20" height="20" fill="white" />
+                        
+                        <rect x="15" y="40" width="5" height="10" fill="white" />
+                        <rect x="25" y="40" width="5" height="5" fill="white" />
+                        <rect x="35" y="40" width="5" height="5" fill="white" />
+                        <rect x="45" y="40" width="10" height="5" fill="white" />
+                        <rect x="60" y="40" width="5" height="5" fill="white" />
+                        <rect x="70" y="40" width="5" height="5" fill="white" />
+                        
+                        <rect x="15" y="55" width="5" height="5" fill="white" />
+                        <rect x="25" y="55" width="5" height="5" fill="white" />
+                        <rect x="35" y="55" width="10" height="5" fill="white" />
+                        <rect x="50" y="55" width="10" height="5" fill="white" />
+                        <rect x="65" y="55" width="5" height="5" fill="white" />
+                        <rect x="75" y="55" width="5" height="5" fill="white" />
+                        
+                        <rect x="15" y="65" width="20" height="20" fill="white" />
+                        <rect x="40" y="65" width="10" height="5" fill="white" />
+                        <rect x="55" y="65" width="5" height="5" fill="white" />
+                        <rect x="65" y="65" width="15" height="5" fill="white" />
+                        
+                        <rect x="40" y="75" width="5" height="5" fill="white" />
+                        <rect x="50" y="75" width="15" height="10" fill="white" />
+                        <rect x="70" y="75" width="10" height="5" fill="white" />
+                        
+                        <rect x="40" y="85" width="5" height="5" fill="white" />
+                        <rect x="70" y="85" width="5" height="5" fill="white" />
+                      </svg>
+                    </div>
+                  </Link>
+                </div>
+              </div>
+              
+              <span className="text-xs  text-gray-500 mt-16" style={{visibility: 'hidden'}}>Scan</span>
+            </div>
+            
+            {/* Rewards button */}
+            <Link href="/rewards" className="flex flex-col items-center w-16">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
+                <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span className="text-xs text-gray-500">Rewards</span>
+            </Link>
+            
+            {/* NFTs button */}
+            <Link href="/nfts" className="flex flex-col items-center w-16">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+              <span className="text-xs text-gray-500">NFTs</span>
+            </Link>
           </div>
-          
-          <Link 
-            href="/rewards" 
-            className="flex flex-col items-center py-2 px-3 text-gray-500"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-            </svg>
-            <span className="text-xs mt-1">Rewards</span>
-          </Link>
-          
-          <Link 
-            href="/nfts" 
-            className="flex flex-col items-center py-2 px-3 text-gray-500"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-            </svg>
-            <span className="text-xs mt-1">NFTs</span>
-          </Link>
         </div>
-      </nav>
+      </div>
     </div>
+    </body>
+    </html>
   )
 }
