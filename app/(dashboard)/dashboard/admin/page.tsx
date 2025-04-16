@@ -1,7 +1,7 @@
-// src/pages/admin/create-qr.tsx
+"use client"
 import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import QRGenerator from '@/components/QRGenerator';
 
 // Helper function to generate a unique ID

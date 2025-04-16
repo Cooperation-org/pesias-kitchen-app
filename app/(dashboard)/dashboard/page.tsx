@@ -14,18 +14,19 @@ interface ScanResult {
 
 // Sample activities data
 const SAMPLE_ACTIVITIES = [
-  { id: 1, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' },
-  { id: 2, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' },
-  { id: 3, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' },
-  { id: 4, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' }
+  { id: 1, title: 'Event xyz', date: '26 Nov 2021', amount: '$321.00' },
+  { id: 2, title: 'Event xyz', date: '14 Nov 2021', amount: '$321.00' },
+  { id: 3, title: 'Event xyz', date: '01 Nov 2021', amount: '$321.00' },
+  { id: 4, title: 'Event xyz', date: '24 Nov 2021', amount: '$321.00' }
 ]
 
-export default function DashboardPage() {
+export default function Dashboard() {
   const [activities, setActivities] = useState(SAMPLE_ACTIVITIES)
   const [activitiesCount, setActivitiesCount] = useState(43)
   const [goodDollarsEarned, setGoodDollarsEarned] = useState(234)
   const [showPopup, setShowPopup] = useState<boolean>(false)
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+  const [hasGoodWallet, setHasGoodWallet] = useState(true) // Toggle between the two UI states
 
   useEffect(() => {
     // Check if we should show the popup based on localStorage
@@ -45,8 +46,10 @@ export default function DashboardPage() {
         // Add the new activity to the list
         const newActivity = {
           id: Date.now(),
-          title: lastScanResult.type || 'Scanned Activity',
-          date: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toLowerCase(),
+          title: lastScanResult.type || 'Event xyz',
+          date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+            .replace(/ /g, ' ')
+            .toLowerCase(),
           amount: `$${lastScanResult.reward}.00`
         }
         
@@ -61,68 +64,76 @@ export default function DashboardPage() {
   const closePopup = () => {
     setShowPopup(false)
   }
+
+  const toggleWallet = () => {
+    setHasGoodWallet(!hasGoodWallet)
+  }
   
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header with stats */}
-      <div className="p-4">
-        <div className="flex justify-between items-center mb-2">
-          <div>
-            <div className="flex items-center">
-              <div className="bg-blue-100 w-6 h-6 rounded-md flex items-center justify-center mr-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-blue-500">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-                </svg>
-              </div>
-              <div className="text-lg font-medium">{activitiesCount}</div>
+    
+      {/* Stats Card */}
+      <div className="mx-4 mt-4 bg-white rounded-lg shadow-sm">
+        <div className="p-4 flex justify-between">
+          <div className="flex flex-col items-center">
+            <div className="bg-yellow-100 p-2 rounded-md mb-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M14 8.5H10C9.45 8.5 9 8.95 9 9.5V10C9 10.55 9.45 11 10 11H14C14.55 11 15 10.55 15 10V9.5C15 8.95 14.55 8.5 14 8.5Z" fill="#FFD54F"/>
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.25 16H7.75C7.34 16 7 15.66 7 15.25C7 14.84 7.34 14.5 7.75 14.5H16.25C16.66 14.5 17 14.84 17 15.25C17 15.66 16.66 16 16.25 16ZM16.25 12.5H7.75C7.34 12.5 7 12.16 7 11.75C7 11.34 7.34 11 7.75 11H16.25C16.66 11 17 11.34 17 11.75C17 12.16 16.66 12.5 16.25 12.5ZM16.25 9H7.75C7.34 9 7 8.66 7 8.25C7 7.84 7.34 7.5 7.75 7.5H16.25C16.66 7.5 17 7.84 17 8.25C17 8.66 16.66 9 16.25 9Z" fill="#FFD54F"/>
+              </svg>
             </div>
+            <div className="text-lg font-bold">{activitiesCount}</div>
             <div className="text-xs text-gray-500">Activities attended</div>
           </div>
           
-          <div>
-            <div className="flex items-center justify-end">
-              <div className="bg-blue-100 w-6 h-6 rounded-md flex items-center justify-center mr-2">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-4 h-4 text-blue-500">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="text-lg font-medium">${goodDollarsEarned}</div>
-            </div>
-            <div className="text-xs text-gray-500 text-right">G$ earned</div>
-          </div>
-        </div>
-        
-        {/* Connect GoodWallet Button */}
-        <div className="rounded-lg border border-gray-200 mt-4 mb-4">
-          <div className="p-4">
-            <div className="font-medium mb-2">Link GoodWallet to Claim Good Dollars</div>
-            <button className="flex items-center bg-blue-50 text-blue-600 rounded-lg px-4 py-2 w-full">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5 mr-2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+          <div className="flex flex-col items-center">
+            <div className="bg-blue-100 p-2 rounded-md mb-2">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="#2196F3"/>
+                <path d="M12.5 7H11V13L16.2 16.2L17 14.9L12.5 12.2V7Z" fill="#2196F3"/>
               </svg>
-              Add GoodWallet
-            </button>
+            </div>
+            <div className="text-lg font-bold">${goodDollarsEarned}</div>
+            <div className="text-xs text-gray-500">G$ earned</div>
           </div>
         </div>
       </div>
       
-      {/* Recent Activities */}
-      <div className="px-4 flex-1">
+      {/* Wallet Section - Conditional rendering based on wallet status */}
+      {!hasGoodWallet && (
+        <div className="mx-4 mt-4">
+          <h3 className="text-md font-medium mb-2">Link GoodWallet to Claim Good Dollars</h3>
+          <button onClick={toggleWallet} className="w-full bg-white border border-gray-200 rounded-lg p-3 flex items-center justify-center text-blue-500 font-medium">
+            <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="9" stroke="#4F46E5" strokeWidth="2"/>
+              <path d="M12 8V16" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M8 12H16" stroke="#4F46E5" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+            Add GoodWallet
+          </button>
+        </div>
+      )}
+      
+      {/* Recent Receipts Section */}
+      <div className="mx-4 mt-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="font-medium">Recent Receipts</h2>
+          <h2 className="text-md font-medium">Recent Receipts</h2>
           <Link href="/activities" className="text-blue-500 text-sm">See all</Link>
         </div>
         
-        <div className="space-y-4">
-          {activities.map(activity => (
-            <div key={activity.id} className="border-b border-gray-100 pb-4">
-              <div className="font-medium">{activity.title}</div>
-              <div className="text-xs text-gray-500">{activity.date}</div>
-              <div className="text-right text-sm">{activity.amount}</div>
+        <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+          {activities.map((activity, index) => (
+            <div key={activity.id} className={`p-4 flex justify-between ${index !== activities.length - 1 ? 'border-b border-gray-100' : ''}`}>
+              <div>
+                <h3 className="font-medium">{activity.title}</h3>
+                <p className="text-xs text-gray-500">{activity.date}</p>
+              </div>
+              <div className="text-md font-medium">{activity.amount}</div>
             </div>
           ))}
         </div>
       </div>
+      
       
       {/* Success Popup */}
       {showPopup && scanResult && (
@@ -162,16 +173,6 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-      
-      {/* Scan Button - Fixed at bottom right */}
-      <div className="fixed bottom-6 right-6">
-        <Link href="/scan" className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
-          </svg>
-        </Link>
-      </div>
     </div>
   )
 }
