@@ -3,18 +3,64 @@
 import { useState, useEffect } from "react"
 import Link from "next/link"
 
+// Scanner result type definition
+interface ScanResult {
+  id: string;
+  type: string;
+  reward: number;
+  location: string;
+  timestamp: number;
+}
+
 // Sample activities data
 const SAMPLE_ACTIVITIES = [
-  { id: 1, title: 'Event xyz', date: '24 nov 2021' },
-  { id: 2, title: 'Event xyz', date: '24 nov 2021' },
-  { id: 3, title: 'Event xyz', date: '24 nov 2021' },
-  { id: 4, title: 'Event xyz', date: '24 nov 2021' }
+  { id: 1, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' },
+  { id: 2, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' },
+  { id: 3, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' },
+  { id: 4, title: 'Event xyz', date: '24 nov 2021', amount: '$325.00' }
 ]
 
 export default function DashboardPage() {
   const [activities, setActivities] = useState(SAMPLE_ACTIVITIES)
   const [activitiesCount, setActivitiesCount] = useState(43)
   const [goodDollarsEarned, setGoodDollarsEarned] = useState(234)
+  const [showPopup, setShowPopup] = useState<boolean>(false)
+  const [scanResult, setScanResult] = useState<ScanResult | null>(null)
+
+  useEffect(() => {
+    // Check if we should show the popup based on localStorage
+    const shouldShowPopup = localStorage.getItem('showScanPopup') === 'true'
+    if (shouldShowPopup) {
+      // Get the last scan result from localStorage
+      const lastScanResultStr = localStorage.getItem('lastScanResult')
+      if (lastScanResultStr) {
+        const lastScanResult = JSON.parse(lastScanResultStr)
+        setScanResult(lastScanResult)
+        setShowPopup(true)
+        
+        // Update totals
+        setGoodDollarsEarned(prev => prev + lastScanResult.reward)
+        setActivitiesCount(prev => prev + 1)
+        
+        // Add the new activity to the list
+        const newActivity = {
+          id: Date.now(),
+          title: lastScanResult.type || 'Scanned Activity',
+          date: new Date().toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' }).toLowerCase(),
+          amount: `$${lastScanResult.reward}.00`
+        }
+        
+        setActivities([newActivity, ...activities.slice(0, 3)])
+        
+        // Clear the flags so popup won't show again on refresh
+        localStorage.removeItem('showScanPopup')
+      }
+    }
+  }, []) // Empty dependency array means this runs once on mount
+
+  const closePopup = () => {
+    setShowPopup(false)
+  }
   
   return (
     <div className="min-h-screen bg-white flex flex-col">
@@ -72,12 +118,60 @@ export default function DashboardPage() {
             <div key={activity.id} className="border-b border-gray-100 pb-4">
               <div className="font-medium">{activity.title}</div>
               <div className="text-xs text-gray-500">{activity.date}</div>
-              <div className="text-right text-sm">$325.00</div>
+              <div className="text-right text-sm">{activity.amount}</div>
             </div>
           ))}
         </div>
       </div>
       
+      {/* Success Popup */}
+      {showPopup && scanResult && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-green-400 p-6 rounded-lg max-w-sm w-full mx-4 relative overflow-hidden">
+            {/* Confetti animation background */}
+            <div className="absolute inset-0 overflow-hidden">
+              {/* Confetti elements - styling matches Figma design */}
+              <div className="absolute top-10 left-12 w-6 h-2 bg-yellow-300 rounded-full rotate-45"></div>
+              <div className="absolute top-20 right-10 w-8 h-2 bg-pink-400 rounded-full -rotate-12"></div>
+              <div className="absolute bottom-14 left-1/4 w-5 h-2 bg-blue-300 rounded-full rotate-30"></div>
+              <div className="absolute top-1/3 right-1/4 w-4 h-4 bg-yellow-300 rounded-full"></div>
+              <div className="absolute bottom-1/3 left-20 w-3 h-8 bg-pink-400 rounded-full -rotate-45"></div>
+              <div className="absolute top-1/2 right-8 w-2 h-6 bg-blue-300 rounded-full"></div>
+            </div>
+            
+            <div className="relative z-10 text-center">
+              {/* G logo badge */}
+              <div className="bg-white rounded-full h-10 w-10 flex items-center justify-center mx-auto mb-4">
+                <span className="text-green-500 font-bold text-xl">G</span>
+              </div>
+              
+              {/* Display earned amount */}
+              <h2 className="text-4xl font-bold text-white mb-2">
+                {scanResult.reward}
+              </h2>
+              <p className="text-white font-medium mb-6">Dollars Earned</p>
+              
+              {/* Close button */}
+              <button 
+                onClick={closePopup}
+                className="bg-white text-green-500 px-10 py-2 rounded-full font-medium"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Scan Button - Fixed at bottom right */}
+      <div className="fixed bottom-6 right-6">
+        <Link href="/scan" className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 013.75 9.375v-4.5zM3.75 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5zM13.5 4.875c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5A1.125 1.125 0 0113.5 9.375v-4.5z" />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 14.625c0-.621.504-1.125 1.125-1.125h4.5c.621 0 1.125.504 1.125 1.125v4.5c0 .621-.504 1.125-1.125 1.125h-4.5a1.125 1.125 0 01-1.125-1.125v-4.5z" />
+          </svg>
+        </Link>
+      </div>
     </div>
   )
 }

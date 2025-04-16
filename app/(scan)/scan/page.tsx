@@ -47,10 +47,15 @@ export default function ScanPage() {
         
         setScanResult(scanData);
         
-        // Simulate API verification and redirect to success screen
+        // Store scan result in localStorage to retrieve in dashboard
+        localStorage.setItem('lastScanResult', JSON.stringify(scanData));
+        localStorage.setItem('showScanPopup', 'true');
+        
+        // Short timeout for visual feedback before redirecting
         setTimeout(() => {
-          router.push(`/scan-success?id=${scanData.id}&type=${scanData.type}&reward=${scanData.reward}`);
-        }, 2000);
+          // Directly navigate back to dashboard instead of success page
+          router.push('/dashboard');
+        }, 1500);
         
       } catch (err) {
         setIsProcessing(false);
@@ -128,7 +133,7 @@ export default function ScanPage() {
             
             <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Success!</h2>
             <p className="text-center text-gray-600 mb-6">
-              QR code scanned successfully. Redirecting you to the confirmation screen...
+              QR code scanned successfully. Returning to dashboard...
             </p>
             
             <div className="flex justify-center">
