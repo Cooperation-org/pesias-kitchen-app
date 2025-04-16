@@ -28,7 +28,7 @@ export default function HomePage() {
                 asChild
                 size='lg'
                 variant='outline'
-                className='text-white border-white hover:bg-white/10'
+                className='border-white hover:bg-white/10'
               >
                 <Link href={ROUTES.LOGIN}>Sign In</Link>
               </Button>
