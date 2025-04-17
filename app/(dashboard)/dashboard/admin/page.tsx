@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Head from 'next/head';
 import { useRouter } from 'next/navigation';
 import QRGenerator from '@/components/QRGenerator';
+import { qrService } from '@/src/services/api'; // Import the API service
 
 // Helper function to generate a unique ID
 const generateUniqueId = () => {
@@ -18,32 +19,60 @@ const CreateQRPage: React.FC = () => {
   const [qrGenerated, setQrGenerated] = useState<boolean>(false);
   const [showAdvanced, setShowAdvanced] = useState<boolean>(false);
   const [expiryHours, setExpiryHours] = useState<number>(24);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
   
   // Generate QR code data
-  const generateQRCode = () => {
-    if (!location) {
-      alert('Please enter a location');
-      return;
-    }
-    
-    const qrData = {
-      id: generateUniqueId(),
-      type: eventType,
-      reward: rewardAmount,
+  // Inside your generateQRCode function in the QR generator page
+const generateQRCode = async () => {
+  if (!location) {
+    alert('Please enter a location');
+    return;
+  }
+  
+  setIsLoading(true);
+  setError('');
+  
+  try {
+    // First, create an activity record (or use an existing one)
+    const activityData = {
+      title: `${eventType} at ${location}`,
+      description: `Activity for ${eventType}`,
       location: location,
-      timestamp: Date.now(),
-      expiry: Date.now() + (expiryHours * 60 * 60 * 1000) // Convert hours to milliseconds
+      date: new Date(),
+      status: 'active',
+      // Add other required fields for your Activity model
     };
     
-    // Convert to JSON string
-    const qrValue = JSON.stringify(qrData);
-    setQrValue(qrValue);
-    setQrGenerated(true);
+    // Create the activity
+    const activityResponse = await activityService.createActivity(activityData);
     
-    // In a real application, you would save this QR code data to your database
-  };
+    if (activityResponse.data && activityResponse.data.success) {
+      const activityId = activityResponse.data.data._id;
+      
+      // Now generate QR code for this activity
+      const qrResponse = await qrService.generateQR(activityId);
+      
+      if (qrResponse.data && qrResponse.data.success) {
+        // Set the QR value from the response
+        const generatedQRData = qrResponse.data.data;
+        setQrValue(JSON.stringify(generatedQRData));
+        setQrGenerated(true);
+      } else {
+        setError(qrResponse.data?.message || 'Failed to generate QR code');
+      }
+    } else {
+      setError(activityResponse.data?.message || 'Failed to create activity');
+    }
+  } catch (error) {
+    console.error('Error generating QR code:', error);
+    setError(`An error occurred: ${error.message}`);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-  // Function to download QR code as PNG
+  // Function to download QR code as PNG (unchanged from your original code)
   const downloadQR = () => {
     const canvas = document.getElementById('qr-download-canvas') as HTMLCanvasElement;
     if (!canvas) return;
@@ -104,6 +133,13 @@ const CreateQRPage: React.FC = () => {
         </div>
         
         <div className="max-w-md mx-auto p-4">
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-4">
+              {error}
+            </div>
+          )}
+          
           {!qrGenerated ? (
             <div className="bg-white rounded-xl shadow-sm p-6 mb-6">
               <h2 className="text-lg font-semibold mb-4 text-gray-800">QR Code Details</h2>
@@ -118,6 +154,7 @@ const CreateQRPage: React.FC = () => {
                     value={eventType}
                     onChange={(e) => setEventType(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isLoading}
                   >
                     <option value="food-sorting">Food Sorting</option>
                     <option value="food-distribution">Food Distribution</option>
@@ -139,6 +176,7 @@ const CreateQRPage: React.FC = () => {
                     min={1}
                     max={100}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -153,6 +191,7 @@ const CreateQRPage: React.FC = () => {
                     onChange={(e) => setLocation(e.target.value)}
                     placeholder="e.g., Tel Aviv Distribution Center"
                     className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                    disabled={isLoading}
                   />
                 </div>
                 
@@ -161,6 +200,7 @@ const CreateQRPage: React.FC = () => {
                     type="button"
                     onClick={() => setShowAdvanced(!showAdvanced)}
                     className="text-blue-500 text-sm font-medium flex items-center"
+                    disabled={isLoading}
                   >
                     {showAdvanced ? (
                       <>
@@ -193,6 +233,7 @@ const CreateQRPage: React.FC = () => {
                       min={1}
                       max={168}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                      disabled={isLoading}
                     />
                     <p className="text-xs text-gray-500 mt-1">
                       QR code will expire after {expiryHours} hours
@@ -202,9 +243,20 @@ const CreateQRPage: React.FC = () => {
                 
                 <button
                   onClick={generateQRCode}
-                  className="w-full bg-blue-500 text-white py-2 px-4 rounded-md font-medium hover:bg-blue-600 transition-colors mt-4"
+                  className={`w-full ${isLoading ? 'bg-blue-400' : 'bg-blue-500 hover:bg-blue-600'} text-white py-2 px-4 rounded-md font-medium transition-colors mt-4 flex justify-center items-center`}
+                  disabled={isLoading}
                 >
-                  Generate QR Code
+                  {isLoading ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Generating...
+                    </>
+                  ) : (
+                    'Generate QR Code'
+                  )}
                 </button>
               </div>
             </div>
