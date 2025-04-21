@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ROUTES } from '@/lib/constants';
+import ConnectionTest from '@/components/ConnectionTest';
+
 
 export default function HomePage() {
   return (
@@ -10,6 +12,8 @@ export default function HomePage() {
       <section className='bg-blue-600 py-20'>
         <div className='container mx-auto px-4'>
           <div className='max-w-3xl'>
+
+            <ConnectionTest />
             <Badge className='bg-blue-500/30 text-white hover:bg-blue-500/30 mb-4'>
               GoodDollar Integration
             </Badge>
