@@ -1,23 +1,33 @@
 'use client';
-
-import { useState } from 'react';
+import React from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft } from 'lucide-react';
 import Image from 'next/image';
-import { SocialLogin } from './social-login';
+import { ConnectKitButton } from 'connectkit';
+import { useAccount } from 'wagmi';
+import { useAuth } from '@/providers/web3Provider';
 
-export default function SignUp() {
-  const [showPassword, setShowPassword] = useState(false);
+export default function LoginPage() {
+  const { isConnected } = useAccount();
+  const { redirectToDashboard } = useAuth();
+
+  // Redirect to dashboard if already connected
+  useEffect(() => {
+    if (isConnected) {
+      redirectToDashboard();
+    }
+  }, [isConnected, redirectToDashboard]);
 
   return (
-    <main className='min-h-screen flex flex-col  '>
-      {/* <BackgroundImage /> */}
+    <main className='min-h-screen flex flex-col'>
       <Image
-        src={require('./home.svg')}
-        alt='...'
+        src="/images/home.svg"
+        alt="Background"
         className='w-full z-40 -mt-32'
         width={200}
         height={200}
+        priority
       />
 
       <div className='relative flex-1 flex flex-col px-7'>
@@ -28,57 +38,49 @@ export default function SignUp() {
         </div>
 
         <div className='mb-8'>
-          <h1 className='text-2xl pb-2 font-bold text-[#303030]'>Login</h1>
+          <h1 className='text-2xl pb-2 font-bold text-[#303030]'>Connect Wallet</h1>
           <p className='text-sm text-[#303030]/80'>
-            Fill the details to login to your account
+            Connect your wallet to access the Global Classrooms application
           </p>
         </div>
 
-        <form className='space-y-4 flex-col'>
-          <div>
-            <input
-              type='email'
-              placeholder='EMAIL ID'
-              className='w-full px-4 py-3 rounded-3xl border border-[#303030]/20 bg-white text-[#303030] placeholder:text-[#303030]/50 placeholder:text-xs focus:outline-none'
-            />
+        <div className='flex flex-col items-center justify-center space-y-6 flex-1 mb-12'>
+          {/* Custom styled ConnectKit button */}
+          <div className='w-full'>
+            <ConnectKitButton.Custom>
+              {({ isConnected, isConnecting, show, hide, address, ensName }) => {
+                return (
+                  <button
+                    onClick={show}
+                    className="flex items-center justify-center space-x-2 w-full bg-[#f7c334] text-[#303030] font-medium py-4 rounded-3xl shadow-md hover:bg-[#f5bb20] transition-colors"
+                  >
+                    {isConnected ? (
+                      <div className="flex items-center space-x-2">
+                        <span>Connected: {ensName || `${address?.slice(0, 6)}...${address?.slice(-4)}`}</span>
+                      </div>
+                    ) : (
+                      <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+                    )}
+                  </button>
+                );
+              }}
+            </ConnectKitButton.Custom>
           </div>
-
-          <div className='relative'>
-            <input
-              type={showPassword ? 'text' : 'password'}
-              placeholder='PASSWORD'
-              className='w-full px-4 py-3 rounded-3xl border border-[#303030]/20 bg-white text-[#303030] placeholder:text-[#303030]/50 placeholder:text-xs focus:outline-none'
-            />
-            <button
-              type='button'
-              onClick={() => setShowPassword(!showPassword)}
-              className='absolute  right-3 top-1/2 transform -translate-y-1/2 text-[#303030]/50'
+          
+          <div className='text-center mt-6'>
+            <p className='text-sm text-[#303030]/70'>
+              New to crypto wallets?
+            </p>
+            <a 
+              href="https://blog.gooddollar.org/how-to-set-up-your-gooddollar-wallet/" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className='text-sm text-[#f7c334]'
             >
-              {showPassword ? (
-                <EyeOff className='h-4 w-4' />
-              ) : (
-                <Eye className='h-4 w-4' />
-              )}
-            </button>
+              Learn how to set up a GoodDollar wallet
+            </a>
           </div>
-
-          <button
-            type='submit'
-            className='w-full bg-[#f7c334] text-[#303030] font-medium py-3 rounded-3xl shadow-sm mt-4'
-          >
-            Login
-          </button>
-          <div className='text-right flex justify-center '>
-            <Link
-              href='/forgot-password'
-              className=' text-sm text-[#f7c334]/80'
-            >
-              Forgot Password?
-            </Link>
-          </div>
-        </form>
-
-        <SocialLogin />
+        </div>
       </div>
     </main>
   );

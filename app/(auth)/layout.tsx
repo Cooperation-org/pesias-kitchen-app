@@ -1,19 +1,26 @@
-'use client';
-import React from 'react';
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
 import '../globals.css';
+import { AppProvider } from '@/providers/web3Provider';
 
-export default function DashboardLayout({
+const inter = Inter({ subsets: ['latin'] });
+
+export const metadata: Metadata = {
+  title: 'Global Classrooms',
+  description: 'Cross-community education for sustainable development',
+};
+
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang='en' className='h-full w-full'>
-      <body className='h-full'>
-        <div className='flex flex-col min-h-screen bg-white'>
-          {/* Main content area with increased bottom padding to accommodate taller navbar */}
-          <main className='flex-1 pb-24'>{children}</main>
-        </div>
+    <html lang="en">
+      <body className={inter.className}>
+        <AppProvider>
+          {children}
+        </AppProvider>
       </body>
     </html>
   );

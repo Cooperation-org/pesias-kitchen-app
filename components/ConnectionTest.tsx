@@ -3,10 +3,15 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 
+interface TestResult {
+  message: string;
+  // Add other properties as needed
+}
+
 const ConnectionTest = () => {
-  const [testResult, setTestResult] = useState(null);
+  const [testResult, setTestResult] = useState<TestResult | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
 
   const testConnection = async () => {
     setLoading(true);
@@ -19,9 +24,10 @@ const ConnectionTest = () => {
       console.log('Response received:', response);
       setTestResult(response.data);
       setLoading(false);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Connection test failed:', err);
-      setError(`Failed to connect to backend: ${err.message}`);
+      const errorMessage = err instanceof Error ? err.message : 'An unknown error occurred';
+      setError(`Failed to connect to backend: ${errorMessage}`);
       setLoading(false);
     }
   };
