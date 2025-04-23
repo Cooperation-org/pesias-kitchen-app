@@ -1,14 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  AlignLeft,
-  ArrowLeft,
-  ArrowLeftIcon,
-  ChevronLeft,
-  MoveLeft,
-  ToggleLeft,
-} from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
 import { clsx } from "clsx";
@@ -16,7 +9,7 @@ import { twMerge } from "tailwind-merge";
 import Image from "next/image";
 
 // Utility function
-function cn(...inputs: any[]) {
+function cn(...inputs: (string | undefined)[]) {
   return twMerge(clsx(inputs));
 }
 
@@ -66,7 +59,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 Button.displayName = "Button";
 
 // Main Component
-const Rewards = (): JSX.Element => {
+const Rewards = () => {
   const rewardEvents = [
     { id: 1, name: "Event xyz", date: "26 Nov 2021", amount: "$321.00" },
     { id: 2, name: "Event xyz", date: "26 Nov 2021", amount: "$321.00" },
@@ -91,7 +84,7 @@ const Rewards = (): JSX.Element => {
             <Image
               width={5}
               height={50}
-              src={require("./gg.svg")}
+              src="/gg.svg"
               className="w-6 h-6 mr-2"
               alt="coin"
             />
