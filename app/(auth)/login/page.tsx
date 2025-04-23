@@ -1,85 +1,92 @@
 'use client';
-import React from 'react';
-import { useEffect } from 'react';
-import Link from 'next/link';
-import { ChevronLeft } from 'lucide-react';
-import Image from 'next/image';
+import React, { useEffect } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount } from 'wagmi';
 import { useAuth } from '@/providers/web3Provider';
+import Image from 'next/image';
 
 export default function LoginPage() {
   const { isConnected } = useAccount();
   const { redirectToDashboard } = useAuth();
 
-  // Redirect to dashboard if already connected
+  // Handle redirection when wallet is connected
   useEffect(() => {
+    let redirectTimer: NodeJS.Timeout;
+    
     if (isConnected) {
-      redirectToDashboard();
+      // Use a very short timeout to ensure any UI updates complete first
+      redirectTimer = setTimeout(() => {
+        redirectToDashboard();
+      }, 100);
     }
+    
+    return () => {
+      if (redirectTimer) clearTimeout(redirectTimer);
+    };
   }, [isConnected, redirectToDashboard]);
 
   return (
-    <main className='min-h-screen flex flex-col'>
-      <Image
-        src="/images/home.svg"
-        alt="Background"
-        className='w-full z-40 -mt-32'
-        width={200}
-        height={200}
-        priority
-      />
-
-      <div className='relative flex-1 flex flex-col px-7'>
-        <div className='mb-3'>
-          <Link href='/' className='inline-flex items-center text-[#303030]'>
-            <ChevronLeft className='' size={28} />
-          </Link>
+    <main className='h-screen flex flex-col'>
+      {/* Top half with background and images */}
+      <div className='h-1/2 relative overflow-hidden'>
+        {/* Yellow background with curved bottom */}
+        <div className='absolute inset-0 bg-[#f7c334]'></div>
+        <div className='absolute bottom-0 left-0 right-0 h-16 bg-white rounded-t-[50%]'></div>
+        
+        {/* Cloud image taking full width, positioned a bit lower */}
+        <div className='absolute inset-0 flex items-end justify-center pb-12'>
+          <Image
+            src='/images/cloud.svg'
+            alt='Cloud background'
+            className='w-full'
+            width={400}
+            height={200}
+            priority
+          />
         </div>
-
-        <div className='mb-8'>
-          <h1 className='text-2xl pb-2 font-bold text-[#303030]'>Connect Wallet</h1>
-          <p className='text-sm text-[#303030]/80'>
-            Connect your wallet to access the Global Classrooms application
+        
+        {/* Phone illustration positioned over cloud */}
+        <div className='absolute inset-0 flex items-center justify-center'>
+          <Image
+            src='/images/phone.svg'
+            alt='Phone with QR code'
+            className='w-3/5 max-w-xs'
+            width={200}
+            height={180}
+            priority
+          />
+        </div>
+      </div>
+      
+      {/* Bottom half with content */}
+      <div className='h-1/2 bg-white flex flex-col items-center justify-start pt-6'>
+        {/* Welcome text */}
+        <div className='text-center mb-8 px-6'>
+          <h1 className='text-2xl font-bold text-[#303030] mb-2'>Welcome to</h1>
+          <h2 className='text-xl font-bold text-[#303030] mb-1'>Pesia's Kitchen EAT Initiative</h2>
+          <p className='text-sm text-[#303030]/70 max-w-xs mx-auto'>
+            Rescuing food, helping communities, and making a real impact
           </p>
         </div>
 
-        <div className='flex flex-col items-center justify-center space-y-6 flex-1 mb-12'>
-          {/* Custom styled ConnectKit button */}
-          <div className='w-full'>
-            <ConnectKitButton.Custom>
-              {({ isConnected, isConnecting, show, hide, address, ensName }) => {
-                return (
-                  <button
-                    onClick={show}
-                    className="flex items-center justify-center space-x-2 w-full bg-[#f7c334] text-[#303030] font-medium py-4 rounded-3xl shadow-md hover:bg-[#f5bb20] transition-colors"
-                  >
-                    {isConnected ? (
-                      <div className="flex items-center space-x-2">
-                        <span>Connected: {ensName || `${address?.slice(0, 6)}...${address?.slice(-4)}`}</span>
-                      </div>
-                    ) : (
-                      <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
-                    )}
-                  </button>
-                );
-              }}
-            </ConnectKitButton.Custom>
-          </div>
-          
-          <div className='text-center mt-6'>
-            <p className='text-sm text-[#303030]/70'>
-              New to crypto wallets?
-            </p>
-            <a 
-              href="https://blog.gooddollar.org/how-to-set-up-your-gooddollar-wallet/" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className='text-sm text-[#f7c334]'
-            >
-              Learn how to set up a GoodDollar wallet
-            </a>
-          </div>
+        {/* Connect Wallet button */}
+        <div className='w-full max-w-md px-6'>
+          <ConnectKitButton.Custom>
+            {({ isConnected, isConnecting, show }) => {
+              return (
+                <button
+                  onClick={show}
+                  className="flex items-center justify-center w-full bg-[#f7c334] text-[#303030] font-medium py-4 rounded-3xl shadow-md hover:bg-[#f5bb20] transition-colors"
+                >
+                  {isConnected ? (
+                    <span>Continue to Dashboard</span>
+                  ) : (
+                    <span>{isConnecting ? 'Connecting...' : 'Connect Wallet'}</span>
+                  )}
+                </button>
+              );
+            }}
+          </ConnectKitButton.Custom>
         </div>
       </div>
     </main>
