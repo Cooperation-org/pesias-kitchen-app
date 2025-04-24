@@ -13,7 +13,7 @@ const ROUTES = {
   HOME: "/",
   ABOUT: "/about",
   IMPACT: "/impact",
-  LOGIN: "/login",
+  LOGIN: "/",
   REGISTER: "/register",
   DASHBOARD: "/dashboard"
 }
