@@ -3,10 +3,10 @@ export const APP_NAME = "Pesia's Kitchen EAT Initiative"
 
 // Routes
 export const ROUTES = {
-  HOME: "/",
+  HOME: "/dashboard",
   ABOUT: "/about",
   IMPACT: "/impact",
-  LOGIN: "/login",
+  LOGIN: "/",
   REGISTER: "/register",
   DASHBOARD: "/dashboard",
   EVENTS: "/dashboard/events",
