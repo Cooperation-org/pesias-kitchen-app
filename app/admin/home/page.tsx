@@ -1,34 +1,27 @@
-import { Scan, CircleDollarSign } from "lucide-react";
 import Link from "next/link";
 
 export default function Dashboard() {
   return (
-    <div className="w-full   px-10 p-5 space-y-6">
-      {/* Stats Cards */}
-      <div className="bg-white rounded-xl shadow-sm p-6">
-        <div className="flex  gap-4 justify-between">
-          {/* Activities Created Card */}
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-10 h-10 bg-yellow-50 rounded-md">
-              <Scan className="w-6 h-6 text-yellow-500" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">43</h2>
-              <p className="text-sm text-gray-400">Activities created</p>
-            </div>
-          </div>
-
-          {/* G$ Rewarded Card */}
-          <div className="flex items-center gap-3 ">
-            <div className="flex   items-center justify-center w-10 h-10 bg-blue-50 rounded-md">
-              <CircleDollarSign className="w-6 h-6 text-blue-500" />
-            </div>
-            <div>
-              <h2 className="text-2xl font-bold">$234</h2>
-              <p className="text-sm text-gray-400">G$ rewarded</p>
-            </div>
-          </div>
-        </div>
+    <div className="w-full px-10 p-5 space-y-6">
+      {/* Scan Image Section */}
+      <div
+        className="relative"
+        style={{
+          width: "80%", // Increased size, use percentage for responsiveness
+          maxWidth: "500px", // Optional: maximum size for large screens
+          height: "150px", // Increased height
+          margin: "0 auto 20px", // Centers the div horizontally
+        }}
+      >
+        <img
+          src="/scan.png" // Ensure the image has no background
+          alt="Scan Icon"
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "contain", // Ensures the image maintains aspect ratio
+          }}
+        />
       </div>
 
       {/* Recent Receipts */}
