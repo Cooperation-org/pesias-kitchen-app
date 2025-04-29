@@ -1,32 +1,43 @@
 'use client';
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useAuth } from '@/providers/web3Provider';
 import Image from 'next/image';
 import { getNonce, verifySignature, storeAuthData } from '@/services/authServices';
 
+// Performance monitoring
+const logPerformance = (label: string) => {
+  if (process.env.NODE_ENV === 'development') {
+    console.time(label);
+    return () => console.timeEnd(label);
+  }
+  return () => {};
+};
+
 export default function LoginPage() {
   const { isConnected, address } = useAccount();
   const { redirectToDashboard } = useAuth();
   const { signMessageAsync } = useSignMessage();
   
-  const [authLoading, setAuthLoading] = useState(false);
-  const [authError, setAuthError] = useState<string | null>(null);
+  const [authState, setAuthState] = useState({
+    loading: false,
+    error: null as string | null,
+    isProcessing: false
+  });
   
   // Use refs to prevent infinite loops
   const hasAttemptedAuth = useRef(false);
-  const isProcessing = useRef(false);
 
   // Handle authentication process
-  const authenticate = async () => {
+  const authenticate = useCallback(async () => {
+    const endTimer = logPerformance('Authentication Process');
+    
     // Prevent concurrent auth attempts
-    if (isProcessing.current || !address) return;
+    if (authState.isProcessing || !address) return;
     
     try {
-      isProcessing.current = true;
-      setAuthLoading(true);
-      setAuthError(null);
+      setAuthState(prev => ({ ...prev, isProcessing: true, loading: true, error: null }));
       
       console.log("Starting authentication for address:", address);
       
@@ -73,23 +84,29 @@ export default function LoginPage() {
         );
         
         // Step 5: Redirect to dashboard
+        console.log("About to redirect to dashboard");
         redirectToDashboard();
-      } catch (signError: any) {
+        console.log("Redirect called");
+      } catch (signError: unknown) {
         console.error("Error during signing:", signError);
-        setAuthError(signError.message || 'Failed to sign message. Please try again.');
+        const errorMessage = signError instanceof Error ? signError.message : 'Failed to sign message. Please try again.';
+        setAuthState(prev => ({ ...prev, error: errorMessage }));
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Authentication error:', error);
-      setAuthError(error.message || 'Authentication failed');
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+      setAuthState(prev => ({ ...prev, error: errorMessage }));
     } finally {
-      setAuthLoading(false);
-      isProcessing.current = false;
+      setAuthState(prev => ({ ...prev, loading: false, isProcessing: false }));
       hasAttemptedAuth.current = true;
+      endTimer();
     }
-  };
+  }, [address, authState.isProcessing, redirectToDashboard, signMessageAsync]);
 
   // Effect to handle automatic authentication
   useEffect(() => {
+    const endTimer = logPerformance('Auth Check Effect');
+    
     const checkAndAuthenticate = async () => {
       // Check if we should attempt authentication
       if (
@@ -97,7 +114,7 @@ export default function LoginPage() {
         address && 
         !localStorage.getItem('token') && 
         !hasAttemptedAuth.current && 
-        !isProcessing.current
+        !authState.isProcessing
       ) {
         await authenticate();
       } else if (isConnected && localStorage.getItem('token')) {
@@ -107,16 +124,17 @@ export default function LoginPage() {
     };
 
     checkAndAuthenticate();
+    endTimer();
     
     // Cleanup function
     return () => {
       // Reset the auth attempt state when component unmounts or dependencies change
       hasAttemptedAuth.current = false;
     };
-  }, [isConnected, address, redirectToDashboard]);
+  }, [isConnected, address, redirectToDashboard, authenticate, authState.isProcessing]);
 
   // Handle manual connection/authentication
-  const handleConnectClick = (show: () => void) => {
+  const handleConnectClick = useCallback((show: () => void) => {
     if (isConnected) {
       // Reset the auth attempt state to allow for another try
       hasAttemptedAuth.current = false;
@@ -125,7 +143,7 @@ export default function LoginPage() {
       // Open wallet connection modal
       show();
     }
-  };
+  }, [isConnected, authenticate]);
 
   return (
     <main className='h-screen flex flex-col'>
@@ -144,6 +162,8 @@ export default function LoginPage() {
             width={400}
             height={200}
             priority
+            loading="eager"
+            quality={75}
           />
         </div>
         
@@ -156,6 +176,8 @@ export default function LoginPage() {
             width={200}
             height={180}
             priority
+            loading="eager"
+            quality={75}
           />
         </div>
       </div>
@@ -165,16 +187,16 @@ export default function LoginPage() {
         {/* Welcome text */}
         <div className='text-center mb-8 px-6'>
           <h1 className='text-2xl font-bold text-[#303030] mb-2'>Welcome to</h1>
-          <h2 className='text-xl font-bold text-[#303030] mb-1'>Pesia's Kitchen EAT Initiative</h2>
+          <h2 className='text-xl font-bold text-[#303030] mb-1'>Pesia&apos;s Kitchen EAT Initiative</h2>
           <p className='text-sm text-[#303030]/70 max-w-xs mx-auto'>
             Rescuing food, helping communities, and making a real impact
           </p>
         </div>
 
         {/* Auth Error Message */}
-        {authError && (
+        {authState.error && (
           <div className="mb-4 bg-red-50 text-red-700 p-3 rounded-lg max-w-md px-6 w-full">
-            <p className="text-sm">{authError}</p>
+            <p className="text-sm">{authState.error}</p>
             <button 
               onClick={() => {
                 hasAttemptedAuth.current = false; 
@@ -192,7 +214,7 @@ export default function LoginPage() {
           <ConnectKitButton.Custom>
             {({ isConnected, isConnecting, show }) => {
               // Determine the button state
-              const isLoading = isConnecting || authLoading;
+              const isLoading = isConnecting || authState.loading;
               let buttonText = 'Connect Wallet';
               
               if (isConnected) {

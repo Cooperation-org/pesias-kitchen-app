@@ -3,16 +3,19 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export function middleware(request: NextRequest) {
-  // Get the token from cookies or headers
-  const token = request.cookies.get('token')?.value || request.headers.get('Authorization')?.split(' ')[1];
+  // Get the token from cookies
+  const token = request.cookies.get('token')?.value;
   
-  // Check if user is trying to access dashboard without being logged in
-  if (request.nextUrl.pathname.startsWith('/dashboard') && !token) {
+  // Get wallet connection status from cookies
+  const isWalletConnected = request.cookies.get('walletConnected')?.value === 'true';
+  
+  // Check if user is trying to access dashboard without being logged in or wallet disconnected
+  if (request.nextUrl.pathname.startsWith('/dashboard') && (!token || !isWalletConnected)) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   
   // If user is already logged in and tries to access login page, redirect to dashboard
-  if (request.nextUrl.pathname === '/' && token) {
+  if (request.nextUrl.pathname === '/' && token && isWalletConnected) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   
