@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
 import { 
   WagmiConfig, 
   createConfig,
@@ -16,7 +16,7 @@ import {
 } from "connectkit";
 import { celoAlfajores } from 'wagmi/chains';
 import { useRouter } from 'next/navigation';
-import { apiGet, apiPost } from '@/utils/api-client';
+import { setWalletConnectionStatus, getUser, getToken, clearAuthData } from '@/services/authServices';
 
 // Configure the chains you want to support
 const { chains } = configureChains(
@@ -33,35 +33,6 @@ const config = createConfig(
   }),
 );
 
-// Auth utilities
-const getToken = (): string | null => {
-  if (typeof window !== 'undefined') {
-    return localStorage.getItem('token');
-  }
-  return null;
-};
-
-const getUser = () => {
-  if (typeof window !== 'undefined') {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      try {
-        return JSON.parse(userData);
-      } catch (error) {
-        console.error('Error parsing user data', error);
-      }
-    }
-  }
-  return null;
-};
-
-const clearAuthData = () => {
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-  }
-};
-
 // Auth context type
 interface AuthContextValue {
   // Navigation functions
@@ -70,12 +41,20 @@ interface AuthContextValue {
   
   // Authentication state
   isAuthenticated: boolean;
-  user: any;
+  user: UserData | null;
   token: string | null;
   logout: () => void;
   
   // Loading state
   isLoading: boolean;
+}
+
+// User data type
+interface UserData {
+  id: string;
+  walletAddress: string;
+  role: string;
+  [key: string]: string | number | boolean;
 }
 
 // Create context with default values
@@ -100,13 +79,29 @@ function AuthProvider({ children }: AuthProviderProps) {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<UserData | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
   // Navigation functions
-  const redirectToLogin = () => router.push('/');
-  const redirectToDashboard = () => router.push('/dashboard');
+  const redirectToLogin = () => {
+    console.log("Redirecting to login page");
+    try {
+      router.replace('/');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      window.location.href = '/';
+    }
+  };
+  const redirectToDashboard = () => {
+    console.log("Redirecting to dashboard");
+    try {
+      router.replace('/dashboard');
+    } catch (error) {
+      console.error('Navigation error:', error);
+      window.location.href = '/dashboard';
+    }
+  };
   
   // Logout function
   const logout = () => {
@@ -115,6 +110,14 @@ function AuthProvider({ children }: AuthProviderProps) {
     setUser(null);
     redirectToLogin();
   };
+  
+  // Update wallet connection status
+  useEffect(() => {
+    setWalletConnectionStatus(isConnected);
+    if (!isConnected) {
+      logout();
+    }
+  }, [isConnected]);
   
   // Load auth data on mount and when wallet changes
   useEffect(() => {
@@ -133,23 +136,16 @@ function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(false);
   }, [address, isConnected]);
 
-  // Cleanup when wallet disconnects
-  useEffect(() => {
-    if (!isConnected && token) {
-      logout();
-    }
-  }, [isConnected, token]);
-
   // Auth context value
-  const value = {
+  const value = useMemo(() => ({
     redirectToLogin,
     redirectToDashboard,
-    isAuthenticated: !!token && !!user,
+    isAuthenticated: !!token && !!user && isConnected,
     user,
     token,
     logout,
     isLoading
-  };
+  }), [token, user, isLoading, isConnected]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -160,21 +156,24 @@ function AuthProvider({ children }: AuthProviderProps) {
 
 // Final AppProvider with all providers combined
 export function AppProvider({ children }: AuthProviderProps) {
+  // Memoize the theme object
+  const theme = useMemo(() => ({
+    "--ck-connectbutton-background": "#f7c334",
+    "--ck-connectbutton-color": "#303030",
+    "--ck-connectbutton-hover-background": "#f5bb20",
+    "--ck-body-background": "#ffffff",
+    "--ck-body-color": "#303030",
+    "--ck-primary-button-background": "#f7c334",
+    "--ck-primary-button-font-weight": "600",
+    "--ck-primary-button-color": "#303030",
+  }), []);
+
   return (
     <WagmiConfig config={config}>
       <ConnectKitProvider 
         theme="auto"
         mode="dark" 
-        customTheme={{
-          "--ck-connectbutton-background": "#f7c334",
-          "--ck-connectbutton-color": "#303030",
-          "--ck-connectbutton-hover-background": "#f5bb20",
-          "--ck-body-background": "#ffffff",
-          "--ck-body-color": "#303030",
-          "--ck-primary-button-background": "#f7c334",
-          "--ck-primary-button-font-weight": "600",
-          "--ck-primary-button-color": "#303030",
-        }}
+        customTheme={theme}
       >
         <AuthProvider>
           {children}
