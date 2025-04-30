@@ -11,7 +11,6 @@ export default function UserProfile() {
           <Link href="#" className="p-2">
             <ArrowLeft className="h-6 w-6 text-gray-800" />
           </Link>
-          {/* <h1 className='text-3xl font-bold text-gray-800'>Activities</h1> */}
         </div>
       </div>
 
@@ -37,9 +36,12 @@ export default function UserProfile() {
             <Mail className="w-3 h-3 mr-1" />
             <span>happy203@gmail.com</span>
           </div>
+          {/* Admin Badge */}
+          <span className="inline-block mt-1 bg-[#303030] text-white text-xs px-2 py-0.5 rounded-md">
+            Admin
+          </span>
         </div>
       </div>
-
       {/* Personal Details Card */}
       <div className="bg-white rounded-lg shadow-md p-5 mb-4">
         <div className="flex justify-between items-center mb-4">

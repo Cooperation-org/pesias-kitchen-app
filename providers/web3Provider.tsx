@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { 
@@ -29,8 +29,9 @@ const config = createConfig(
   getDefaultConfig({
     appName: "Global Classrooms App",
     chains,
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-  }),
+    walletConnectProjectId:
+      process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+  })
 );
 
 // User data type
@@ -46,13 +47,13 @@ interface AuthContextValue {
   // Navigation functions
   redirectToLogin: () => void;
   redirectToDashboard: () => void;
-  
+
   // Authentication state
   isAuthenticated: boolean;
   user: UserData | null;
   token: string | null;
   logout: () => void;
-  
+
   // Loading state
   isLoading: boolean;
 }
@@ -65,7 +66,7 @@ const AuthContext = createContext<AuthContextValue>({
   user: null,
   token: null,
   logout: () => {},
-  isLoading: false
+  isLoading: false,
 });
 
 // Hook to use the auth context
@@ -152,11 +153,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     isLoading
   }), [token, user, isLoading, isConnected, redirectToLogin, redirectToDashboard, logout]);
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 // Memoize theme object outside of component
@@ -175,14 +172,12 @@ const theme = {
 export function AppProvider({ children }: AuthProviderProps) {
   return (
     <WagmiConfig config={config}>
-      <ConnectKitProvider 
+      <ConnectKitProvider
         theme="auto"
         mode="dark" 
         customTheme={theme}
       >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <AuthProvider>{children}</AuthProvider>
       </ConnectKitProvider>
     </WagmiConfig>
   );
