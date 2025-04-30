@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
 import { 
   WagmiConfig, 
   createConfig,
@@ -33,6 +33,14 @@ const config = createConfig(
   }),
 );
 
+// User data type
+interface UserData {
+  id: string;
+  walletAddress: string;
+  role: string;
+  [key: string]: string | number | boolean;
+}
+
 // Auth context type
 interface AuthContextValue {
   // Navigation functions
@@ -47,14 +55,6 @@ interface AuthContextValue {
   
   // Loading state
   isLoading: boolean;
-}
-
-// User data type
-interface UserData {
-  id: string;
-  walletAddress: string;
-  role: string;
-  [key: string]: string | number | boolean;
 }
 
 // Create context with default values
@@ -83,8 +83,8 @@ function AuthProvider({ children }: AuthProviderProps) {
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // Navigation functions
-  const redirectToLogin = () => {
+  // Memoize navigation functions
+  const redirectToLogin = useCallback(() => {
     console.log("Redirecting to login page");
     try {
       router.replace('/');
@@ -92,8 +92,9 @@ function AuthProvider({ children }: AuthProviderProps) {
       console.error('Navigation error:', error);
       window.location.href = '/';
     }
-  };
-  const redirectToDashboard = () => {
+  }, [router]);
+
+  const redirectToDashboard = useCallback(() => {
     console.log("Redirecting to dashboard");
     try {
       router.replace('/dashboard');
@@ -101,15 +102,15 @@ function AuthProvider({ children }: AuthProviderProps) {
       console.error('Navigation error:', error);
       window.location.href = '/dashboard';
     }
-  };
+  }, [router]);
   
-  // Logout function
-  const logout = () => {
+  // Memoize logout function
+  const logout = useCallback(() => {
     clearAuthData();
     setToken(null);
     setUser(null);
     redirectToLogin();
-  };
+  }, [redirectToLogin]);
   
   // Update wallet connection status
   useEffect(() => {
@@ -117,26 +118,30 @@ function AuthProvider({ children }: AuthProviderProps) {
     if (!isConnected) {
       logout();
     }
-  }, [isConnected]);
+  }, [isConnected, logout]);
   
   // Load auth data on mount and when wallet changes
   useEffect(() => {
-    const storedToken = getToken();
-    const storedUser = getUser();
+    const loadAuthData = async () => {
+      const storedToken = getToken();
+      const storedUser = getUser();
 
-    if (storedToken && storedUser && isConnected) {
-      if (address && address.toLowerCase() === storedUser.walletAddress?.toLowerCase()) {
-        setToken(storedToken);
-        setUser(storedUser);
-      } else {
-        clearAuthData();
+      if (storedToken && storedUser && isConnected) {
+        if (address && address.toLowerCase() === storedUser.walletAddress?.toLowerCase()) {
+          setToken(storedToken);
+          setUser(storedUser);
+        } else {
+          clearAuthData();
+        }
       }
-    }
-    
-    setIsLoading(false);
+      
+      setIsLoading(false);
+    };
+
+    loadAuthData();
   }, [address, isConnected]);
 
-  // Auth context value
+  // Memoize auth context value
   const value = useMemo(() => ({
     redirectToLogin,
     redirectToDashboard,
@@ -145,7 +150,7 @@ function AuthProvider({ children }: AuthProviderProps) {
     token,
     logout,
     isLoading
-  }), [token, user, isLoading, isConnected]);
+  }), [token, user, isLoading, isConnected, redirectToLogin, redirectToDashboard, logout]);
 
   return (
     <AuthContext.Provider value={value}>
@@ -154,20 +159,20 @@ function AuthProvider({ children }: AuthProviderProps) {
   );
 }
 
+// Memoize theme object outside of component
+const theme = {
+  "--ck-connectbutton-background": "#f7c334",
+  "--ck-connectbutton-color": "#303030",
+  "--ck-connectbutton-hover-background": "#f5bb20",
+  "--ck-body-background": "#ffffff",
+  "--ck-body-color": "#303030",
+  "--ck-primary-button-background": "#f7c334",
+  "--ck-primary-button-font-weight": "600",
+  "--ck-primary-button-color": "#303030",
+} as const;
+
 // Final AppProvider with all providers combined
 export function AppProvider({ children }: AuthProviderProps) {
-  // Memoize the theme object
-  const theme = useMemo(() => ({
-    "--ck-connectbutton-background": "#f7c334",
-    "--ck-connectbutton-color": "#303030",
-    "--ck-connectbutton-hover-background": "#f5bb20",
-    "--ck-body-background": "#ffffff",
-    "--ck-body-color": "#303030",
-    "--ck-primary-button-background": "#f7c334",
-    "--ck-primary-button-font-weight": "600",
-    "--ck-primary-button-color": "#303030",
-  }), []);
-
   return (
     <WagmiConfig config={config}>
       <ConnectKitProvider 

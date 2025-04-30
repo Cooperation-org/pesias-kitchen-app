@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback, memo } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useAuth } from '@/providers/web3Provider';
@@ -14,6 +14,70 @@ const logPerformance = (label: string) => {
   }
   return () => {};
 };
+
+// Memoized background component
+const Background = memo(() => (
+  <div className='h-1/2 relative overflow-hidden'>
+    <div className='absolute inset-0 bg-[#f7c334]'></div>
+    <div className='absolute bottom-0 left-0 right-0 h-16 bg-white rounded-t-[50%]'></div>
+    
+    <div className='absolute inset-0 flex items-end justify-center pb-12'>
+      <Image
+        src='/images/cloud.svg'
+        alt='Cloud background'
+        className='w-full'
+        width={400}
+        height={200}
+        priority
+        loading="eager"
+        quality={75}
+      />
+    </div>
+    
+    <div className='absolute inset-0 flex items-center justify-center'>
+      <Image
+        src='/images/phone.svg'
+        alt='Phone with QR code'
+        className='w-3/5 max-w-xs'
+        width={200}
+        height={180}
+        priority
+        loading="eager"
+        quality={75}
+      />
+    </div>
+  </div>
+));
+
+Background.displayName = 'Background';
+
+// Memoized welcome text component
+const WelcomeText = memo(() => (
+  <div className='text-center mb-8 px-6'>
+    <h1 className='text-2xl font-bold text-[#303030] mb-2'>Welcome to</h1>
+    <h2 className='text-xl font-bold text-[#303030] mb-1'>Pesia&apos;s Kitchen EAT Initiative</h2>
+    <p className='text-sm text-[#303030]/70 max-w-xs mx-auto'>
+      Rescuing food, helping communities, and making a real impact
+    </p>
+  </div>
+));
+
+WelcomeText.displayName = 'WelcomeText';
+
+// Memoized error message component
+const ErrorMessage = memo(({ error, onRetry }: { error: string; onRetry: () => void }) => (
+  <div className="mb-4 bg-red-50 text-red-700 p-3 rounded-lg max-w-md px-6 w-full">
+    <p className="text-sm">{error}</p>
+    <button 
+      onClick={onRetry}
+      className="text-sm font-medium text-red-700 underline mt-1"
+    >
+      Try again
+    </button>
+  </div>
+));
+
+ErrorMessage.displayName = 'ErrorMessage';
 
 export default function LoginPage() {
   const { isConnected, address } = useAccount();
@@ -145,71 +209,22 @@ export default function LoginPage() {
     }
   }, [isConnected, authenticate]);
 
+  const handleRetry = useCallback(() => {
+    hasAttemptedAuth.current = false;
+    authenticate();
+  }, [authenticate]);
+
   return (
     <main className='h-screen flex flex-col'>
-      {/* Top half with background and images */}
-      <div className='h-1/2 relative overflow-hidden'>
-        {/* Yellow background with curved bottom */}
-        <div className='absolute inset-0 bg-[#f7c334]'></div>
-        <div className='absolute bottom-0 left-0 right-0 h-16 bg-white rounded-t-[50%]'></div>
-        
-        {/* Cloud image taking full width, positioned a bit lower */}
-        <div className='absolute inset-0 flex items-end justify-center pb-12'>
-          <Image
-            src='/images/cloud.svg'
-            alt='Cloud background'
-            className='w-full'
-            width={400}
-            height={200}
-            priority
-            loading="eager"
-            quality={75}
-          />
-        </div>
-        
-        {/* Phone illustration positioned over cloud */}
-        <div className='absolute inset-0 flex items-center justify-center'>
-          <Image
-            src='/images/phone.svg'
-            alt='Phone with QR code'
-            className='w-3/5 max-w-xs'
-            width={200}
-            height={180}
-            priority
-            loading="eager"
-            quality={75}
-          />
-        </div>
-      </div>
+      <Background />
       
-      {/* Bottom half with content */}
       <div className='h-1/2 bg-white flex flex-col items-center justify-start pt-6'>
-        {/* Welcome text */}
-        <div className='text-center mb-8 px-6'>
-          <h1 className='text-2xl font-bold text-[#303030] mb-2'>Welcome to</h1>
-          <h2 className='text-xl font-bold text-[#303030] mb-1'>Pesia&apos;s Kitchen EAT Initiative</h2>
-          <p className='text-sm text-[#303030]/70 max-w-xs mx-auto'>
-            Rescuing food, helping communities, and making a real impact
-          </p>
-        </div>
+        <WelcomeText />
 
-        {/* Auth Error Message */}
         {authState.error && (
-          <div className="mb-4 bg-red-50 text-red-700 p-3 rounded-lg max-w-md px-6 w-full">
-            <p className="text-sm">{authState.error}</p>
-            <button 
-              onClick={() => {
-                hasAttemptedAuth.current = false; 
-                authenticate();
-              }}
-              className="text-sm font-medium text-red-700 underline mt-1"
-            >
-              Try again
-            </button>
-          </div>
+          <ErrorMessage error={authState.error} onRetry={handleRetry} />
         )}
 
-        {/* Connect Wallet button */}
         <div className='w-full max-w-md px-6'>
           <ConnectKitButton.Custom>
             {({ isConnected, isConnecting, show }) => {
