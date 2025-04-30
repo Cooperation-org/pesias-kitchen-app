@@ -32,7 +32,7 @@ const nftData = [
   },
 ];
 
-export default function NfTs(): JSX.Element {
+export default function NfTs() {
   return (
     <div className="bg-white min-h-screen">
       <div className="px-6 py-4">
