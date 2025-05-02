@@ -1,54 +1,60 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import "../globals.css";
+import { ConnectKitButton } from "connectkit";
+import { usePathname } from 'next/navigation';
+import { Plus } from 'lucide-react';
+import {
+  HomeIcon,
+  UserGroupIcon,
+  CalendarIcon,
+  ChartBarIcon,
+  Cog6ToothIcon,
+  ArrowLeftOnRectangleIcon,
+} from '@heroicons/react/24/outline';
+import CreateEventModal from '@/components/CreateEventModal';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <html lang="en" className="h-full">
       <body className="h-full">
         <div className="flex flex-col min-h-screen bg-white">
           {/* Header with menu and notifications */}
-          <header className="p-4 flex justify-between items-center border-b border-gray-100 fixed w-full bg-white">
-            <button>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5"
-                />
-              </svg>
-            </button>
+          <header className="p-4 flex justify-end items-center border-b border-gray-100 fixed w-full bg-white z-20">
 
-            <button>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth={1.5}
-                stroke="currentColor"
-                className="w-6 h-6"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0"
-                />
-              </svg>
-            </button>
+            <div className="flex items-center gap-4">
+              {/* Wallet Connection Button */}
+              <ConnectKitButton.Custom>
+                {({ isConnected, isConnecting, show, hide, address, ensName }) => {
+                  return (
+                    <button
+                      onClick={show}
+                      className="flex items-center text-sm font-medium"
+                    >
+                      {isConnected ? (
+                        <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-800">
+                          {ensName || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
+                        </span>
+                      ) : (
+                        <span className="px-3 py-1 bg-yellow-400 text-gray-800 rounded-full">
+                          {isConnecting ? 'Connecting...' : 'Connect'}
+                        </span>
+                      )}
+                    </button>
+                  );
+                }}
+              </ConnectKitButton.Custom>
+
+            </div>
           </header>
-
           <main className="flex-1 pb-24 mt-[4rem]">{children}</main>
 
           {/* Fixed bottom navigation with shadow effect on horizontal line */}
@@ -111,20 +117,17 @@ export default function DashboardLayout({
                 </Link>
 
                 {/* Centered QR Code Button with inset effect */}
-                <div className="flex flex-col items-center -mt-10 relative">
+                <div className="flex flex-col items-center -mt-10 relative cursor-pointer" onClick={() => setIsModalOpen(true)}>
                   {/* Recessed area/inset effect */}
                   <div className="absolute -top-5 w-24 h-24 bg-gray-100 rounded-full shadow-inner flex items-center justify-center">
                     {/* QR Code Button in center of recessed area */}
                     <div className="relative">
                       {/* White outer glow/shadow effect */}
-                      <div className="absolute -inset-2 bg-white rounded-full blur-md"></div>
 
-                      {/* Yellow circle with QR code */}
-                      <Link
-                        href="/scan"
-                        className="relative flex items-center justify-center"
+                      <button
+
+                        className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center z-10 shadow-lg hover:bg-yellow-500 transition-colors"
                       >
-                        <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center z-10 shadow-lg">
                           {/* QR Code SVG */}
 
                           <svg
@@ -189,13 +192,14 @@ export default function DashboardLayout({
                               </filter>
                             </defs>
                           </svg>
-                        </div>
-                      </Link>
+  
+
+                      </button>
                     </div>
                   </div>
 
                   <span
-                    className="text-xs  text-gray-500 mt-16"
+                    className="text-xs text-gray-500 mt-16"
                     style={{ visibility: "hidden" }}
                   >
                     Scan
@@ -244,6 +248,12 @@ export default function DashboardLayout({
             </div>
           </div>
         </div>
+
+        {/* Create Event Modal */}
+        <CreateEventModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+        />
       </body>
     </html>
   );
