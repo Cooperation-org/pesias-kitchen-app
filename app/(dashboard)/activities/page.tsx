@@ -1,179 +1,388 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from "next/link";
-import { ArrowLeft, Share2, Calendar, Clock, Info, AlertCircle } from "lucide-react";
-import { useApi } from '@/hooks/useApi';
+import { motion } from 'framer-motion';
+import { toast } from 'sonner';
+import { getEvents, joinEvent, generateQRCode } from '@/services/api';
+import { useAuth } from '@/providers/web3Provider';
 
-// Define the activity type based on your API response
-interface Activity {
-  _id: string;
-  event: string;
-  qrCode: string;
-  user: string;
-  quantity: number;
-  verified: boolean;
-  nftId: string | null;
-  timestamp: string;
-  notes: string;
-}
+import { ProcessedEvent, TimeFilter } from './types';
+import { processServerEvents } from './utils';
+import EventCard from './EventCard';
+import QRCodeModal from './QRCodeModal';
+import EditEventModal from '@/components/EditEventModal';
+import NoEventsMessage from './NoEventsMessage';
+import TimeFilterButtons from './TimeFilterButtons';
 
 export default function ActivitiesPage() {
-  const api = useApi();
-  const { 
-    data: activities, 
-    loading, 
-    error, 
-    execute: fetchActivities 
-  } = api.useGet<Activity[]>();
+  const [events, setEvents] = useState<ProcessedEvent[]>([]);
+  const [filteredEvents, setFilteredEvents] = useState<ProcessedEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
+  const { user, isAuthenticated } = useAuth();
+  
+  // State for QR code modal
+  const [qrCodeModal, setQrCodeModal] = useState({
+    isOpen: false,
+    qrCodeUrl: '',
+    eventName: '',
+    eventId: '', // Added to keep track of which event we're generating for
+    qrCodeType: 'volunteer' as 'volunteer' | 'recipient',
+    isGenerating: false
+  });
+  
+  // State for edit event modal
+  const [editEventModal, setEditEventModal] = useState({
+    isOpen: false,
+    eventId: ''
+  });
 
-  // Fetch activities when the component mounts
   useEffect(() => {
-    fetchActivities('/api/activity/user');
-  }, [fetchActivities]);
+    fetchEvents();
+  }, []);
 
-  // Format date for display
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  };
+  useEffect(() => {
+    filterEvents();
+  }, [events, timeFilter]);
 
-  // Format time for display
-  const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  // Share activity handler
-  const handleShare = (activityId: string) => {
-    if (navigator.share) {
-      navigator.share({
-        title: 'Check out this activity!',
-        text: 'I participated in this activity through the Global Classrooms app.',
-        url: `${window.location.origin}/activities/${activityId}`,
-      }).catch(err => {
-        console.log('Error sharing:', err);
-      });
-    } else {
-      alert('Web Share API not supported in your browser');
+  const fetchEvents = async () => {
+    try {
+      const response = await getEvents();
+      const processedEvents = processServerEvents(response.data);
+      setEvents(processedEvents);
+    } catch (error) {
+      toast.error('Failed to fetch events');
+      console.error('Error fetching events:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
+  const filterEvents = () => {
+    const now = new Date();
+    const filtered = events.filter(event => {
+      const eventDate = new Date(`${event.date}`);
+      switch (timeFilter) {
+        case 'upcoming':
+          return eventDate >= now;
+        case 'past':
+          return eventDate < now;
+        default:
+          return true;
+      }
+    });
+
+    // Sort events by date
+    const sorted = [...filtered].sort((a, b) => {
+      const dateA = new Date(`${a.date}`);
+      const dateB = new Date(`${b.date}`);
+      
+      // For upcoming events, sort chronologically (earliest first)
+      // For past events, sort reverse chronologically (most recent first)
+      return timeFilter === 'past' 
+        ? dateB.getTime() - dateA.getTime() 
+        : dateA.getTime() - dateB.getTime();
+    });
+
+    setFilteredEvents(sorted);
+  };
+
+  const handleJoinEvent = async (eventId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to join this event');
+      return;
+    }
+
+    try {
+      await joinEvent(eventId);
+      toast.success('Successfully joined the event!');
+      fetchEvents();
+    } catch (error) {
+      toast.error('Failed to join event');
+      console.error('Error joining event:', error);
+    }
+  };
+
+  // First step - Show the modal with type selection
+  const handleGenerateQRCode = async (eventId: string, eventTitle: string) => {
+    try {
+      // Show the modal with type selection options
+      setQrCodeModal({
+        isOpen: true,
+        qrCodeUrl: '',
+        eventName: eventTitle,
+        eventId: eventId, // Store the event ID
+        qrCodeType: 'volunteer',
+        isGenerating: true
+      });
+    } catch (error) {
+      toast.error('Failed to prepare QR code generator');
+      console.error('Error preparing QR code generator:', error);
+    }
+  };
+  
+  // Second step - Generate the QR code after type selection
+ // Second step - Generate the QR code after type selection
+const handleGenerateWithType = async (type: 'volunteer' | 'recipient') => {
+  try {
+    setIsLoading(true);
+    
+    // Get the event ID from the modal state
+    const eventId = qrCodeModal.eventId;
+    
+    // Call the API with the selected type
+    const response = await generateQRCode({ 
+      type: type,
+      eventId 
+    });
+    
+    // Update the modal with the generated QR code
+    setQrCodeModal(prev => ({
+      ...prev,
+      qrCodeUrl: response.data.qrCode.qrImage, // Updated to match the API response structure
+      qrCodeType: type,
+      isGenerating: false
+    }));
+    
+    // Success message
+    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} QR Code generated successfully!`);
+    
+    // Note: We've removed the fetchEvents() call here as requested
+    
+  } catch (error) {
+    toast.error('Failed to generate QR code');
+    console.error('Error generating QR code:', error);
+    
+    // Reset the generation state if there's an error
+    setQrCodeModal(prev => ({
+      ...prev,
+      isGenerating: false
+    }));
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const handleViewQRCode = async (
+  eventId: string, 
+  eventTitle: string, 
+  qrCodeType: 'volunteer' | 'recipient' = 'volunteer'
+) => {
+  try {
+    // For viewing an existing QR code, you'd typically fetch it from the server
+    // But for now we'll simulate this by constructing a URL with the necessary parameters
+    
+    setQrCodeModal({
+      isOpen: true,
+      qrCodeUrl: `/api/qr/${eventId}?type=${qrCodeType}`,
+      eventName: eventTitle,
+      eventId: eventId,
+      qrCodeType,
+      isGenerating: false
+    });
+  } catch (error) {
+    toast.error('Failed to retrieve QR code');
+    console.error('Error retrieving QR code:', error);
+  }
+};
+
+  const closeQrModal = () => {
+    setQrCodeModal({
+      isOpen: false,
+      qrCodeUrl: '',
+      eventName: '',
+      eventId: '',
+      qrCodeType: 'volunteer',
+      isGenerating: false
+    });
+  };
+  
+  const openEditModal = (eventId: string) => {
+    setEditEventModal({
+      isOpen: true,
+      eventId
+    });
+  };
+  
+  const closeEditModal = () => {
+    setEditEventModal({
+      isOpen: false,
+      eventId: ''
+    });
+  };
+  
+  const handleEventUpdated = () => {
+    fetchEvents();
+  };
+
+  // Function to check if the current user is the creator of an event
+  const isEventCreator = (event: ProcessedEvent) => {
+    if (!user || !isAuthenticated) return false;
+    
+    // Check by ID
+    if (event.createdBy && event.createdBy.id === user.id) {
+      return true;
+    }
+    
+    // Check by wallet address (case-insensitive comparison)
+    if (event.createdBy && 
+        event.createdBy.walletAddress && 
+        user.walletAddress) {
+      return event.createdBy.walletAddress.toLowerCase() === user.walletAddress.toLowerCase();
+    }
+    
+    return false;
+  };
+
+  // Function to check if the current user has joined an event
+  const hasUserJoined = (event: ProcessedEvent) => {
+    if (!user || !isAuthenticated) return false;
+    
+    // Check if user is in participants array
+    return event.participants.some(participant => {
+      // Check by ID if available
+      if (typeof participant === 'object' && participant._id && user.id) {
+        return participant._id === user.id;
+      }
+      
+      // Check by wallet address if available
+      if (typeof participant === 'object' && participant.walletAddress && user.walletAddress) {
+        return participant.walletAddress.toLowerCase() === user.walletAddress.toLowerCase();
+      }
+      
+      // If participant is just a string (ID), compare with user ID
+      if (typeof participant === 'string' && user.id) {
+        return participant === user.id;
+      }
+      
+      return false;
+    });
+  };
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
+
+  // Animation variants for containers
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div 
+                key={i} 
+                className="bg-card rounded-xl overflow-hidden"
+              >
+                <div className="h-40 bg-gradient-to-r from-secondary/40 to-secondary/10 animate-pulse"></div>
+                <div className="p-6 space-y-4">
+                  <div className="h-6 bg-secondary/40 rounded w-3/4 animate-pulse"></div>
+                  <div className="space-y-2">
+                    <div className="h-4 bg-secondary/30 rounded animate-pulse"></div>
+                    <div className="h-4 bg-secondary/30 rounded animate-pulse"></div>
+                    <div className="h-4 bg-secondary/30 rounded animate-pulse"></div>
+                  </div>
+                  <div className="h-10 bg-secondary/40 rounded animate-pulse mt-4"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full bg-white min-h-screen p-4 md:p-6 lg:p-8 pb-24">
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6 max-w-7xl mx-auto">
-        <div className="flex items-center gap-4">
-          <Link href="/dashboard" className="p-2">
-            <ArrowLeft className="h-6 w-6 text-gray-800" />
-          </Link>
-          <h1 className="text-3xl font-bold text-gray-800">Activities</h1>
+    <>
+      <div className="min-h-screen bg-background p-6">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ 
+              type: "spring",
+              stiffness: 100,
+              damping: 15
+            }}
+            className="mb-12 text-center"
+          >
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-4 relative inline-block">
+              <span className="relative z-10">Community Activities</span>
+              <motion.span 
+                className="absolute -z-10 left-0 right-0 bottom-2 h-3 bg-primary/30 rounded-full"
+                initial={{ width: "0%" }}
+                animate={{ width: "100%" }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+              ></motion.span>
+            </h1>
+            <p className="text-lg text-muted-foreground mt-2 max-w-2xl mx-auto">
+              Join our community events, make meaningful connections, and create positive change together
+            </p>
+
+            {/* Time filter buttons */}
+            <TimeFilterButtons 
+              currentFilter={timeFilter} 
+              onFilterChange={setTimeFilter} 
+            />
+          </motion.div>
+
+          <motion.div 
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            variants={containerVariants}
+            initial="hidden"
+            animate="show"
+          >
+            {filteredEvents.map((event) => (
+              <EventCard
+                key={event.id}
+                event={event}
+                isCreator={isEventCreator(event)}
+                isAdmin={isAdmin}
+                userJoined={hasUserJoined(event)}
+                isAuthenticated={isAuthenticated}
+                onJoin={handleJoinEvent}
+                onGenerateQRCode={handleGenerateQRCode}
+                onViewQRCode={handleViewQRCode}
+                onEdit={openEditModal}
+              />
+            ))}
+          </motion.div>
+
+          {filteredEvents.length === 0 && !isLoading && (
+            <NoEventsMessage timeFilter={timeFilter} />
+          )}
         </div>
       </div>
 
-      {/* Loading State */}
-      {loading && (
-        <div className="flex flex-col items-center justify-center py-12">
-          <div className="w-12 h-12 border-4 border-gray-200 border-t-yellow-400 rounded-full animate-spin mb-4"></div>
-          <p className="text-gray-500">Loading activities...</p>
-        </div>
-      )}
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={qrCodeModal.isOpen}
+        qrCodeUrl={qrCodeModal.qrCodeUrl}
+        eventName={qrCodeModal.eventName}
+        qrCodeType={qrCodeModal.qrCodeType}
+        isGenerating={qrCodeModal.isGenerating}
+        onClose={closeQrModal}
+        onGenerate={handleGenerateWithType}
+      />
 
-      {/* Error State */}
-      {error && (
-        <div className="max-w-7xl mx-auto bg-red-50 border border-red-200 rounded-lg p-4 flex items-start mb-6">
-          <AlertCircle className="h-5 w-5 text-red-500 mr-3 mt-0.5 flex-shrink-0" />
-          <div>
-            <h3 className="font-medium text-red-800">Error loading activities</h3>
-            <p className="text-red-700 text-sm mt-1">{error}</p>
-            <button 
-              onClick={() => fetchActivities('/api/activity/user')} 
-              className="mt-2 text-sm font-medium text-red-700 hover:text-red-800"
-            >
-              Try again
-            </button>
-          </div>
-        </div>
+      {/* Edit Event Modal */}
+      {editEventModal.isOpen && (
+        <EditEventModal
+          isOpen={editEventModal.isOpen}
+          onClose={closeEditModal}
+          eventId={editEventModal.eventId}
+          onEventUpdated={handleEventUpdated}
+        />
       )}
-
-      {/* Empty State */}
-      {!loading && !error && (!activities || activities.length === 0) && (
-        <div className="max-w-7xl mx-auto bg-gray-50 border border-gray-200 rounded-lg p-8 flex flex-col items-center">
-          <Info className="h-12 w-12 text-gray-400 mb-3" />
-          <h3 className="font-medium text-gray-800 text-lg">No activities yet</h3>
-          <p className="text-gray-500 text-center max-w-md mt-2">
-            You haven't participated in any activities yet. Check back later or join an activity by scanning a QR code.
-          </p>
-        </div>
-      )}
-
-      {/* Activity Cards */}
-      {!loading && !error && activities && activities.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-4 max-w-7xl mx-auto">
-          {activities.map((activity) => (
-            <div key={activity._id} className="border border-gray-200 rounded-lg p-4 flex items-start">
-              <div className="w-12 h-12 rounded-full bg-gray-100 mr-4 flex-shrink-0 flex items-center justify-center">
-                {activity.verified ? (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#10b981" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                ) : (
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="#f59e0b" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75v.75m0 3v.75m0 3v.75" />
-                  </svg>
-                )}
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-gray-800 mb-1">
-                  {activity.event || "Activity"}
-                  {activity.verified && (
-                    <span className="ml-2 text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded-full">
-                      Verified
-                    </span>
-                  )}
-                </h3>
-                
-                <div className="text-gray-500 text-sm mb-3">
-                  <div className="flex items-center mb-1">
-                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                    <span>{formatDate(activity.timestamp)}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <Clock className="h-3.5 w-3.5 mr-1.5" />
-                    <span>{formatTime(activity.timestamp)}</span>
-                  </div>
-                  {activity.notes && (
-                    <p className="mt-2 text-gray-600">{activity.notes}</p>
-                  )}
-                </div>
-                
-                <div className="flex gap-2">
-                  {!activity.verified && (
-                    <button className="px-4 py-2 text-sm border border-yellow-400 text-yellow-500 rounded-md hover:bg-yellow-50">
-                      Verify
-                    </button>
-                  )}
-                  <button 
-                    onClick={() => handleShare(activity._id)}
-                    className="px-4 py-2 text-sm bg-yellow-400 text-white rounded-md flex items-center gap-1 hover:bg-yellow-500"
-                  >
-                    <span>Share</span>
-                    <Share2 className="h-4 w-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
+    </>
   );
 }
