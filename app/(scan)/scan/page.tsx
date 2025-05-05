@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { QrReader } from "react-qr-reader"
 import Link from "next/link"
-import { verifyQRCode, verifyQRAndMintNFT } from "@/services/api"
+import { verifyQRCode, recordActivity, mintActivityNFT } from "@/services/api"
 
 // Scanner result type definition
 interface ScanResult {
@@ -16,9 +16,10 @@ interface ScanResult {
     notes?: string;
   };
   nft?: {
-    nftId: string;
-    txHash: string;
+    nftId?: string;
+    txHash?: string;
     rewardAmount: number | string;
+    nftTokenId?: string;
   };
   event: {
     title: string;
@@ -28,12 +29,22 @@ interface ScanResult {
   timestamp: number;
 }
 
+// Define processing status stages
+type ProcessingStage = 'verifying' | 'recording' | 'minting' | 'complete';
+
+interface ProcessingStatus {
+  stage: ProcessingStage;
+  message: string;
+  progress: number;
+}
+
 export default function ScanPage() {
   const router = useRouter()
   const [isScanning, setIsScanning] = useState<boolean>(true)
   const [errorMessage, setErrorMessage] = useState<string>("")
   const [scanResult, setScanResult] = useState<ScanResult | null>(null)
   const [isProcessing, setIsProcessing] = useState<boolean>(false)
+  const [processingStatus, setProcessingStatus] = useState<ProcessingStatus | null>(null)
   
   // Create a ref to track the last scanned code to prevent duplicates
   const lastScannedCode = useRef<string>("")
@@ -61,69 +72,89 @@ export default function ScanPage() {
     setIsScanning(false)
 
     try {
-      try {
-        // First attempt to use the verify-and-mint endpoint
-        const response = await verifyQRAndMintNFT(
-          qrCodeText, 
-          defaultQuantity, 
-          "Scanned via mobile app"
-        );
-        
-        // Process the verification and mint response
-        const verificationResult = response.data;
-        
-        // Create a scan result object with data from the response
-        const scanData: ScanResult = {
-          id: verificationResult.activity?._id || verificationResult.activity?.id || '',
-          activity: verificationResult.activity ? {
-            id: verificationResult.activity._id || verificationResult.activity.id || '',
-            type: verificationResult.activity.type || 'event',
-            quantity: verificationResult.activity.quantity || defaultQuantity,
-            notes: verificationResult.activity.notes || '',
-          } : undefined,
-          nft: verificationResult.nft ? {
-            nftId: verificationResult.nft.nftId || '',
-            txHash: verificationResult.nft.txHash || '',
-            rewardAmount: verificationResult.nft.rewardAmount || '~',
-          } : undefined,
-          event: {
-            title: verificationResult.event.title || '',
-            activityType: verificationResult.event.activityType || '',
-            location: verificationResult.event.location || '',
-          },
-          timestamp: Date.now(),
-        };
-        
-        setScanResult(scanData);
-        
-        // Store scan result in localStorage to retrieve in dashboard
-        localStorage.setItem('lastScanResult', JSON.stringify(scanData));
-        localStorage.setItem('showScanPopup', 'true');
-        
-      } catch (mintError) {
-        console.error("Error in verify-and-mint, falling back to basic verify:", mintError);
-        
-        // If verify-and-mint fails, fall back to regular verify
-        const verifyResponse = await verifyQRCode(qrCodeText);
-        const verifyResult = verifyResponse.data;
-        
-        // Create a simpler scan result from just verification
-        const basicScanData: ScanResult = {
-          id: verifyResult.qrCode?.id || '',
-          event: {
-            title: verifyResult.qrCode?.event?.title || '',
-            activityType: verifyResult.qrCode?.event?.activityType || '',
-            location: verifyResult.qrCode?.event?.location || '',
-          },
-          timestamp: Date.now(),
-        };
-        
-        setScanResult(basicScanData);
-        
-        // Store basic scan result
-        localStorage.setItem('lastScanResult', JSON.stringify(basicScanData));
-        localStorage.setItem('showScanPopup', 'true');
-      }
+      // Step 1: Verify QR Code
+      setProcessingStatus({
+        stage: 'verifying',
+        message: 'Verifying QR code...',
+        progress: 33
+      });
+      
+      const verifyResponse = await verifyQRCode(qrCodeText);
+      const verifyResult = verifyResponse.data;
+      
+      // Parse event info from verification
+      const eventData = verifyResult.qrCode?.event || {};
+      const qrCodeId = verifyResult.qrCode?.id;
+      
+      // Step 2: Record Activity 
+      setProcessingStatus({
+        stage: 'recording',
+        message: 'Recording activity...',
+        progress: 66
+      });
+      
+      let activityResult = null;
+      let activityId = null;
+
+      console.log(verifyResult.qrCode, 'letscheck ')
+      
+      // If no activityId, create a new activity based on QR data
+      const activityData = {
+        eventId: eventData.id,
+        qrCodeId: qrCodeId,
+        quantity: eventData.defaultQuantity || defaultQuantity,
+        notes: "Scanned via mobile app"
+      };
+      
+      const recordResponse = await recordActivity(activityData);
+      activityResult = recordResponse.data.activity; // The response contains activity in a message object
+      activityId = activityResult._id || activityResult.id;
+      
+      // Step 3: Mint NFT
+      setProcessingStatus({
+        stage: 'minting',
+        message: 'Minting NFT...',
+        progress: 99
+      });
+      
+      const mintResponse = await mintActivityNFT(activityId);
+      const mintResult = mintResponse.data;
+      
+      // Create a scan result object with all the data
+      const scanData: ScanResult = {
+        id: activityId,
+        activity: {
+          id: activityId,
+          type: activityResult?.type || verifyResult.qrCode?.type || 'event',
+          quantity: activityResult?.rewardAmount || verifyResult.qrCode?.rewardAmount || defaultQuantity,
+          notes: activityResult?.description || '',
+        },
+        nft: {
+          nftId: mintResult.nftTokenId,
+          txHash: null, // Not returned in our API
+          rewardAmount: mintResult.rewardAmount || verifyResult.qrCode?.rewardAmount || '~',
+          nftTokenId: mintResult.nftTokenId,
+        },
+        event: {
+          title: eventData.title || '',
+          activityType: eventData.activityType || '',
+          location: eventData.location || '',
+        },
+        timestamp: Date.now(),
+      };
+      
+      // Mark as complete
+      setProcessingStatus({
+        stage: 'complete',
+        message: 'Success!',
+        progress: 100
+      });
+      
+      setScanResult(scanData);
+      
+      // Store scan result in localStorage to retrieve in dashboard
+      localStorage.setItem('lastScanResult', JSON.stringify(scanData));
+      localStorage.setItem('showScanPopup', 'true');
       
       // Short timeout for visual feedback before redirecting
       setTimeout(() => {
@@ -136,7 +167,7 @@ export default function ScanPage() {
       
       // Extract error message from the response if available
       const errorMsg = err.response?.data?.message || 
-                      "Failed to verify QR code. Please try again.";
+                      "Failed to process QR code. Please try again.";
                       
       // Set the error message
       setErrorMessage(errorMsg);
@@ -151,6 +182,7 @@ export default function ScanPage() {
         setErrorMessage("");
         setIsProcessing(false);
         setIsScanning(true);
+        setProcessingStatus(null);
         // Also reset the last scanned code
         lastScannedCode.current = "";
       }, 3000);
@@ -244,6 +276,31 @@ export default function ScanPage() {
           </>
         )}
         
+        {!isScanning && !scanResult && processingStatus && (
+          <div className="absolute inset-0 bg-white flex flex-col items-center justify-center p-6">
+            {/* Processing animation */}
+            <div className="w-20 h-20 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+            
+            <h2 className="text-xl font-bold text-center text-gray-800 mb-2">{processingStatus.message}</h2>
+            
+            {/* Progress bar */}
+            <div className="w-full max-w-xs bg-gray-200 rounded-full h-2.5 mb-6">
+              <div 
+                className="bg-blue-600 h-2.5 rounded-full transition-all duration-500 ease-out" 
+                style={{width: `${processingStatus.progress}%`}}
+              ></div>
+            </div>
+            
+            {/* Stage indicator */}
+            <div className="text-sm text-gray-600 mb-4">
+              {processingStatus.stage === 'verifying' && 'Verifying QR code...'}
+              {processingStatus.stage === 'recording' && 'Recording your activity...'}
+              {processingStatus.stage === 'minting' && 'Minting your NFT reward...'}
+              {processingStatus.stage === 'complete' && 'Finalizing...'}
+            </div>
+          </div>
+        )}
+        
         {!isScanning && scanResult && (
           <div className="absolute inset-0 bg-white flex flex-col items-center justify-center p-6">
             {/* Success animation */}
@@ -255,15 +312,9 @@ export default function ScanPage() {
             
             <h2 className="text-xl font-bold text-center text-gray-800 mb-2">Success!</h2>
             
-            {scanResult.activity && scanResult.nft ? (
-              <p className="text-center text-gray-600 mb-2">
-                Activity recorded and NFT minted!
-              </p>
-            ) : (
-              <p className="text-center text-gray-600 mb-2">
-                QR code verified successfully!
-              </p>
-            )}
+            <p className="text-center text-gray-600 mb-2">
+              Activity recorded and NFT minted!
+            </p>
             
             {scanResult.event.title && (
               <p className="text-center text-gray-700 mb-2 font-medium">
@@ -274,14 +325,14 @@ export default function ScanPage() {
             {scanResult.nft?.rewardAmount && (
               <div className="flex gap-2 items-center justify-center mb-2">
                 <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">
-                  +{scanResult.nft.rewardAmount} points
+                  +{scanResult.nft.rewardAmount} G$ tokens
                 </span>
               </div>
             )}
             
-            {scanResult.activity?.quantity && scanResult.activity.quantity > 0 && (
-              <p className="text-center text-gray-600 mb-6">
-                Quantity: {scanResult.activity.quantity}
+            {scanResult.nft?.nftTokenId && (
+              <p className="text-center text-gray-500 text-sm mb-4">
+                NFT #{scanResult.nft.nftTokenId}
               </p>
             )}
             
