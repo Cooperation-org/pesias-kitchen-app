@@ -78,7 +78,7 @@ interface ProfileUpdateData {
   avatarUrl?: string;
 }
 
-const API_URL = "http://localhost:5002/api";
+const API_URL = "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
 
 const api: AxiosInstance = axios.create({
   baseURL: API_URL,
