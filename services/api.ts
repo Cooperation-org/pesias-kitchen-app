@@ -80,6 +80,25 @@ interface ProfileUpdateData {
   avatarUrl?: string;
 }
 
+interface Reward {
+  activityId: string;
+  nftId: string;
+  activityType: string;
+  location: string;
+  date: string;
+  rewardAmount: number;
+}
+
+interface RewardsResponse {
+  userInfo: {
+    id: string;
+    name: string;
+    walletAddress: string;
+  };
+  rewards: Reward[];
+  totalRewards: number;
+}
+
 const API_URL = "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
 
 const api: AxiosInstance = axios.create({
@@ -187,5 +206,10 @@ export const joinEvent = (eventId: string): Promise<AxiosResponse<Event>> =>
 
 export const leaveEvent = (eventId: string): Promise<AxiosResponse<Event>> =>
   api.post(`/event/${eventId}/leave`);
+
+export const getRewardsHistory = async (): Promise<RewardsResponse> => {
+  const response = await api.get('/rewards/history');
+  return response.data;
+};
 
 export default api;
