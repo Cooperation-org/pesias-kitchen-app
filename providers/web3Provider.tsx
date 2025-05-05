@@ -14,13 +14,13 @@ import {
   ConnectKitProvider, 
   getDefaultConfig 
 } from "connectkit";
-import { celoAlfajores } from 'wagmi/chains';
+import { celo, celoAlfajores } from 'wagmi/chains';
 import { useRouter } from 'next/navigation';
 import { setWalletConnectionStatus, getUser, getToken, clearAuthData } from '@/services/authServices';
 
 // Configure the chains you want to support
 const { chains } = configureChains(
-  [mainnet, sepolia, celoAlfajores],
+  [mainnet, sepolia, celo, celoAlfajores],
   [publicProvider()]
 );
 

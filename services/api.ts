@@ -28,14 +28,16 @@ interface Event {
 }
 
 interface Activity {
-  id: string;
-  type: string;
-  description: string;
-  userId: string;
-  eventId?: string;
-  rewardAmount?: number;
+  _id?: string;
+  id?: string;
+  event: string;
+  qrCode: string;
+  user: string;
+  quantity: number;
+  notes: string;
   nftMinted?: boolean;
   nftTokenId?: string;
+  rewardAmount?: number;
   createdAt: string;
   updatedAt: string;
 }
