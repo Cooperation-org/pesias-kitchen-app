@@ -1,4 +1,4 @@
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 
 // Define base types
 interface User {
@@ -78,12 +78,12 @@ interface ProfileUpdateData {
   avatarUrl?: string;
 }
 
-const API_URL =  'http://localhost:5002/api';
+const API_URL = "http://localhost:5002/api";
 
 const api: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
-    'Content-Type': 'application/json',
+    "Content-Type": "application/json",
   },
   timeout: 10000,
 });
@@ -91,7 +91,7 @@ const api: AxiosInstance = axios.create({
 // Add authentication token to requests
 api.interceptors.request.use(
   (config: AxiosRequestConfig): AxiosRequestConfig => {
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem("token");
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -101,69 +101,89 @@ api.interceptors.request.use(
 );
 
 // Auth endpoints
-export const getNonce = (walletAddress: string): Promise<AxiosResponse<NonceResponse>> => 
-  api.post('/auth/nonce', { walletAddress });
+export const getNonce = (
+  walletAddress: string
+): Promise<AxiosResponse<NonceResponse>> =>
+  api.post("/auth/nonce", { walletAddress });
 
 export const verifySignature = (
-  walletAddress: string, 
+  walletAddress: string,
   signature: string
-): Promise<AxiosResponse<VerifySignatureResponse>> => 
-  api.post('/auth/verify', { walletAddress, signature });
+): Promise<AxiosResponse<VerifySignatureResponse>> =>
+  api.post("/auth/verify", { walletAddress, signature });
 
 // QR Codes endpoints
-export const generateQRCode = (data: QRCodeData): Promise<AxiosResponse<QRCodeResponse>> => 
-  api.post('/qr/generate', data);
+export const generateQRCode = (
+  data: QRCodeData
+): Promise<AxiosResponse<QRCodeResponse>> => api.post("/qr/generate", data);
 
-export const verifyQRCode = (qrData: string): Promise<AxiosResponse<any>> => 
-  api.post('/qr/verify', { qrData });
+export const verifyQRCode = (qrData: string): Promise<AxiosResponse<any>> =>
+  api.post("/qr/verify", { qrData });
+
+export const verifyQRAndMintNFT = (
+  qrData: string,
+  quantity?: number,
+  notes?: string
+): Promise<AxiosResponse<any>> =>
+  api.post("/qr/verify-and-mint", { qrData, quantity, notes });
 
 // Activities endpoints
-export const recordActivity = (data: Partial<Activity>): Promise<AxiosResponse<Activity>> => 
-  api.post('/activity/record', data);
+export const recordActivity = (
+  data: Partial<Activity>
+): Promise<AxiosResponse<Activity>> => api.post("/activity/record", data);
 
-export const mintActivityNFT = (activityId: string): Promise<AxiosResponse<Activity>> => 
-  api.post(`/activity/mint/${activityId}`);
+export const mintActivityNFT = (
+  activityId: string
+): Promise<AxiosResponse<Activity>> => api.post(`/activity/mint/${activityId}`);
 
-export const getUserActivities = (): Promise<AxiosResponse<Activity[]>> => 
-  api.get('/activity/user');
+export const getUserActivities = (): Promise<AxiosResponse<Activity[]>> =>
+  api.get("/activity/user");
 
 // User endpoints
-export const getCurrentUser = (): Promise<AxiosResponse<User>> => 
-  api.get('/user/profile');
+export const getCurrentUser = (): Promise<AxiosResponse<User>> =>
+  api.get("/user/profile");
 
-export const updateProfile = (data: ProfileUpdateData): Promise<AxiosResponse<User>> => 
-  api.put('/user/profile', data);
+export const updateProfile = (
+  data: ProfileUpdateData
+): Promise<AxiosResponse<User>> => api.put("/user/profile", data);
 
 // Admin-only user endpoints
-export const getAllUsers = (): Promise<AxiosResponse<User[]>> => 
-  api.get('/user');
+export const getAllUsers = (): Promise<AxiosResponse<User[]>> =>
+  api.get("/user");
 
-export const getUserById = (userId: string): Promise<AxiosResponse<User>> => 
+export const getUserById = (userId: string): Promise<AxiosResponse<User>> =>
   api.get(`/user/${userId}`);
 
-export const updateUserRole = (userId: string, role: string): Promise<AxiosResponse<User>> => 
-  api.put(`/user/${userId}/role`, { role });
+export const updateUserRole = (
+  userId: string,
+  role: string
+): Promise<AxiosResponse<User>> => api.put(`/user/${userId}/role`, { role });
 
 // Event endpoints
-export const getEvents = (): Promise<AxiosResponse<Event[]>> => 
-  api.get('/event');
+export const getEvents = (): Promise<AxiosResponse<Event[]>> =>
+  api.get("/event");
 
-export const getEventById = (eventId: string): Promise<AxiosResponse<Event>> => 
+export const getEventById = (eventId: string): Promise<AxiosResponse<Event>> =>
   api.get(`/event/${eventId}`);
 
-export const createEvent = (data: Partial<Event>): Promise<AxiosResponse<Event>> => 
-  api.post('/event', data);
+export const createEvent = (
+  data: Partial<Event>
+): Promise<AxiosResponse<Event>> => api.post("/event", data);
 
-export const updateEvent = (eventId: string, data: Partial<Event>): Promise<AxiosResponse<Event>> => 
-  api.put(`/event/${eventId}`, data);
+export const updateEvent = (
+  eventId: string,
+  data: Partial<Event>
+): Promise<AxiosResponse<Event>> => api.put(`/event/${eventId}`, data);
 
-export const deleteEvent = (eventId: string): Promise<AxiosResponse<{ message: string }>> => 
+export const deleteEvent = (
+  eventId: string
+): Promise<AxiosResponse<{ message: string }>> =>
   api.delete(`/event/${eventId}`);
 
-export const joinEvent = (eventId: string): Promise<AxiosResponse<Event>> => 
+export const joinEvent = (eventId: string): Promise<AxiosResponse<Event>> =>
   api.post(`/event/${eventId}/join`);
 
-export const leaveEvent = (eventId: string): Promise<AxiosResponse<Event>> => 
+export const leaveEvent = (eventId: string): Promise<AxiosResponse<Event>> =>
   api.post(`/event/${eventId}/leave`);
 
 export default api;
