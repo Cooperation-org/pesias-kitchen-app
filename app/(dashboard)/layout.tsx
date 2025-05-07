@@ -1,6 +1,7 @@
 "use client"
-import React from "react"
+import React, { useEffect, useState } from "react"
 import Link from "next/link"
+import { usePathname } from "next/navigation";
 import "../globals.css";
 import { ConnectKitButton } from "connectkit";
 import { motion } from "framer-motion";
@@ -12,18 +13,57 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
+  const pathname = usePathname();
+  const [shouldShowBackButton, setShouldShowBackButton] = useState(false);
+  const [pageTitle, setPageTitle] = useState("Dashboard");
+  
+  // Determine if we should show back button based on current route
+  useEffect(() => {
+    // If the path is exactly /dashboard, don't show back button
+    const isExactDashboard = pathname === "/dashboard";
+    setShouldShowBackButton(!isExactDashboard);
+    
+    // Set page title based on route
+    if (pathname.includes("/activities")) {
+      setPageTitle("Activities");
+    } else if (pathname.includes("/events")) {
+      setPageTitle("Events");
+    } else if (pathname.includes("/rewards")) {
+      setPageTitle("Rewards");
+    } else if (pathname.includes("/nfts")) {
+      setPageTitle("My NFTs");
+    } else if (pathname.includes("/scan")) {
+      setPageTitle("Scan QR");
+    } else {
+      setPageTitle("Dashboard");
+    }
+  }, [pathname]);
+
   return (
     <html lang="en" className="h-full">
       <body className="h-full">
         <div className="flex flex-col min-h-screen bg-white">
-          {/* Header with menu, wallet connection, and notifications */}
+          {/* Header with back button (conditional), title, wallet connection, and notifications */}
           <motion.header
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className=" flex justify-end items-center border-b border-gray-100 fixed w-full bg-white z-20 bg-gradient-to-r from-green-400 to-blue-500 text-white p-4 shadow-md">
+            className="flex justify-between items-center fixed w-full bg-white z-20 bg-gradient-to-r from-green-400 to-blue-500 text-white p-4 shadow-md"
+          >
+            {/* Left side with back button and title */}
+            <div className="flex items-center gap-2">
+              {shouldShowBackButton && (
+                <Link href="/dashboard" className="text-white p-1 rounded-full hover:bg-white/10 transition-colors">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 19L8 12L15 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </Link>
+              )}
+              <h1 className="text-xl font-bold">{pageTitle}</h1>
+            </div>
+            
+            {/* Right side with wallet connection */}
             <div className="flex items-center gap-4">
-             
               {/* Wallet Connection Button */}
               <ConnectKitButton.Custom>
                 {({ isConnected, isConnecting, show, address, ensName }) => {
@@ -61,21 +101,49 @@ export default function DashboardLayout({
             <div className="bg-white py-4">
               <div className="flex justify-around items-end">
                 {/* Home button */}
-                <Link href="/dashboard" className="flex flex-col items-center w-16">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2 text-gray-500">
+                <Link 
+                  href="/dashboard" 
+                  className="flex flex-col items-center w-16"
+                >
+                  <svg 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={`mb-2 ${pathname === "/dashboard" ? "text-blue-500" : "text-gray-500"}`}
+                  >
                     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
-                  <span className="text-xs text-gray-500">Home</span>
-                  <div className="w-1 h-1 bg-gray-900 rounded-full mt-1"></div>
+                  <span className={`text-xs ${pathname === "/dashboard" ? "text-blue-500" : "text-gray-500"}`}>Home</span>
+                  {pathname === "/dashboard" && (
+                    <div className="w-1 h-1 bg-blue-500 rounded-full mt-1"></div>
+                  )}
                 </Link>
 
                 {/* Activities button */}
-                <Link href="/dashboard/events" className="flex flex-col items-center w-16">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
-                    <path d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
-                    <path d="M17.657 8.343a7 7 0 1 1-9.9-9.9 7 7 0 0 1 9.9 9.9z" strokeWidth="1.5" strokeDasharray="0.5 3" />
+                <Link 
+                  href="/dashboard/activities" 
+                  className="flex flex-col items-center w-16"
+                >
+                  <svg 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="1.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={`mb-2 ${pathname === "/dashboard/activities" ? "text-blue-500" : "text-gray-500"}`}
+                  >
+                    <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z" />
+                    <path d="M9 13l2 2 4-4" />
                   </svg>
-                  <span className="text-xs text-gray-500">Events</span>
+                  <span className={`text-xs ${pathname === "/dashboard/activities" ? "text-blue-500" : "text-gray-500"}`}>Activities</span>
+                  {pathname === "/dashboard/activities" && (
+                    <div className="w-1 h-1 bg-blue-500 rounded-full mt-1"></div>
+                  )}
                 </Link>
 
                 {/* Centered QR Code Button with inset effect */}
@@ -132,19 +200,51 @@ export default function DashboardLayout({
                 </div>
 
                 {/* Rewards button */}
-                <Link href="/dashboard/rewards" className="flex flex-col items-center w-16">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
+                <Link 
+                  href="/dashboard/rewards" 
+                  className="flex flex-col items-center w-16"
+                >
+                  <svg 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="1.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={`mb-2 ${pathname === "/dashboard/rewards" ? "text-blue-500" : "text-gray-500"}`}
+                  >
                     <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
-                  <span className="text-xs text-gray-500">Rewards</span>
+                  <span className={`text-xs ${pathname === "/dashboard/rewards" ? "text-blue-500" : "text-gray-500"}`}>Rewards</span>
+                  {pathname === "/dashboard/rewards" && (
+                    <div className="w-1 h-1 bg-blue-500 rounded-full mt-1"></div>
+                  )}
                 </Link>
 
                 {/* NFTs button */}
-                <Link href="/dashboard/nfts" className="flex flex-col items-center w-16">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
+                <Link 
+                  href="/dashboard/nfts" 
+                  className="flex flex-col items-center w-16"
+                >
+                  <svg 
+                    width="24" 
+                    height="24" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="1.5" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    className={`mb-2 ${pathname === "/dashboard/nfts" ? "text-blue-500" : "text-gray-500"}`}
+                  >
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
                   </svg>
-                  <span className="text-xs text-gray-500">NFTs</span>
+                  <span className={`text-xs ${pathname === "/dashboard/nfts" ? "text-blue-500" : "text-gray-500"}`}>NFTs</span>
+                  {pathname === "/dashboard/nfts" && (
+                    <div className="w-1 h-1 bg-blue-500 rounded-full mt-1"></div>
+                  )}
                 </Link>
               </div>
             </div>
