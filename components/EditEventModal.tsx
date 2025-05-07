@@ -14,6 +14,23 @@ const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: 'food_pickup', label: 'Food Pickup' },
 ];
 
+interface ApiEventResponse {
+  data: {
+    _id: string;
+    title: string;
+    description: string;
+    date: string;
+    location: string;
+    capacity: number;
+    activityType: ActivityType;
+    defaultQuantity: number;
+    participants: string[];
+    createdBy: string;
+    createdAt: string;
+    __v: number;
+  }
+}
+
 interface EditEventData {
   title: string;
   description: string;
@@ -54,7 +71,7 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
     try {
       setIsLoading(true);
       const response = await getEventById(eventId);
-      const eventData = response.data;
+      const eventData = (response as unknown as ApiEventResponse).data;
 
       // Parse the ISO date string to separate date and time
       const eventDate = new Date(eventData.date);
@@ -71,7 +88,7 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
         capacity: eventData.capacity,
         activityType: eventData.activityType || 'food_sorting',
       });
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Failed to fetch event details');
       console.error('Error fetching event details:', error);
       onClose();
@@ -100,7 +117,7 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
       toast.success('Event updated successfully!');
       onEventUpdated();
       onClose();
-    } catch (error) {
+    } catch (error: unknown) {
       toast.error('Failed to update event. Please try again.');
       console.error('Error updating event:', error);
     } finally {
@@ -112,7 +129,7 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: name === 'capacity' || name === 'price' ? Number(value) : value,
+      [name]: name === 'capacity' ? Number(value) : value,
     }));
   };
 
