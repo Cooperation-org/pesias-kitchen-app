@@ -260,15 +260,7 @@ export default function DashboardClient() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
       {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-gradient-to-r from-green-400 to-blue-500 text-white p-4 shadow-md"
-      >
-        <h1 className="text-xl font-bold">Your Dashboard</h1>
-        <p className="text-sm opacity-80">Welcome back!</p>
-      </motion.div>
+      
     
       {/* Stats Card */}
       <motion.div 
