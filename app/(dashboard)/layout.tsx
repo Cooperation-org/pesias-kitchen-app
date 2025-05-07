@@ -4,24 +4,23 @@ import Link from "next/link"
 import "../globals.css";
 import { ConnectKitButton } from "connectkit";
 
+interface DashboardLayoutProps {
+  children: React.ReactNode;
+}
 
 export default function DashboardLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: DashboardLayoutProps) {
   return (
     <html lang="en" className="h-full">
-    <body className="h-full">
-
+      <body className="h-full">
         <div className="flex flex-col min-h-screen bg-white">
           {/* Header with menu, wallet connection, and notifications */}
           <header className="p-4 flex justify-end items-center border-b border-gray-100 fixed w-full bg-white z-20">
-           
             <div className="flex items-center gap-4">
               {/* Wallet Connection Button */}
               <ConnectKitButton.Custom>
-                {({ isConnected, isConnecting, show, hide, address, ensName }) => {
+                {({ isConnected, isConnecting, show, address, ensName }) => {
                   return (
                     <button
                       onClick={show}
@@ -40,7 +39,6 @@ export default function DashboardLayout({
                   );
                 }}
               </ConnectKitButton.Custom>
-            
             </div>
           </header>
           
@@ -66,12 +64,12 @@ export default function DashboardLayout({
                 </Link>
                 
                 {/* Activities button */}
-                <Link href="/activities" className="flex flex-col items-center w-16">
+                <Link href="/dashboard/events" className="flex flex-col items-center w-16">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
                     <path d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z"/>
                     <path d="M17.657 8.343a7 7 0 1 1-9.9-9.9 7 7 0 0 1 9.9 9.9z" strokeWidth="1.5" strokeDasharray="0.5 3"/>
                   </svg>
-                  <span className="text-xs text-gray-500">Activities</span>
+                  <span className="text-xs text-gray-500">Events</span>
                 </Link>
                 
                 {/* Centered QR Code Button with inset effect */}
@@ -128,7 +126,7 @@ export default function DashboardLayout({
                 </div>
                 
                 {/* Rewards button */}
-                <Link href="/rewards" className="flex flex-col items-center w-16">
+                <Link href="/dashboard/rewards" className="flex flex-col items-center w-16">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
                     <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
                   </svg>
@@ -136,7 +134,7 @@ export default function DashboardLayout({
                 </Link>
                 
                 {/* NFTs button */}
-                <Link href="/nfts" className="flex flex-col items-center w-16">
+                <Link href="/dashboard/admin/nfts" className="flex flex-col items-center w-16">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-2 text-gray-500">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                   </svg>
@@ -146,7 +144,7 @@ export default function DashboardLayout({
             </div>
           </div>
         </div>
-    </body>
+      </body>
     </html>
-  )
+  );
 }

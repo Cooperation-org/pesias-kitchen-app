@@ -12,7 +12,6 @@ import { useAuth } from '@/providers/web3Provider';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
-import gooddollar from '@/public/images/gooddollar.svg';
 
 // Utility function
 function cn(...inputs: (string | undefined)[]) {
@@ -118,7 +117,7 @@ const Rewards = () => {
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), 'dd MMM yyyy');
-    } catch (err) {
+    } catch {
       return dateString;
     }
   };
@@ -213,20 +212,19 @@ const Rewards = () => {
         <motion.div 
           variants={itemVariants}
           className="bg-white shadow-lg rounded-2xl p-6 flex flex-col items-center mb-8 border border-gray-100"
-          whileHover={{ y: -5, shadow: "xl" }}
+          whileHover={{ y: -5 }}
         >
           <motion.div 
             className="flex items-center text-4xl font-bold text-[#303030] mb-2"
             animate={{ scale: [1, 1.05, 1] }}
             transition={{ duration: 2, repeat: Infinity }}
           >
-           <div className='bg-[#4CAF50] rounded-full  mr-3'>
-           <Image
-            
+           <div className='bg-[#4CAF50] rounded-full mr-3'>
+            <Image
               width={32}
               height={32}
               src="/images/gooddollar.svg"
-              className="w-8 h-8 "
+              className="w-8 h-8"
               alt="coin"
             />
            </div>

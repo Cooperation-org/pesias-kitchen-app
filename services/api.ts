@@ -99,6 +99,36 @@ interface RewardsResponse {
   totalRewards: number;
 }
 
+interface NFTAttribute {
+  trait_type: string;
+  value: string;
+}
+
+interface NFTDetails {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  attributes: NFTAttribute[];
+  txHash: string;
+  owner: string;
+}
+
+interface NFT {
+  id: string;
+  name: string;
+  imageUrl: string;
+  activityType: string;
+  location: string;
+  quantity: number;
+  date: string;
+  txHash: string;
+}
+
+interface NFTsResponse {
+  nfts: NFT[];
+}
+
 const API_URL = "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
 
 const api: AxiosInstance = axios.create({
@@ -209,6 +239,16 @@ export const leaveEvent = (eventId: string): Promise<AxiosResponse<Event>> =>
 
 export const getRewardsHistory = async (): Promise<RewardsResponse> => {
   const response = await api.get('/rewards/history');
+  return response.data;
+};
+
+export const getUserNFTs = async (): Promise<NFTsResponse> => {
+  const response = await api.get('/nft/user');
+  return response.data;
+};
+
+export const getNFTDetails = async (nftId: string): Promise<NFTDetails> => {
+  const response = await api.get(`/nft/${nftId}`);
   return response.data;
 };
 
