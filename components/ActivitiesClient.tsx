@@ -18,11 +18,11 @@ interface Activity {
   txHash?: string;
   verified?: boolean;
   timestamp?: string;
-  title?: string; // For display purposes
-  date?: string; // Formatted date for display
-  amount?: string; // Formatted amount for display
-  location?: string; // Location from event
-  activityType?: string; // Type from event
+  title?: string; 
+  date?: string; 
+  amount?: string; 
+  location?: string;
+  activityType?: string;
 }
 
 // Event type definition
@@ -273,20 +273,7 @@ export default function ActivitiesClient() {
   
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="bg-gradient-to-r from-green-400 to-blue-500 text-white p-4 shadow-md flex items-center"
-      >
-        <Link href="/dashboard" className="mr-2">
-          <svg className="w-6 h-6" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M15 19L8 12L15 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-          </svg>
-        </Link>
-        <h1 className="text-xl font-bold">All Activities</h1>
-      </motion.div>
+  
       
       {/* Filter and Sort Controls */}
       <motion.div

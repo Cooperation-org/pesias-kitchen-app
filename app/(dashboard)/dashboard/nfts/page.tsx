@@ -69,19 +69,6 @@ export default function NFTs() {
   return (
     <div className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
       <div className="px-6 py-4">
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center gap-4">
-            <button 
-              onClick={() => router.back()}
-              className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-            >
-              <ChevronLeftIcon className="w-6 h-6" />
-            </button>
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-[#4CAF50] to-[#43A047] bg-clip-text text-transparent">
-              My NFTs
-            </h1>
-          </div>
-        </div>
 
         {error && (
           <div className="bg-red-50 text-red-500 p-4 rounded-lg mb-6">
