@@ -71,6 +71,9 @@ export const storeAuthData = (token: string, user: UserData) => {
   // Store in cookies
   document.cookie = `token=${token}; path=/; max-age=2592000`; // 30 days
   document.cookie = `walletConnected=true; path=/; max-age=2592000`; // 30 days
+  
+  // Store user role in cookies for middleware access
+  document.cookie = `userRole=${user.role}; path=/; max-age=2592000`; // 30 days
 };
 
 /**
@@ -84,6 +87,7 @@ export const clearAuthData = () => {
   // Clear cookies
   document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
   document.cookie = 'walletConnected=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+  document.cookie = 'userRole=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
 };
 
 /**
@@ -142,4 +146,20 @@ export const getUser = (): UserData | null => {
     }
   }
   return null;
+};
+
+/**
+ * Get user role
+ */
+export const getUserRole = (): string | null => {
+  const user = getUser();
+  return user ? user.role : null;
+};
+
+/**
+ * Check if user is an admin
+ */
+export const isAdmin = (): boolean => {
+  const role = getUserRole();
+  return role === 'admin';
 };

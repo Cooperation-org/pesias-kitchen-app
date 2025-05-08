@@ -274,7 +274,6 @@ export default function ActivitiesClient() {
   return (
     <div className="min-h-screen bg-white flex flex-col">
   
-      
       {/* Filter and Sort Controls */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -500,7 +499,6 @@ export default function ActivitiesClient() {
                     <span className="font-medium text-xs">{selectedActivity._id}</span>
                   </div>
                 </div>
-                
                 <div className="flex space-x-3">
                   {!selectedActivity.hasNFT && (
                     <button className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium">
