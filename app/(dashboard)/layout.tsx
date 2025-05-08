@@ -123,7 +123,7 @@ export default function DashboardLayout({
 
                 {/* Activities button */}
                 <Link 
-                  href="/dashboard/activities" 
+                  href="/dashboard/events" 
                   className="flex flex-col items-center w-16"
                 >
                   <svg 
@@ -135,13 +135,13 @@ export default function DashboardLayout({
                     strokeWidth="1.5" 
                     strokeLinecap="round" 
                     strokeLinejoin="round" 
-                    className={`mb-2 ${pathname === "/dashboard/activities" ? "text-blue-500" : "text-gray-500"}`}
+                    className={`mb-2 ${pathname === "/dashboard/events" ? "text-blue-500" : "text-gray-500"}`}
                   >
                     <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z" />
                     <path d="M9 13l2 2 4-4" />
                   </svg>
-                  <span className={`text-xs ${pathname === "/dashboard/activities" ? "text-blue-500" : "text-gray-500"}`}>Activities</span>
-                  {pathname === "/dashboard/activities" && (
+                  <span className={`text-xs ${pathname === "/dashboard/events" ? "text-blue-500" : "text-gray-500"}`}>Events</span>
+                  {pathname === "/dashboard/events" && (
                     <div className="w-1 h-1 bg-blue-500 rounded-full mt-1"></div>
                   )}
                 </Link>
