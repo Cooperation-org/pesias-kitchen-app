@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { getEvents, joinEvent, generateQRCode } from '@/services/api';
+import { getEvents, joinEvent, generateQRCode, leaveEvent, deleteEvent } from '@/services/api';
 import { useAuth } from '@/providers/web3Provider';
 import { QRCodeModal } from '@/app/(dashboard)/dashboard/events';
 import EditEventModal from '@/components/EditEventModal';
@@ -215,9 +215,53 @@ export default function EventsPage({
       console.error('Error joining event:', error);
     }
   };
+  
+  // Function to handle leaving an event
+  const handleLeaveEvent = async (eventId: string) => {
+    if (!isAuthenticated) {
+      toast.error('Please login to perform this action');
+      return;
+    }
+
+    try {
+      await leaveEvent(eventId);
+      toast.success('Successfully left the event');
+      fetchEvents();
+      closeEventDetails(); // Close modal after leaving
+    } catch (error) {
+      toast.error('Failed to leave event');
+      console.error('Error leaving event:', error);
+    }
+  };
+  
+  // Function to handle deleting an event
+  const handleDeleteEvent = async (eventId: string) => {
+    if (!isAuthenticated || !isAdmin) {
+      toast.error('You do not have permission to delete this event');
+      return;
+    }
+    
+    // Confirm before deletion
+    if (!window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await deleteEvent(eventId);
+      toast.success('Event deleted successfully');
+      fetchEvents();
+      closeEventDetails(); // Close modal after deletion
+    } catch (error) {
+      toast.error('Failed to delete event');
+      console.error('Error deleting event:', error);
+    }
+  };
 
   // Function to handle generating QR code
   const handleGenerateQRCode = (eventId: string, eventTitle: string) => {
+    // Close event details modal when opening QR code modal
+    closeEventDetails();
+    
     setQrCodeModal({
       isOpen: true,
       qrCodeUrl: '',
@@ -235,6 +279,9 @@ export default function EventsPage({
     qrCodeType: 'volunteer' | 'recipient' = 'volunteer'
   ) => {
     try {
+      // Close event details modal when viewing QR code
+      closeEventDetails();
+      
       // In a real implementation, you would fetch the actual QR code URL
       const qrCodeUrl = `/api/qr/${eventId}?type=${qrCodeType}`;
       
@@ -622,6 +669,8 @@ export default function EventsPage({
             toast.error('Error: Cannot edit this event');
           }
         }}
+        onDelete={handleDeleteEvent}
+        onLeave={handleLeaveEvent}
         onGenerateQR={handleGenerateQRCode}
         onViewQR={handleViewQRCode}
         onJoin={handleJoinEvent}
