@@ -23,6 +23,8 @@ interface Activity {
   amount?: string; 
   location?: string;
   activityType?: string;
+  hasNFT?: boolean;
+  time?: string;
 }
 
 // Event type definition
@@ -70,8 +72,8 @@ export default function ActivitiesClient() {
   const [error, setError] = useState("")
   const [showEventModal, setShowEventModal] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
-  const [sortBy, setSortBy] = useState("date") // Default sort by date
-  const [filterType, setFilterType] = useState("all") // Default filter
+  const [sortBy, setSortBy] = useState("date") 
+  const [filterType, setFilterType] = useState("all")
 
   // Fetch all data: activities, rewards, and NFTs
   useEffect(() => {
