@@ -203,7 +203,7 @@ export default function LoginPage() {
               
               return (
                 <button
-                  onClick={() => handleConnectClick(show)}
+                onClick={() => handleConnectClick(show ?? (() => {}))}
                   disabled={isLoading}
                   className={`flex items-center justify-center w-full bg-[#f7c334] text-[#303030] font-medium py-4 rounded-3xl shadow-md hover:bg-[#f5bb20] transition-colors ${
                     isLoading ? 'opacity-70 cursor-not-allowed' : ''
