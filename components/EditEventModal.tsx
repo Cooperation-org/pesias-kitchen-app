@@ -15,7 +15,7 @@ const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
 ];
 
 interface ApiEventResponse {
-  data: {
+  data?: {
     _id: string;
     title: string;
     description: string;
@@ -28,7 +28,14 @@ interface ApiEventResponse {
     createdBy: string;
     createdAt: string;
     __v: number;
-  }
+  };
+  _id?: string;
+  title?: string;
+  description?: string;
+  date?: string;
+  location?: string;
+  capacity?: number;
+  activityType?: ActivityType;
 }
 
 interface EditEventData {
@@ -63,15 +70,40 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
 
   useEffect(() => {
     if (isOpen && eventId) {
+      console.log('EditEventModal - Fetching event with ID:', eventId); // Debug log
       fetchEvent();
+    } else if (isOpen && !eventId) {
+      console.error('EditEventModal opened without an eventId');
+      toast.error('Error: Cannot load event details');
+      onClose();
     }
   }, [isOpen, eventId]);
 
   const fetchEvent = async () => {
     try {
       setIsLoading(true);
+      console.log(`Fetching event with ID: ${eventId}`); // Debug log
+      
       const response = await getEventById(eventId);
-      const eventData = (response as unknown as ApiEventResponse).data;
+      console.log('API Response:', response); // Debug log
+      
+      // Handle different API response structures
+      let eventData: any;
+      
+      if (response && response.data) {
+        // Response has nested data property
+        eventData = response.data;
+      } else {
+        // Response data is at the root level
+        eventData = response;
+      }
+      
+      // Verify we have the required fields
+      if (!eventData || (!eventData._id && !eventData.id)) {
+        throw new Error('Invalid event data structure');
+      }
+
+      console.log('Parsed event data:', eventData); // Debug log
 
       // Parse the ISO date string to separate date and time
       const eventDate = new Date(eventData.date);
@@ -80,17 +112,17 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
 
       // Set form data
       setFormData({
-        title: eventData.title,
-        description: eventData.description,
+        title: eventData.title || '',
+        description: eventData.description || '',
         date: dateString,
         time: timeString,
-        location: eventData.location,
-        capacity: eventData.capacity,
+        location: eventData.location || '',
+        capacity: eventData.capacity || 0,
         activityType: eventData.activityType || 'food_sorting',
       });
     } catch (error: unknown) {
-      toast.error('Failed to fetch event details');
       console.error('Error fetching event details:', error);
+      toast.error('Failed to fetch event details');
       onClose();
     } finally {
       setIsLoading(false);
@@ -112,14 +144,16 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
         date: combinedDateTime,
       };
 
+      console.log(`Updating event with ID: ${eventId}`, requestData); // Debug log
+
       // Send update request
       await updateEvent(eventId, requestData);
       toast.success('Event updated successfully!');
       onEventUpdated();
       onClose();
     } catch (error: unknown) {
-      toast.error('Failed to update event. Please try again.');
       console.error('Error updating event:', error);
+      toast.error('Failed to update event. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

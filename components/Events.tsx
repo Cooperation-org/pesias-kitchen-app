@@ -59,7 +59,8 @@ interface QRCodeResponse {
   }
 
 interface APIEvent {
-    id: string;
+    id?: string;
+    _id?: string;
     title: string;
     description?: string;
     date?: string;
@@ -141,7 +142,7 @@ export default function EventsPage({
       
       // Map API events to match your Event interface
       const mappedEvents = (response.data as APIEvent[] || []).map(event => ({
-        _id: event.id, 
+        _id: event._id || event.id, // Support both _id and id formats
         title: event.title,
         description: event.description,
         date: event.date,
@@ -153,6 +154,8 @@ export default function EventsPage({
         createdBy: event.createdBy,
         createdAt: event.createdAt
       }));
+
+      console.log('Mapped events:', mappedEvents); // Debug log to check events data
       
       setEvents(mappedEvents);
     } catch (error) {
@@ -309,9 +312,19 @@ export default function EventsPage({
 
   // Function to open edit event modal
   const openEditModal = (eventId: string) => {
+    console.log('Opening edit modal with eventId:', eventId); // Debug log
+    if (!eventId) {
+      console.error('Cannot open edit modal: eventId is undefined');
+      toast.error('Error: Cannot edit this event');
+      return;
+    }
+    
+    // Close event details modal when opening edit modal
+    closeEventDetails();
+    
     setEditEventModal({
       isOpen: true,
-      eventId
+      eventId: eventId
     });
   };
 
@@ -325,6 +338,7 @@ export default function EventsPage({
   
   // Function to open event details modal
   const openEventDetails = (event: Event) => {
+    console.log('Opening event details with event:', event); // Debug log
     setEventDetailsModal({
       isOpen: true,
       event
@@ -505,6 +519,13 @@ export default function EventsPage({
                           </svg>
                           <span>{formatDate(event.date)}</span>
                           <span className="ml-1">at {formatTime(event.date)}</span>
+                          
+                          {/* Past event indicator */}
+                          {eventIsPast && (
+                            <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-xs rounded">
+                              Past
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex items-center gap-1">
@@ -576,7 +597,7 @@ export default function EventsPage({
       />
 
       {/* Edit Event Modal */}
-      {editEventModal.isOpen && (
+      {editEventModal.isOpen && editEventModal.eventId && (
         <EditEventModal
           isOpen={editEventModal.isOpen}
           onClose={closeEditModal}
@@ -590,7 +611,17 @@ export default function EventsPage({
         isOpen={eventDetailsModal.isOpen}
         event={eventDetailsModal.event}
         onClose={closeEventDetails}
-        onEdit={openEditModal}
+        onEdit={(eventId) => {
+          console.log('Edit button clicked with eventId:', eventId); // Debug log
+          if (eventId) {
+            openEditModal(eventId);
+          } else if (eventDetailsModal.event && eventDetailsModal.event._id) {
+            openEditModal(eventDetailsModal.event._id);
+          } else {
+            console.error('Cannot edit: No event ID available');
+            toast.error('Error: Cannot edit this event');
+          }
+        }}
         onGenerateQR={handleGenerateQRCode}
         onViewQR={handleViewQRCode}
         onJoin={handleJoinEvent}
