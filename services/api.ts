@@ -1,254 +1,289 @@
+// services/api.ts
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import { 
+  User, 
+  Event, 
+  Activity, 
+  QRCodeData, 
+  QRCodeResponse, 
+  NonceResponse, 
+  VerifySignatureResponse, 
+  ProfileUpdateData, 
+  RewardsResponse, 
+  NFTsResponse, 
+  NFTDetails,
+  SWR_ENDPOINTS
+} from "@/types/api";
+import { buildApiUrl } from "@/utils/swr-config";
 
-// Define base types
-interface User {
-  id: string;
-  walletAddress: string;
-  email?: string;
-  name?: string;
-  role: string;
-  createdAt: string;
-  updatedAt: string;
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
 
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  date: string;
-  time: string;
-  location: string;
-  capacity: number;
-  price: number;
-  imageUrl?: string;
-  creator: string | User;
-  participants?: string[] | User[];
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface Activity {
-  _id?: string;
-  id?: string;
-  event: string;
-  qrCode: string;
-  user: string;
-  quantity: number;
-  notes: string;
-  nftMinted?: boolean;
-  nftTokenId?: string;
-  rewardAmount?: number;
-  createdAt: string;
-  updatedAt: string;
-}
-
-interface QRCodeData {
-  type: string;
-  activityId?: string;
-  eventId?: string;
-  rewardAmount?: number;
-  expiresAt?: string;
-  [key: string]: any;
-}
-
-interface QRCodeResponse {
-  qrCodeUrl: string;
-  verificationCode: string;
-  expiresAt: string;
-}
-
-// Auth interfaces
-interface NonceResponse {
-  nonce: string;
-  message: string;
-}
-
-interface VerifySignatureRequest {
-  walletAddress: string;
-  signature: string;
-}
-
-interface VerifySignatureResponse {
-  token: string;
-  user: User;
-}
-
-interface ProfileUpdateData {
-  name?: string;
-  email?: string;
-  bio?: string;
-  avatarUrl?: string;
-}
-
-interface Reward {
-  activityId: string;
-  nftId: string;
-  activityType: string;
-  location: string;
-  date: string;
-  rewardAmount: number;
-}
-
-interface RewardsResponse {
-  userInfo: {
-    id: string;
-    name: string;
-    walletAddress: string;
-  };
-  rewards: Reward[];
-  totalRewards: number;
-}
-
-interface NFTAttribute {
-  trait_type: string;
-  value: string;
-}
-
-interface NFTDetails {
-  id: string;
-  name: string;
-  description: string;
-  image: string;
-  attributes: NFTAttribute[];
-  txHash: string;
-  owner: string;
-}
-
-interface NFT {
-  id: string;
-  name: string;
-  imageUrl: string;
-  activityType: string;
-  location: string;
-  quantity: number;
-  date: string;
-  txHash: string;
-}
-
-interface NFTsResponse {
-  nfts: NFT[];
-}
-
-const API_URL = "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
-
+/**
+ * Configured Axios instance for API requests
+ */
 const api: AxiosInstance = axios.create({
   baseURL: API_URL,
   headers: {
     "Content-Type": "application/json",
   },
-  timeout: 10000,
+  timeout: 10000, // 10 seconds timeout
 });
 
-// Add authentication token to requests
+/**
+ * Add authentication token to outgoing requests
+ */
 api.interceptors.request.use(
-  (config: AxiosRequestConfig): AxiosRequestConfig => {
-    const token = localStorage.getItem("token");
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`;
+  (config) => {
+    // Skip adding token for auth endpoints
+    if (config.url?.includes('/auth/')) {
+      return config;
+    }
+    
+    // Add token only if available in client environment
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem("token");
+      if (token && config.headers) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
   (error) => Promise.reject(error)
 );
 
-// Auth endpoints
+/**
+ * Process API response errors centrally
+ */
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Add custom error handling logic here
+    if (error.response?.status === 401) {
+      // Handle unauthorized access - could redirect to login or clear auth
+      if (typeof window !== 'undefined') {
+        // Clear auth data on 401 errors
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+      }
+    }
+    
+    // Format error message
+    const errorMessage = error.response?.data?.message || error.message || 'An error occurred';
+    error.displayMessage = errorMessage;
+    
+    return Promise.reject(error);
+  }
+);
+
+// ===== Auth Endpoints =====
+
+/**
+ * Request a nonce for wallet authentication
+ */
 export const getNonce = (
   walletAddress: string
-): Promise<AxiosResponse<NonceResponse>> =>
-  api.post("/auth/nonce", { walletAddress });
+): Promise<AxiosResponse<NonceResponse>> => {
+  return api.post("/auth/nonce", { walletAddress });
+};
 
+/**
+ * Verify wallet signature for authentication
+ */
 export const verifySignature = (
   walletAddress: string,
   signature: string
-): Promise<AxiosResponse<VerifySignatureResponse>> =>
-  api.post("/auth/verify", { walletAddress, signature });
+): Promise<AxiosResponse<VerifySignatureResponse>> => {
+  return api.post("/auth/verify", { walletAddress, signature });
+};
 
-// QR Codes endpoints
+// ===== QR Code Endpoints =====
+
+/**
+ * Generate a QR code for an event or activity
+ */
 export const generateQRCode = (
   data: QRCodeData
-): Promise<AxiosResponse<QRCodeResponse>> => api.post("/qr/generate", data);
+): Promise<AxiosResponse<QRCodeResponse>> => {
+  return api.post("/qr/generate", data);
+};
 
-export const verifyQRCode = (qrData: string): Promise<AxiosResponse<any>> =>
-  api.post("/qr/verify", { qrData });
+/**
+ * Verify a QR code
+ */
+export const verifyQRCode = (
+  qrData: string
+): Promise<AxiosResponse<any>> => {
+  return api.post("/qr/verify", { qrData });
+};
 
+/**
+ * Verify a QR code and mint an NFT in one step
+ */
 export const verifyQRAndMintNFT = (
   qrData: string,
   quantity?: number,
   notes?: string
-): Promise<AxiosResponse<any>> =>
-  api.post("/qr/verify-and-mint", { qrData, quantity, notes });
+): Promise<AxiosResponse<any>> => {
+  return api.post("/qr/verify-and-mint", { qrData, quantity, notes });
+};
 
-// Activities endpoints
+// ===== Activity Endpoints =====
+
+/**
+ * Record a new activity
+ */
 export const recordActivity = (
   data: Partial<Activity>
-): Promise<AxiosResponse<Activity>> => api.post("/activity/record", data);
+): Promise<AxiosResponse<Activity>> => {
+  return api.post("/activity/record", data);
+};
 
+/**
+ * Mint an NFT for an activity
+ */
 export const mintActivityNFT = (
   activityId: string
-): Promise<AxiosResponse<Activity>> => api.post(`/activity/mint/${activityId}`);
+): Promise<AxiosResponse<Activity>> => {
+  return api.post(`/activity/mint/${activityId}`);
+};
 
-export const getUserActivities = (): Promise<AxiosResponse<Activity[]>> =>
-  api.get("/activity/user");
-export const getallActivities = (): Promise<AxiosResponse<Activity[]>> =>
-  api.get("/activity");
+/**
+ * Get activities for current user
+ */
+export const getUserActivities = (): Promise<AxiosResponse<Activity[]>> => {
+  return api.get(SWR_ENDPOINTS.USER_ACTIVITIES.url);
+};
 
-// User endpoints
-export const getCurrentUser = (): Promise<AxiosResponse<User>> =>
-  api.get("/user/profile");
+/**
+ * Get all activities (admin only)
+ */
+export const getallActivities = (): Promise<AxiosResponse<Activity[]>> => {
+  return api.get(SWR_ENDPOINTS.ALL_ACTIVITIES.url);
+};
 
+// ===== User Endpoints =====
+
+/**
+ * Get current user profile
+ */
+export const getCurrentUser = (): Promise<AxiosResponse<User>> => {
+  return api.get(SWR_ENDPOINTS.USER_PROFILE.url);
+};
+
+/**
+ * Update user profile
+ */
 export const updateProfile = (
   data: ProfileUpdateData
-): Promise<AxiosResponse<User>> => api.put("/user/profile", data);
+): Promise<AxiosResponse<User>> => {
+  return api.put(SWR_ENDPOINTS.USER_PROFILE.url, data);
+};
 
-// Admin-only user endpoints
-export const getAllUsers = (): Promise<AxiosResponse<User[]>> =>
-  api.get("/user");
+// ===== Admin User Endpoints =====
 
-export const getUserById = (userId: string): Promise<AxiosResponse<User>> =>
-  api.get(`/user/${userId}`);
+/**
+ * Get all users (admin only)
+ */
+export const getAllUsers = (): Promise<AxiosResponse<User[]>> => {
+  return api.get(SWR_ENDPOINTS.USERS.url);
+};
 
+/**
+ * Get user by ID (admin only)
+ */
+export const getUserById = (userId: string): Promise<AxiosResponse<User>> => {
+  return api.get(`/user/${userId}`);
+};
+
+/**
+ * Update user role (admin only)
+ */
 export const updateUserRole = (
   userId: string,
   role: string
-): Promise<AxiosResponse<User>> => api.put(`/user/${userId}/role`, { role });
+): Promise<AxiosResponse<User>> => {
+  return api.put(`/user/${userId}/role`, { role });
+};
 
-// Event endpoints
-export const getEvents = (): Promise<AxiosResponse<Event[]>> =>
-  api.get("/event");
+// ===== Event Endpoints =====
 
-export const getEventById = (eventId: string): Promise<AxiosResponse<Event>> =>
-  api.get(`/event/${eventId}`);
+/**
+ * Get all events
+ */
+export const getEvents = (): Promise<AxiosResponse<Event[]>> => {
+  return api.get(SWR_ENDPOINTS.EVENTS.url);
+};
 
+/**
+ * Get event by ID
+ */
+export const getEventById = (eventId: string): Promise<AxiosResponse<Event>> => {
+  return api.get(`/event/${eventId}`);
+};
+
+/**
+ * Create a new event
+ */
 export const createEvent = (
   data: Partial<Event>
-): Promise<AxiosResponse<Event>> => api.post("/event", data);
+): Promise<AxiosResponse<Event>> => {
+  return api.post(SWR_ENDPOINTS.EVENTS.url, data);
+};
 
+/**
+ * Update an event
+ */
 export const updateEvent = (
   eventId: string,
   data: Partial<Event>
-): Promise<AxiosResponse<Event>> => api.put(`/event/${eventId}`, data);
+): Promise<AxiosResponse<Event>> => {
+  return api.put(`/event/${eventId}`, data);
+};
 
+/**
+ * Delete an event
+ */
 export const deleteEvent = (
   eventId: string
-): Promise<AxiosResponse<{ message: string }>> =>
-  api.delete(`/event/${eventId}`);
+): Promise<AxiosResponse<{ message: string }>> => {
+  return api.delete(`/event/${eventId}`);
+};
 
-export const joinEvent = (eventId: string): Promise<AxiosResponse<Event>> =>
-  api.post(`/event/${eventId}/join`);
+/**
+ * Join an event
+ */
+export const joinEvent = (eventId: string): Promise<AxiosResponse<Event>> => {
+  return api.post(`/event/${eventId}/join`);
+};
 
-export const leaveEvent = (eventId: string): Promise<AxiosResponse<Event>> =>
-  api.post(`/event/${eventId}/leave`);
+/**
+ * Leave an event
+ */
+export const leaveEvent = (eventId: string): Promise<AxiosResponse<Event>> => {
+  return api.post(`/event/${eventId}/leave`);
+};
 
+// ===== Rewards and NFTs =====
+
+/**
+ * Get rewards history
+ */
 export const getRewardsHistory = async (): Promise<RewardsResponse> => {
-  const response = await api.get('/rewards/history');
+  const response = await api.get(SWR_ENDPOINTS.REWARDS.url);
   return response.data;
 };
 
+/**
+ * Get user NFTs
+ */
 export const getUserNFTs = async (): Promise<NFTsResponse> => {
-  const response = await api.get('/nft/user');
+  const response = await api.get(SWR_ENDPOINTS.NFTS.url);
   return response.data;
 };
 
+/**
+ * Get NFT details
+ */
 export const getNFTDetails = async (nftId: string): Promise<NFTDetails> => {
   const response = await api.get(`/nft/${nftId}`);
   return response.data;
