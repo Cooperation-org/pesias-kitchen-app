@@ -189,6 +189,8 @@ export const mintActivityNFT = (
 
 export const getUserActivities = (): Promise<AxiosResponse<Activity[]>> =>
   api.get("/activity/user");
+export const getallActivities = (): Promise<AxiosResponse<Activity[]>> =>
+  api.get("/activity");
 
 // User endpoints
 export const getCurrentUser = (): Promise<AxiosResponse<User>> =>

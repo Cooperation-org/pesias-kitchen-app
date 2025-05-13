@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   CalendarIcon, 
   ClockIcon, 
@@ -8,7 +8,9 @@ import {
   UsersIcon,
   QrCodeIcon,
   PencilSquareIcon,
-  XMarkIcon
+  XMarkIcon,
+  TrashIcon,
+  ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
 
 export interface Event {
@@ -48,6 +50,8 @@ interface EventDetailsModalProps {
   event: Event | null;
   onClose: () => void;
   onEdit: (eventId: string) => void;
+  onDelete: (eventId: string) => void;
+  onLeave: (eventId: string) => void;
   onGenerateQR: (eventId: string, eventTitle: string) => void;
   onViewQR: (eventId: string, eventTitle: string, qrCodeType: 'volunteer' | 'recipient') => void;
   onJoin: (eventId: string) => void;
@@ -62,6 +66,8 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   event,
   onClose,
   onEdit,
+  onDelete,
+  onLeave,
   onGenerateQR,
   onViewQR,
   onJoin,
@@ -70,6 +76,8 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   userHasJoined,
   isCreator
 }) => {
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  
   if (!isOpen || !event) return null;
 
   // Format date strings
@@ -110,6 +118,24 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
       onEdit(event._id);
     } else {
       console.error('Cannot edit: event._id is undefined');
+    }
+  };
+
+  // Handle delete button click
+  const handleDeleteClick = () => {
+    if (event._id) {
+      onDelete(event._id);
+    } else {
+      console.error('Cannot delete: event._id is undefined');
+    }
+  };
+  
+  // Handle leave button click
+  const handleLeaveClick = () => {
+    if (event._id) {
+      onLeave(event._id);
+    } else {
+      console.error('Cannot leave: event._id is undefined');
     }
   };
 
@@ -248,6 +274,17 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               </button>
             )}
             
+            {/* Leave button (for users who have joined the event) */}
+            {isAuthenticated && userHasJoined && !isCreator && !isPastEvent && (
+              <button 
+                onClick={handleLeaveClick} 
+                className="w-full py-2.5 flex items-center justify-center gap-2 bg-amber-100 hover:bg-amber-200 text-amber-800 rounded-lg transition-colors"
+              >
+                <ArrowLeftOnRectangleIcon className="w-5 h-5" />
+                Leave Event
+              </button>
+            )}
+            
             {/* Edit button (for creators or admins) */}
             {(isCreator || isAdmin) && !isPastEvent && (
               <button 
@@ -256,6 +293,17 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
               >
                 <PencilSquareIcon className="w-5 h-5" />
                 Edit Event
+              </button>
+            )}
+            
+            {/* Delete button (for admins only, non-past events) */}
+            {isAdmin && !isPastEvent && (
+              <button 
+                onClick={handleDeleteClick} 
+                className="w-full py-2.5 flex items-center justify-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+              >
+                <TrashIcon className="w-5 h-5" />
+                Delete Event
               </button>
             )}
             
