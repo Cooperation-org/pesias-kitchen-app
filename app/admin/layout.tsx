@@ -186,7 +186,7 @@ export default function DashboardLayout({
 
             {/* Rewards button */}
             <Link
-              href="/rewards"
+              href="/admin/activity"
               className="flex flex-col items-center w-16"
             >
               <svg
@@ -202,7 +202,7 @@ export default function DashboardLayout({
               >
                 <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span className="text-xs text-gray-500">Rewards</span>
+              <span className="text-xs text-gray-500">Activities</span>
             </Link>
 
             {/* NFTs button */}
