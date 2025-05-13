@@ -1,15 +1,7 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import { AppProvider } from "@/providers/web3Provider";
+// app/layout.tsx
+import { SWRProvider } from '@/providers/SWRProvider';
+import { AppProvider } from '@/providers/web3Provider';
 import { Toaster } from 'sonner';
-
-const inter = Inter({ subsets: ["latin"] });
-
-export const metadata: Metadata = {
-  title: "Pesia's Kitchen EAT Initiative",
-  description: "Rescuing food, helping communities, and making a real impact",
-};
 
 export default function RootLayout({
   children,
@@ -18,12 +10,14 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>
-        <AppProvider>
-          {children}
-        </AppProvider>
+      <body>
+        <SWRProvider>
+          <AppProvider>
+            {children}
+          </AppProvider>
+        </SWRProvider>
         <Toaster position="top-right" richColors />
       </body>
     </html>
   );
-} 
+}

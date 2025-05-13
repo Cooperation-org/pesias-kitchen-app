@@ -509,10 +509,11 @@ export default function ImpactDashboard() {
                   </div>
                 ))}
               </div>
-              <Link href="/admin/activity" className="mt-6 w-full py-2 bg-blue-500 hover:bg-blue-600 rounded-lg text-white font-medium transition-colors">
+              <Link href="/admin/activity" >
+              <button className="mt-6 w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-800 font-medium transition-colors">
                 View All Activities
+              </button>
               </Link>
-             
             </div>
           </div>
         </div>

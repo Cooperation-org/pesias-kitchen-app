@@ -1,9 +1,14 @@
 "use client"
+import { useState, useMemo } from "react";
+import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { useActivities } from '@/hooks/useActivities';
+import { useRewards } from '@/hooks/useRewards';
+import { useNFTs } from '@/hooks/useNFTs';
+import { useAuth } from '@/providers/web3Provider';
+import { getEventById } from '@/services/api';
+import { formatDate, formatTime } from '@/utils/event-utils';
 
-import { useState, useEffect } from "react"
-import Link from "next/link"
-import { motion, AnimatePresence } from "framer-motion"
-import { getUserActivities, getEventById, getRewardsHistory, getUserNFTs } from "@/services/api"
 
 // Activity type definition
 interface Activity {
@@ -61,155 +66,47 @@ interface ActivitiesResponse {
 }
 
 export default function DashboardClient() {
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [activitiesCount, setActivitiesCount] = useState(0)
-  const [goodDollarsEarned, setGoodDollarsEarned] = useState(0)
-  const [nftCount, setNftCount] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [showEventModal, setShowEventModal] = useState(false)
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+  const { activities, isLoading: activitiesLoading } = useActivities();
+  const { rewards, totalRewards, isLoading: rewardsLoading } = useRewards();
+  const { nfts, isLoading: nftsLoading } = useNFTs();
+  
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const [sortBy, setSortBy] = useState("date");
+  const [filterType, setFilterType] = useState("all");
+  
+  const isLoading = activitiesLoading || rewardsLoading || nftsLoading;
+  const nftCount = nfts.length;
+  const activitiesCount = activities.length;
 
   // Fetch all data: activities, rewards, and NFTs
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch data from all needed endpoints in parallel
-        const [activitiesResponse, rewardsResponse, nftsResponse] = await Promise.all([
-          getUserActivities(),
-          getRewardsHistory(),
-          getUserNFTs()
-        ]);
-        
-        const activitiesData = (activitiesResponse as unknown as ActivitiesResponse).data;
-        const rewardsData = rewardsResponse.rewards || [];
-        const nftsData = nftsResponse.nfts || [];
-        
-        // Set NFT count
-        setNftCount(nftsData.length);
-        
-        // Set the total rewards amount from rewards history
-        setGoodDollarsEarned(rewardsResponse.totalRewards || 0);
-        
-        // Process activities and fetch event details if needed
-        await processActivities(activitiesData, rewardsData, nftsData);
-        
-      } catch (error: unknown) {
-        console.error("Error fetching data:", error);
-        setError("Could not load your data. Please try again later.");
-        setIsLoading(false);
-      }
-    };
-
-    const processActivities = async (activitiesData: RawActivity[], rewardsData: Reward[], nftsData: NFT[]) => {
-      try {
-        // Create a map of activity IDs to rewards for quick lookup
-        const activityRewardsMap = rewardsData.reduce((map, reward) => {
-          map[reward.activityId] = reward;
-          return map;
-        }, {} as Record<string, Reward>);
-        
-        // Create a map of activity IDs to NFTs for quick lookup
-        const activityNFTMap = nftsData.reduce((map, nft) => {
-          // Extract activity ID from NFT ID if it's encoded there
-          const activityId = nft.id.split('-').length > 1 ? nft.id.split('-')[1] : '';
-          if (activityId) map[activityId] = nft;
-          return map;
-        }, {} as Record<string, NFT>);
-        
-        // Process each activity
-        const processedActivities = await Promise.all(activitiesData.map(async (activity) => {
-          let eventDetails: EventDetails;
-          
-          // Get or fetch event information
-          if (activity.event && typeof activity.event === 'object') {
-            // Event details are embedded in the activity
-            eventDetails = activity.event;
-          } else if (typeof activity.event === 'string') {
-            // Only have event ID, need to fetch details
-            try {
-              // Fetch event details from API
-              const eventResponse = await getEventById(activity.event);
-              const responseData = (eventResponse as unknown as { data: EventDetails }).data;
-              eventDetails = responseData;
-            } catch (err) {
-              console.error(`Error fetching event ${activity.event}:`, err);
-              // Use placeholder if fetch fails
-              eventDetails = { 
-                title: "Unknown Event",
-                activityType: "default",
-                location: "Unknown Location",
-              };
-            }
-          } else {
-            // No event details available
-            eventDetails = {
-              title: "Unknown Event",
-              activityType: "default",
-              location: "Unknown Location",
-            };
-          }
-          
-          // Get the activity type
-          const activityType = eventDetails.activityType;
-          
-          // Get reward amount from rewards history if available
-          const activityId = activity._id || activity.id || '';
-          const reward = activityRewardsMap[activityId];
-          const rewardAmount = reward ? reward.rewardAmount : (
-            activityType === 'food_sorting' ? 5 : 
-            activityType === 'food_distribution' ? 2 : 1
-          );
-          
-          // Format the date/time
-          const timestamp = activity.timestamp ? new Date(activity.timestamp) : new Date();
-          const formattedDate = timestamp.toLocaleDateString('en-GB', { 
-            day: '2-digit', 
-            month: 'short', 
-            year: 'numeric' 
-          });
-          const formattedTime = timestamp.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-          
-          // Check if this activity has an NFT
-          const hasNFT = !!activity.nftId || !!activityNFTMap[activityId];
-          
-          // Return formatted activity
-          return {
-            _id: activity._id,
-            title: eventDetails.title,
-            activityType: activityType,
-            location: eventDetails.location,
-            date: formattedDate,
-            time: formattedTime,
-            amount: `${rewardAmount}`,
-            hasNFT: hasNFT,
-            quantity: activity.quantity || 1
-          } as Activity;
-        }));
-        
-        // Sort activities by timestamp (most recent first)
-        processedActivities.sort((a, b) => {
-          return new Date(b.timestamp || '').getTime() - new Date(a.timestamp || '').getTime();
-        });
-        
-        // Update the state
-        setActivities(processedActivities);
-        setActivitiesCount(processedActivities.length);
-        setIsLoading(false);
-      } catch (error: unknown) {
-        console.error("Error processing activities:", error);
-        setError("Could not process your activities. Please try again later.");
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
+  const processedActivities = useMemo(() => {
+    return activities.map(activity => {
+      // Process activity data
+      const activityType = activity.event?.activityType || 'default';
+      
+      // Format the date/time
+      const timestamp = activity.timestamp ? new Date(activity.timestamp) : new Date();
+      const formattedDate = formatDate(timestamp);
+      const formattedTime = formatTime(timestamp);
+      
+      // Check if this activity has an NFT
+      const hasNFT = !!activity.nftId || !!activity.nftMinted;
+      
+      // Return formatted activity
+      return {
+        ...activity,
+        title: activity.event?.title || 'Activity',
+        activityType,
+        location: activity.event?.location || 'Unknown Location',
+        date: formattedDate,
+        time: formattedTime,
+        timestamp,
+        amount: activity.rewardAmount || '0',
+        hasNFT
+      };
+    });
+  }, [activities]);
   
   const handleActivityClick = (activity: Activity) => {
     setSelectedActivity(activity);
