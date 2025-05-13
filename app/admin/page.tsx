@@ -32,11 +32,11 @@ export default function ImpactDashboard() {
     };
   }, []);
 
-  const onPieEnter = (_, index) => {
+  const onPieEnter = (_: any, index: number) => {
     setActiveIndex(index);
   };
 
-  const renderActiveShape = (props) => {
+  const renderActiveShape = (props: any) => {
     const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
   
     return (

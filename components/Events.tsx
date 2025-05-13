@@ -50,6 +50,35 @@ interface QRCodeModalState {
   isGenerating: boolean;
 }
 
+interface QRCodeResponse {
+    qrCode?: {
+      qrImage?: string;
+    };
+    qrImage?: string;
+    imageUrl?: string; 
+  }
+
+interface APIEvent {
+    id: string;
+    title: string;
+    description?: string;
+    date?: string;
+    location?: string;
+    capacity?: number;
+    participants?: any[];
+    // These might be missing in your API response
+    activityType?: string;
+    hasQrCode?: boolean;
+    createdBy?: {
+      _id?: string;
+      id?: string;
+      walletAddress?: string;
+      name?: string;
+    };
+    createdAt?: string;
+  }
+  
+
 interface EditEventModalState {
   isOpen: boolean;
   eventId: string;
@@ -109,7 +138,23 @@ export default function EventsPage({
     try {
       setLoading(true);
       const response = await getEvents();
-      setEvents(response.data || []);
+      
+      // Map API events to match your Event interface
+      const mappedEvents = (response.data as APIEvent[] || []).map(event => ({
+        _id: event.id, 
+        title: event.title,
+        description: event.description,
+        date: event.date,
+        location: event.location,
+        capacity: event.capacity,
+        participants: event.participants || [],
+        activityType: event.activityType,
+        hasQrCode: event.hasQrCode,
+        createdBy: event.createdBy,
+        createdAt: event.createdAt
+      }));
+      
+      setEvents(mappedEvents);
     } catch (error) {
       console.error("Error fetching events:", error);
       toast.error("Failed to load events");
@@ -161,7 +206,7 @@ export default function EventsPage({
     try {
       await joinEvent(eventId);
       toast.success('Successfully joined the event!');
-      fetchEvents(); // Refresh events to update UI
+      fetchEvents(); 
     } catch (error) {
       toast.error('Failed to join event');
       console.error('Error joining event:', error);
@@ -217,11 +262,18 @@ export default function EventsPage({
         type: type,
         eventId 
       });
+
+      const qrData = response.data as QRCodeResponse;
+      const qrImageUrl = 
+      qrData.qrCode?.qrImage || // Option 1: response.data.qrCode.qrImage
+      qrData.qrImage ||         // Option 2: response.data.qrImage
+      qrData.imageUrl ||        // Option 3: response.data.imageUrl
+      '';    
       
-      // Update the modal with the generated QR code
+    
       setQrCodeModal(prev => ({
         ...prev,
-        qrCodeUrl: response.data.qrCode.qrImage,
+        qrCodeUrl: qrImageUrl,
         qrCodeType: type,
         isGenerating: false
       }));
