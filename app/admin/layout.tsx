@@ -92,7 +92,7 @@ export default function DashboardLayout({
 
                 {/* Activities button */}
                 <Link
-                  href="/activities"
+                  href="/admin/event"
                   className="flex flex-col items-center w-16"
                 >
                   <svg
@@ -113,7 +113,7 @@ export default function DashboardLayout({
                       strokeDasharray="0.5 3"
                     />
                   </svg>
-                  <span className="text-xs text-gray-500">Activities</span>
+                  <span className="text-xs text-gray-500">Events</span>
                 </Link>
 
                 {/* Centered QR Code Button with inset effect */}
