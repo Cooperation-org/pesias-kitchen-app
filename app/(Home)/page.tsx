@@ -2,13 +2,13 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { ConnectKitButton } from 'connectkit';
 import { useAccount, useSignMessage } from 'wagmi';
-import { useAuth } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/web3Provider';
 import Image from 'next/image';
 import { getNonce, verifySignature, storeAuthData } from '@/services/authServices';
 
 export default function LoginPage() {
   const { isConnected, address } = useAccount();
-  const { redirectToDashboard } = useAuth();
+  const { redirectToDashboard } = useAuthContext();
   const { signMessageAsync } = useSignMessage();
   
   const [authLoading, setAuthLoading] = useState(false);

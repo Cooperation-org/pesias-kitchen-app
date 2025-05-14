@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ExternalLink, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getNFTDetails } from '@/services/api';
-import { useAuth } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/web3Provider';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -26,7 +26,7 @@ interface NFTDetails {
 
 export default function NFTDetails({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthContext();
   const [nft, setNft] = useState<NFTDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

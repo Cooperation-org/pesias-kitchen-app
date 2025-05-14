@@ -1,38 +1,11 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useMemo, useCallback } from 'react';
-import { 
-  WagmiConfig, 
-  createConfig,
-  configureChains,
-  mainnet,
-  sepolia,
-  useAccount
-} from 'wagmi';
+import React, { createContext, useContext, ReactNode } from 'react';
+import { WagmiConfig, createConfig, configureChains, mainnet, sepolia } from 'wagmi';
 import { publicProvider } from 'wagmi/providers/public';
-import { 
-  ConnectKitProvider, 
-  getDefaultConfig 
-} from "connectkit";
+import { ConnectKitProvider, getDefaultConfig } from "connectkit";
 import { celo, celoAlfajores } from 'wagmi/chains';
-import { useRouter } from 'next/navigation';
-import { setWalletConnectionStatus, getUser, getToken, clearAuthData } from '@/services/authServices';
-
-// Configure the chains you want to support
-const { chains } = configureChains(
-  [mainnet, sepolia, celo, celoAlfajores],
-  [publicProvider()]
-);
-
-// Create wagmi config with ConnectKit
-const config = createConfig(
-  getDefaultConfig({
-    appName: "Global Classrooms App",
-    chains,
-    walletConnectProjectId:
-      process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-  })
-);
+import { useAuth } from '@/hooks/useAuth';
 
 // User data type
 interface UserData {
@@ -42,142 +15,90 @@ interface UserData {
   [key: string]: string | number | boolean;
 }
 
-// Auth context type
-interface AuthContextValue {
-  // Navigation functions
-  redirectToLogin: () => void;
-  redirectToDashboard: () => void;
+// Configure the chains you want to support
+const { chains } = configureChains(
+  [celo, celoAlfajores, mainnet, sepolia],
+  [publicProvider()]
+);
 
-  // Authentication state
+// Create wagmi config
+const config = createConfig(
+  getDefaultConfig({
+    appName: "Pesia's Kitchen App",
+    chains,
+    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
+  })
+);
+
+// Auth context type
+interface AuthContextType {
   isAuthenticated: boolean;
   user: UserData | null;
   token: string | null;
-  logout: () => void;
-
-  // Loading state
   isLoading: boolean;
+  error: Error | null;
+  logout: () => Promise<void>;
+  redirectToLogin: () => void;
+  redirectToDashboard: () => void;
+  mutateAuth: (data?: { token: string; user: UserData } | undefined, options?: { revalidate: boolean }) => Promise<{ token: string; user: UserData } | undefined>;
 }
 
-// Create context with default values
-const AuthContext = createContext<AuthContextValue>({
-  redirectToLogin: () => {},
-  redirectToDashboard: () => {},
+// Create auth context
+const AuthContext = createContext<AuthContextType>({
   isAuthenticated: false,
   user: null,
   token: null,
-  logout: () => {},
   isLoading: false,
+  error: null,
+  logout: async () => {},
+  redirectToLogin: () => {},
+  redirectToDashboard: () => {},
+  mutateAuth: async () => undefined,
 });
 
 // Hook to use the auth context
-export const useAuth = () => useContext(AuthContext);
+export const useAuthContext = () => useContext(AuthContext);
 
 interface AuthProviderProps {
   children: ReactNode;
 }
 
 function AuthProvider({ children }: AuthProviderProps) {
-  const router = useRouter();
-  const { address, isConnected } = useAccount();
-  
-  const [user, setUser] = useState<UserData | null>(null);
-  const [token, setToken] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
-  // Memoize navigation functions
-  const redirectToLogin = useCallback(() => {
-    console.log("Redirecting to login page");
-    try {
-      router.replace('/');
-    } catch (error) {
-      console.error('Navigation error:', error);
-      window.location.href = '/';
-    }
-  }, [router]);
+  const auth = useAuth();
 
-  const redirectToDashboard = useCallback(() => {
-    console.log("Redirecting to dashboard");
-    try {
-      router.replace('/dashboard');
-    } catch (error) {
-      console.error('Navigation error:', error);
-      window.location.href = '/dashboard';
-    }
-  }, [router]);
-  
-  // Memoize logout function
-  const logout = useCallback(() => {
-    clearAuthData();
-    setToken(null);
-    setUser(null);
-    redirectToLogin();
-  }, [redirectToLogin]);
-  
-  // Update wallet connection status
-  useEffect(() => {
-    setWalletConnectionStatus(isConnected);
-    if (!isConnected) {
-      logout();
-    }
-  }, [isConnected, logout]);
-  
-  // Load auth data on mount and when wallet changes
-  useEffect(() => {
-    const loadAuthData = async () => {
-      const storedToken = getToken();
-      const storedUser = getUser();
-
-      if (storedToken && storedUser && isConnected) {
-        if (address && address.toLowerCase() === storedUser.walletAddress?.toLowerCase()) {
-          setToken(storedToken);
-          setUser(storedUser);
-        } else {
-          clearAuthData();
-        }
-      }
-      
-      setIsLoading(false);
-    };
-
-    loadAuthData();
-  }, [address, isConnected]);
-
-  // Memoize auth context value
-  const value = useMemo(() => ({
-    redirectToLogin,
-    redirectToDashboard,
-    isAuthenticated: !!token && !!user && isConnected,
-    user,
-    token,
-    logout,
-    isLoading
-  }), [token, user, isLoading, isConnected, redirectToLogin, redirectToDashboard, logout]);
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={auth}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-// Memoize theme object outside of component
-const theme = {
-  "--ck-connectbutton-background": "#f7c334",
-  "--ck-connectbutton-color": "#303030",
-  "--ck-connectbutton-hover-background": "#f5bb20",
-  "--ck-body-background": "#ffffff",
-  "--ck-body-color": "#303030",
-  "--ck-primary-button-background": "#f7c334",
-  "--ck-primary-button-font-weight": "600",
-  "--ck-primary-button-color": "#303030",
-} as const;
+// Custom theme type for ConnectKit
+type CustomTheme = {
+  "--ck-connectbutton-background": string;
+  "--ck-connectbutton-hover-background": string;
+  "--ck-connectbutton-active-background": string;
+  "--ck-connectbutton-color": string;
+  "--ck-connectbutton-radius": string;
+};
 
-// Final AppProvider with all providers combined
-export function AppProvider({ children }: AuthProviderProps) {
+export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
     <WagmiConfig config={config}>
       <ConnectKitProvider
         theme="auto"
-        mode="dark" 
-        customTheme={theme}
+        mode="light"
+        customTheme={{
+          "--ck-connectbutton-background": "#FCD34D",
+          "--ck-connectbutton-hover-background": "#FBBF24",
+          "--ck-connectbutton-active-background": "#F59E0B",
+          "--ck-connectbutton-color": "#1F2937",
+          "--ck-connectbutton-radius": "9999px",
+        } as CustomTheme}
       >
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          {children}
+        </AuthProvider>
       </ConnectKitProvider>
     </WagmiConfig>
   );

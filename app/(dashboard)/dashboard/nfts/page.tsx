@@ -4,7 +4,7 @@ import { ChevronLeftIcon } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getUserNFTs } from "@/services/api";
-import { useAuth } from "@/providers/web3Provider";
+import { useAuthContext } from "@/providers/web3Provider";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import Image from "next/image";
@@ -22,7 +22,7 @@ interface NFT {
 
 export default function NFTs() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthContext();
   const [nfts, setNfts] = useState<NFT[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
