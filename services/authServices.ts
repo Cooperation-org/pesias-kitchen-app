@@ -29,7 +29,7 @@ interface AuthResponse {
  */
 export const getNonce = async (walletAddress: string) => {
   console.log("Requesting nonce for wallet:", walletAddress);
-  return apiPost<NonceResponse>('/api/auth/nonce', { walletAddress });
+  return apiPost<NonceResponse>('/auth/nonce', { walletAddress });
 };
 
 /**
@@ -54,7 +54,7 @@ export const verifySignature = async (walletAddress: string, signature: string) 
   }
   
   // Make the API call with proper parameters
-  return apiPost<AuthResponse>('/api/auth/verify', { 
+  return apiPost<AuthResponse>('/auth/verify', { 
     walletAddress, 
     signature 
   });

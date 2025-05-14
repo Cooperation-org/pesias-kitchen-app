@@ -16,23 +16,39 @@ export interface ApiResponse<T> {
   const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
   
   // Default headers for all requests
-  const defaultHeaders = {
+  const defaultHeaders: HeadersInit = {
     'Content-Type': 'application/json',
   };
   
   // Adds authentication token if available
-  const getAuthHeaders = (): HeadersInit => {
-    let headers = { ...defaultHeaders };
+  export const getAuthHeaders = (): HeadersInit => {
+    let headers: HeadersInit = { ...defaultHeaders };
     
     // Get auth token from local storage (if in browser context)
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('token');
+      console.log('Auth token details:', {
+        exists: !!token,
+        length: token?.length,
+        firstChars: token ? `${token.substring(0, 10)}...` : 'none',
+        storageKey: 'token',
+        storageType: typeof localStorage.getItem('token')
+      });
+      
       if (token) {
         headers = {
           ...headers,
           'Authorization': `Bearer ${token}`,
         };
+        console.log('Final request headers:', {
+          ...headers,
+          Authorization: headers.Authorization ? 'Bearer [token]' : 'none'
+        });
+      } else {
+        console.log('No auth token found in localStorage');
       }
+    } else {
+      console.log('Not in browser context, skipping token check');
     }
     
     return headers;

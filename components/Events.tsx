@@ -1,16 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
-import { getEvents, joinEvent, generateQRCode, leaveEvent, deleteEvent } from '@/services/api';
 import { useAuth } from '@/providers/web3Provider';
-import { QRCodeModal } from '@/app/(dashboard)/dashboard/events';
 import EditEventModal from '@/components/EditEventModal';
 import EventDetailsModal, { 
   Event, 
   ACTIVITY_TYPE_COLORS, 
   ACTIVITY_TYPE_LABELS 
 } from '@/components/EventDetailsModal';
+import { useEvents, TimeFilter } from '@/hooks/useEvents';
+import { useRouter } from 'next/navigation';
+import { buildApiUrl } from '@/utils/swr-config';
+import QRCodeModal from '@/components/QRCodeModal';
 
 // Helper functions
 const formatDate = (dateString: string | undefined): string => {
@@ -39,50 +41,11 @@ const isEventPast = (event: Event): boolean => {
   return eventDate < now;
 };
 
-type TimeFilter = 'all' | 'upcoming' | 'past';
-
 interface QRCodeModalState {
   isOpen: boolean;
-  qrCodeUrl: string;
-  eventName: string;
   eventId: string;
+  eventTitle: string;
   qrCodeType: 'volunteer' | 'recipient';
-  isGenerating: boolean;
-}
-
-interface QRCodeResponse {
-    qrCode?: {
-      qrImage?: string;
-    };
-    qrImage?: string;
-    imageUrl?: string; 
-  }
-
-interface APIEvent {
-    id?: string;
-    _id?: string;
-    title: string;
-    description?: string;
-    date?: string;
-    location?: string;
-    capacity?: number;
-    participants?: any[];
-    // These might be missing in your API response
-    activityType?: string;
-    hasQrCode?: boolean;
-    createdBy?: {
-      _id?: string;
-      id?: string;
-      walletAddress?: string;
-      name?: string;
-    };
-    createdAt?: string;
-  }
-  
-
-interface EditEventModalState {
-  isOpen: boolean;
-  eventId: string;
 }
 
 interface EventDetailsModalState {
@@ -99,262 +62,153 @@ export default function EventsPage({
   title = "Community Events", 
   description = "Join our community events, make meaningful connections, and create positive change together"
 }: EventsPageProps) {
-  const [events, setEvents] = useState<Event[]>([]);
-  const [filteredEvents, setFilteredEvents] = useState<Event[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
-  const { user, isAuthenticated } = useAuth();
-
-  // QR code modal state
-  const [qrCodeModal, setQrCodeModal] = useState<QRCodeModalState>({
+  const [searchQuery] = useState('');
+  const [qrModalState, setQrModalState] = useState<QRCodeModalState>({
     isOpen: false,
-    qrCodeUrl: '',
-    eventName: '',
     eventId: '',
-    qrCodeType: 'volunteer',
-    isGenerating: false
+    eventTitle: '',
+    qrCodeType: 'volunteer'
   });
-
-  // Edit event modal state
-  const [editEventModal, setEditEventModal] = useState<EditEventModalState>({
+  const [editEventModal, setEditEventModal] = useState<{
+    isOpen: boolean;
+    eventId: string | undefined;
+  }>({
     isOpen: false,
-    eventId: ''
+    eventId: undefined
   });
-  
-  // Event details modal state
   const [eventDetailsModal, setEventDetailsModal] = useState<EventDetailsModalState>({
     isOpen: false,
     event: null
   });
+  const { user, isAuthenticated } = useAuth();
+  const router = useRouter();
 
-  useEffect(() => {
-    fetchEvents();
-  }, []);
-
-  useEffect(() => {
-    filterEvents();
-  }, [events, timeFilter]);
-
-  const fetchEvents = async () => {
-    try {
-      setLoading(true);
-      const response = await getEvents();
-      
-      // Map API events to match your Event interface
-      const mappedEvents = (response.data as APIEvent[] || []).map(event => ({
-        _id: event._id || event.id, // Support both _id and id formats
-        title: event.title,
-        description: event.description,
-        date: event.date,
-        location: event.location,
-        capacity: event.capacity,
-        participants: event.participants || [],
-        activityType: event.activityType,
-        hasQrCode: event.hasQrCode,
-        createdBy: event.createdBy,
-        createdAt: event.createdAt
-      }));
-
-      console.log('Mapped events:', mappedEvents); // Debug log to check events data
-      
-      setEvents(mappedEvents);
-    } catch (error) {
-      console.error("Error fetching events:", error);
-      toast.error("Failed to load events");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const filterEvents = () => {
-    const now = new Date();
-    const filtered = events.filter(event => {
-      const eventDate = new Date(event.date || 0);
-      
-      switch (timeFilter) {
-        case 'upcoming':
-          return eventDate >= now;
-        case 'past':
-          return eventDate < now;
-        default:
-          return true;
-      }
-    });
-
-    // Sort events by date
-    const sorted = [...filtered].sort((a, b) => {
-      const dateA = new Date(a.date || 0);
-      const dateB = new Date(b.date || 0);
-      
-      // For upcoming events, sort chronologically (earliest first)
-      // For past events, sort reverse chronologically (most recent first)
-      return timeFilter === 'past' 
-        ? dateB.getTime() - dateA.getTime() 
-        : dateA.getTime() - dateB.getTime();
-    });
-
-    setFilteredEvents(sorted);
-  };
+  // Use the useEvents hook for data fetching
+  const { events, isLoading, error: fetchError, mutate } = useEvents(timeFilter);
 
   // Function to check if user is admin
   const isAdmin = user?.role === 'admin';
 
+  // Filter events based on search query and time filter
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      event.location?.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    if (!event.date) return false;
+    const eventDate = new Date(event.date);
+    const now = new Date();
+    
+    switch (timeFilter) {
+      case 'upcoming':
+        return matchesSearch && eventDate >= now;
+      case 'past':
+        return matchesSearch && eventDate < now;
+      default:
+        return matchesSearch;
+    }
+  }).sort((a, b) => {
+    if (!a.date || !b.date) return 0;
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return timeFilter === 'past' 
+      ? dateB.getTime() - dateA.getTime() 
+      : dateA.getTime() - dateB.getTime();
+  });
+
   // Function to handle joining an event
   const handleJoinEvent = async (eventId: string) => {
-    if (!isAuthenticated) {
-      toast.error('Please login to join this event');
+    if (!user?.id) {
+      router.push('/login');
       return;
     }
 
     try {
-      await joinEvent(eventId);
-      toast.success('Successfully joined the event!');
-      fetchEvents(); 
-    } catch (error) {
+      const response = await fetch(buildApiUrl(`event/${eventId}/join`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to join event');
+      }
+
+      // Optimistically update the UI
+      await mutate();
+      toast.success('Successfully joined the event');
+    } catch {
       toast.error('Failed to join event');
-      console.error('Error joining event:', error);
     }
   };
   
   // Function to handle leaving an event
   const handleLeaveEvent = async (eventId: string) => {
-    if (!isAuthenticated) {
-      toast.error('Please login to perform this action');
+    if (!user?.id) {
+      router.push('/login');
       return;
     }
 
     try {
-      await leaveEvent(eventId);
-      toast.success('Successfully left the event');
-      fetchEvents();
-      closeEventDetails(); // Close modal after leaving
-    } catch (error) {
+      const response = await fetch(buildApiUrl(`event/${eventId}/leave`), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to leave event');
+      }
+
+      // Optimistically update the UI
+      await mutate();
+    } catch {
       toast.error('Failed to leave event');
-      console.error('Error leaving event:', error);
     }
   };
   
   // Function to handle deleting an event
-  const handleDeleteEvent = async (eventId: string) => {
-    if (!isAuthenticated || !isAdmin) {
-      toast.error('You do not have permission to delete this event');
-      return;
-    }
-    
-    // Confirm before deletion
-    if (!window.confirm('Are you sure you want to delete this event? This action cannot be undone.')) {
-      return;
-    }
+  const handleDeleteEvent = async () => {
+    if (!eventDetailsModal.event?._id) return;
 
     try {
-      await deleteEvent(eventId);
-      toast.success('Event deleted successfully');
-      fetchEvents();
-      closeEventDetails(); // Close modal after deletion
-    } catch (error) {
+      const response = await fetch(buildApiUrl(`event/${eventDetailsModal.event._id}`), {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete event');
+      }
+
+      // Optimistically update the UI
+      await mutate();
+      setEventDetailsModal({ isOpen: false, event: null });
+    } catch {
       toast.error('Failed to delete event');
-      console.error('Error deleting event:', error);
     }
   };
 
-  // Function to handle generating QR code
-  const handleGenerateQRCode = (eventId: string, eventTitle: string) => {
-    // Close event details modal when opening QR code modal
-    closeEventDetails();
-    
-    setQrCodeModal({
+  const handleGenerateQRCode = (eventId: string, eventTitle: string, type: 'volunteer' | 'recipient') => {
+    setQrModalState({
       isOpen: true,
-      qrCodeUrl: '',
-      eventName: eventTitle,
-      eventId: eventId,
-      qrCodeType: 'volunteer',
-      isGenerating: true
+      eventId,
+      eventTitle,
+      qrCodeType: type
     });
   };
 
-  // Function to handle viewing QR code
-  const handleViewQRCode = (
-    eventId: string, 
-    eventTitle: string, 
-    qrCodeType: 'volunteer' | 'recipient' = 'volunteer'
-  ) => {
-    try {
-      // Close event details modal when viewing QR code
-      closeEventDetails();
-      
-      // In a real implementation, you would fetch the actual QR code URL
-      const qrCodeUrl = `/api/qr/${eventId}?type=${qrCodeType}`;
-      
-      setQrCodeModal({
-        isOpen: true,
-        qrCodeUrl: qrCodeUrl,
-        eventName: eventTitle,
-        eventId: eventId,
-        qrCodeType,
-        isGenerating: false
-      });
-    } catch (error) {
-      toast.error('Failed to retrieve QR code');
-      console.error('Error retrieving QR code:', error);
-    }
-  };
-
-  // Function to handle generating QR code with selected type
-  const handleGenerateWithType = async (type: 'volunteer' | 'recipient') => {
-    try {
-      setLoading(true);
-      
-      // Get the event ID from the modal state
-      const eventId = qrCodeModal.eventId;
-      
-      // Call the API with the selected type
-      const response = await generateQRCode({ 
-        type: type,
-        eventId 
-      });
-
-      const qrData = response.data as QRCodeResponse;
-      const qrImageUrl = 
-      qrData.qrCode?.qrImage || // Option 1: response.data.qrCode.qrImage
-      qrData.qrImage ||         // Option 2: response.data.qrImage
-      qrData.imageUrl ||        // Option 3: response.data.imageUrl
-      '';    
-      
-    
-      setQrCodeModal(prev => ({
-        ...prev,
-        qrCodeUrl: qrImageUrl,
-        qrCodeType: type,
-        isGenerating: false
-      }));
-      
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} QR Code generated successfully!`);
-      
-      // Refresh events to update QR code status
-      fetchEvents();
-    } catch (error) {
-      toast.error('Failed to generate QR code');
-      console.error('Error generating QR code:', error);
-      
-      setQrCodeModal(prev => ({
-        ...prev,
-        isGenerating: false
-      }));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Function to close QR code modal
-  const closeQrModal = () => {
-    setQrCodeModal({
-      isOpen: false,
-      qrCodeUrl: '',
-      eventName: '',
-      eventId: '',
-      qrCodeType: 'volunteer',
-      isGenerating: false
-    });
+  const handleQRCodeGenerated = (qrCodeUrl: string) => {
+    // Refresh the events list to update the QR code status
+    mutate();
+    toast.success('QR code generated successfully');
   };
 
   // Function to open edit event modal
@@ -379,7 +233,7 @@ export default function EventsPage({
   const closeEditModal = () => {
     setEditEventModal({
       isOpen: false,
-      eventId: ''
+      eventId: undefined
     });
   };
   
@@ -398,12 +252,6 @@ export default function EventsPage({
       isOpen: false,
       event: null
     });
-  };
-
-  // Function to refresh events after update
-  const handleEventUpdated = () => {
-    fetchEvents();
-    toast.success('Event updated successfully');
   };
 
   // Function to check if the current user is the creator of an event
@@ -500,184 +348,179 @@ export default function EventsPage({
     </div>
   );
 
-  if (loading) {
+  const handleEditEvent = (eventId: string) => {
+    console.log('Edit button clicked with eventId:', eventId);
+    if (eventId) {
+      setEditEventModal({
+        isOpen: true,
+        eventId
+      });
+    } else {
+      console.error('Cannot edit: No event ID available');
+      toast.error('Error: Cannot edit this event');
+    }
+  };
+
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-100 p-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <div 
-                key={i} 
-                className="bg-white rounded-xl overflow-hidden shadow-sm"
-              >
-                <div className="h-24 bg-gray-200 animate-pulse"></div>
-                <div className="p-4 space-y-3">
-                  <div className="h-6 bg-gray-200 rounded w-3/4 animate-pulse"></div>
-                  <div className="h-4 bg-gray-200 rounded w-1/2 animate-pulse"></div>
-                  <div className="h-8 bg-gray-200 rounded animate-pulse mt-2"></div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="text-center text-red-500 p-4">
+        Error loading events: {fetchError.message}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      <div className="p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">{title}</h1>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              {description}
-            </p>
-            <TimeFilterButtons />
-          </div>
-
-          {filteredEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredEvents.map((event) => {
-                const userHasJoined = hasUserJoined(event);
-                const isCreator = isEventCreator(event);
-                const eventIsPast = isEventPast(event);
-                
-                return (
-                  <div 
-                    key={event._id} 
-                    className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer"
-                    onClick={() => openEventDetails(event)}
-                  >
-                    <div className={`h-2 w-full ${ACTIVITY_TYPE_COLORS[event.activityType || 'other'].split(' ')[0]}`}></div>
-                    <div className="p-4">
-                      <div className="flex justify-between items-start mb-3">
-                        <h3 className="text-lg font-medium line-clamp-1">{event.title}</h3>
-                        
-                        <span className={`px-2 py-0.5 text-xs rounded-full ${ACTIVITY_TYPE_COLORS[event.activityType || 'other']}`}>
-                          {ACTIVITY_TYPE_LABELS[event.activityType || 'other']}
-                        </span>
-                      </div>
-                      
-                      <div className="space-y-2 text-sm text-gray-500 mb-3">
-                        <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          <span>{formatDate(event.date)}</span>
-                          <span className="ml-1">at {formatTime(event.date)}</span>
-                          
-                          {/* Past event indicator */}
-                          {eventIsPast && (
-                            <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-xs rounded">
-                              Past
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                          </svg>
-                          <span className="line-clamp-1">{event.location || "Location not specified"}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-1">
-                          <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                          <span>Participants: {event.participants.length || 0}</span>
-                        </div>
-                      </div>
-                      
-                      {/* Status indicator */}
-                      {isAuthenticated && (
-                        <div className="mb-3">
-                          {userHasJoined ? (
-                            <div className="text-green-600 text-sm flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                              </svg>
-                              <span>You've joined this event</span>
-                            </div>
-                          ) : isCreator ? (
-                            <div className="text-blue-600 text-sm flex items-center gap-1">
-                              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
-                              <span>You created this event</span>
-                            </div>
-                          ) : null}
-                        </div>
-                      )}
-                      
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation(); // Prevent opening details modal
-                          openEventDetails(event);
-                        }}
-                        className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors duration-200"
-                      >
-                        View Details
-                      </button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <NoEventsMessage />
-          )}
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold mb-2">{title}</h1>
+          <p className="text-gray-600 max-w-2xl mx-auto">
+            {description}
+          </p>
+          <TimeFilterButtons />
         </div>
+
+        {filteredEvents.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredEvents.map((event) => {
+              const userHasJoined = hasUserJoined(event);
+              const isCreator = isEventCreator(event);
+              const eventIsPast = isEventPast(event);
+              
+              return (
+                <div 
+                  key={event._id} 
+                  className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer"
+                  onClick={() => openEventDetails(event)}
+                >
+                  <div className={`h-2 w-full ${ACTIVITY_TYPE_COLORS[event.activityType || 'other'].split(' ')[0]}`}></div>
+                  <div className="p-4">
+                    <div className="flex justify-between items-start mb-3">
+                      <h3 className="text-lg font-medium line-clamp-1">{event.title}</h3>
+                      
+                      <span className={`px-2 py-0.5 text-xs rounded-full ${ACTIVITY_TYPE_COLORS[event.activityType || 'other']}`}>
+                        {ACTIVITY_TYPE_LABELS[event.activityType || 'other']}
+                      </span>
+                    </div>
+                    
+                    <div className="space-y-2 text-sm text-gray-500 mb-3">
+                      <div className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        <span>{formatDate(event.date)}</span>
+                        <span className="ml-1">at {formatTime(event.date)}</span>
+                        
+                        {/* Past event indicator */}
+                        {eventIsPast && (
+                          <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-xs rounded">
+                            Past
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        <span className="line-clamp-1">{event.location || "Location not specified"}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-1">
+                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        <span>Participants: {event.participants.length || 0}</span>
+                      </div>
+                    </div>
+                    
+                    {/* Status indicator */}
+                    {isAuthenticated && (
+                      <div className="mb-3">
+                        {userHasJoined ? (
+                          <div className="text-green-600 text-sm flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            </svg>
+                            <span>You&apos;ve joined this event</span>
+                          </div>
+                        ) : isCreator ? (
+                          <div className="text-blue-600 text-sm flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                            <span>You created this event</span>
+                          </div>
+                        ) : null}
+                      </div>
+                    )}
+                    
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent opening details modal
+                        openEventDetails(event);
+                      }}
+                      className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors duration-200"
+                    >
+                      View Details
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <NoEventsMessage />
+        )}
       </div>
 
-      {/* QR Code Modal */}
-      <QRCodeModal
-        isOpen={qrCodeModal.isOpen}
-        qrCodeUrl={qrCodeModal.qrCodeUrl}
-        eventName={qrCodeModal.eventName}
-        qrCodeType={qrCodeModal.qrCodeType}
-        isGenerating={qrCodeModal.isGenerating}
-        onClose={closeQrModal}
-        onGenerate={handleGenerateWithType}
+      {/* Event Details Modal */}
+      <EventDetailsModal
+        isOpen={eventDetailsModal.isOpen}
+        event={eventDetailsModal.event}
+        onClose={() => setEventDetailsModal({ isOpen: false, event: null })}
+        onEdit={handleEditEvent}
+        onDelete={handleDeleteEvent}
+        onLeave={handleLeaveEvent}
+        onGenerateQR={(eventId, eventTitle) => handleGenerateQRCode(eventId, eventTitle, 'volunteer')}
+        onViewQR={(eventId, eventTitle) => handleGenerateQRCode(eventId, eventTitle, 'volunteer')}
+        onJoin={handleJoinEvent}
+        isAdmin={isAdmin}
+        isAuthenticated={isAuthenticated}
+        userHasJoined={eventDetailsModal.event ? hasUserJoined(eventDetailsModal.event) : false}
+        isCreator={eventDetailsModal.event ? isEventCreator(eventDetailsModal.event) : false}
       />
 
       {/* Edit Event Modal */}
       {editEventModal.isOpen && editEventModal.eventId && (
         <EditEventModal
           isOpen={editEventModal.isOpen}
-          onClose={closeEditModal}
+          onClose={() => setEditEventModal({ isOpen: false, eventId: undefined })}
           eventId={editEventModal.eventId}
-          onEventUpdated={handleEventUpdated}
+          onEventUpdated={() => {
+            mutate();
+            toast.success('Event updated successfully');
+          }}
         />
       )}
-      
-      {/* Event Details Modal */}
-      <EventDetailsModal
-        isOpen={eventDetailsModal.isOpen}
-        event={eventDetailsModal.event}
-        onClose={closeEventDetails}
-        onEdit={(eventId) => {
-          console.log('Edit button clicked with eventId:', eventId); // Debug log
-          if (eventId) {
-            openEditModal(eventId);
-          } else if (eventDetailsModal.event && eventDetailsModal.event._id) {
-            openEditModal(eventDetailsModal.event._id);
-          } else {
-            console.error('Cannot edit: No event ID available');
-            toast.error('Error: Cannot edit this event');
-          }
-        }}
-        onDelete={handleDeleteEvent}
-        onLeave={handleLeaveEvent}
-        onGenerateQR={handleGenerateQRCode}
-        onViewQR={handleViewQRCode}
-        onJoin={handleJoinEvent}
-        isAdmin={isAdmin}
-        isAuthenticated={isAuthenticated}
-        userHasJoined={eventDetailsModal.event ? hasUserJoined(eventDetailsModal.event) : false}
-        isCreator={eventDetailsModal.event ? isEventCreator(eventDetailsModal.event) : false}
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        isOpen={qrModalState.isOpen}
+        onClose={() => setQrModalState(prev => ({ ...prev, isOpen: false }))}
+        eventId={qrModalState.eventId}
+        eventTitle={qrModalState.eventTitle}
+        qrCodeType={qrModalState.qrCodeType}
+        onQRCodeGenerated={handleQRCodeGenerated}
       />
     </div>
   );

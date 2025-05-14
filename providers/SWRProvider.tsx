@@ -1,26 +1,46 @@
-// providers/SWRProvider.tsx
-import React from 'react';
+'use client'
+import React, { useEffect } from 'react';
 import { SWRConfig } from 'swr';
-import { fetcher } from '@/utils/swr-config';
+import { swrConfig } from '@/utils/swr-config';
+import { toast } from 'sonner';
 
 export function SWRProvider({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    const handleSWRError = (event: CustomEvent<{ message: string; code?: string }>) => {
+      const { message, code } = event.detail;
+      
+      // Handle specific error codes
+      switch (code) {
+        case 'UNAUTHORIZED':
+          toast.error(message, {
+            action: {
+              label: 'Login',
+              onClick: () => window.location.href = '/login'
+            }
+          });
+          break;
+        case 'FORBIDDEN':
+          toast.error(message, {
+            action: {
+              label: 'Go Home',
+              onClick: () => window.location.href = '/'
+            }
+          });
+          break;
+        default:
+          toast.error(message);
+      }
+    };
+
+    window.addEventListener('swr-error', handleSWRError as EventListener);
+    
+    return () => {
+      window.removeEventListener('swr-error', handleSWRError as EventListener);
+    };
+  }, []);
+
   return (
-    <SWRConfig
-      value={{
-        fetcher,
-        revalidateOnFocus: false, // Disable auto-revalidation on focus (mobile optimization)
-        revalidateIfStale: true,
-        revalidateOnReconnect: true,
-        errorRetryCount: 3,
-        dedupingInterval: 2000, // Deduplicate requests made within 2 seconds
-        focusThrottleInterval: 5000, // Only revalidate once per 5 seconds during rapid focus events
-        loadingTimeout: 3000, // Show error UI if data doesn't load within 3 seconds
-        suspense: false, // Set to true when using React Suspense
-        onError: (error, key) => {
-          console.error(`SWR Error for ${key}:`, error);
-        }
-      }}
-    >
+    <SWRConfig value={swrConfig}>
       {children}
     </SWRConfig>
   );
