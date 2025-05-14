@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useAuth } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/web3Provider';
 import EditEventModal from '@/components/EditEventModal';
 import EventDetailsModal, { 
   Event, 
@@ -81,7 +81,7 @@ export default function EventsPage({
     isOpen: false,
     event: null
   });
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuthContext();
   const router = useRouter();
 
   // Use the useEvents hook for data fetching

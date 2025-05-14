@@ -8,7 +8,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Image from 'next/image';
 import { getRewardsHistory, mintActivityNFT } from '@/services/api';
-import { useAuth } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/web3Provider';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';
@@ -86,7 +86,7 @@ interface RewardsResponse {
 
 const Rewards = () => {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated } = useAuthContext();
   const [rewardsData, setRewardsData] = useState<RewardsResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
