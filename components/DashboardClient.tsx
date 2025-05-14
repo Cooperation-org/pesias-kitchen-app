@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
-import useSWR from 'swr'
+import useSWR, { mutate } from 'swr'
 import { Activity, NFT, Reward } from '@/types/api'
 import { getUserActivities, getRewardsHistory, getUserNFTs } from "@/services/api"
 import { StatsCard } from './dashboard/StatsCard'
@@ -49,6 +49,41 @@ function useDashboardData() {
   const isLoading = isLoadingActivities || isLoadingRewards || isLoadingNFTs;
   const error = activitiesError || rewardsError || nftsError;
 
+  // Function to optimistically update activities when joining an event
+  const addActivity = useCallback((newActivity: Activity) => {
+    // Optimistically update the activities list
+    mutate('user-activities', (currentData: Activity[]) => {
+      if (!currentData) return [newActivity];
+      
+      const timestamp = new Date(newActivity.timestamp);
+      const date = timestamp.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      const time = timestamp.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const formattedActivity = {
+        ...newActivity,
+        title: typeof newActivity.event === 'object' ? newActivity.event.title : 'Activity',
+        activityType: typeof newActivity.event === 'object' ? newActivity.event.activityType : 'other',
+        location: typeof newActivity.event === 'object' ? newActivity.event.location : 'Unknown Location',
+        date,
+        time,
+        hasNFT: false,
+        amount: 0
+      };
+
+      return [formattedActivity, ...currentData];
+    }, false); // false means don't revalidate immediately
+
+    // Trigger a revalidation in the background
+    mutate('user-activities');
+  }, []);
+
   const activities = useMemo(() => {
     if (!activitiesData) return [];
     return activitiesData.map((activity: Activity) => {
@@ -86,14 +121,15 @@ function useDashboardData() {
     activities,
     stats,
     isLoading,
-    error: error ? 'Failed to load dashboard data' : null
+    error: error ? 'Failed to load dashboard data' : null,
+    addActivity // Expose the mutation function
   };
 }
 
 export default function DashboardClient() {
   const [showEventModal, setShowEventModal] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
-  const { activities, stats, isLoading, error } = useDashboardData()
+  const { activities, stats, isLoading, error, addActivity } = useDashboardData()
 
   const handleActivityClick = useCallback((activity: Activity) => {
     setSelectedActivity(activity)
