@@ -518,8 +518,6 @@ export default function EventsPage({
         isOpen={qrModalState.isOpen}
         onClose={() => setQrModalState(prev => ({ ...prev, isOpen: false }))}
         eventId={qrModalState.eventId}
-        eventTitle={qrModalState.eventTitle}
-        qrCodeType={qrModalState.qrCodeType}
         onQRCodeGenerated={handleQRCodeGenerated}
       />
     </div>

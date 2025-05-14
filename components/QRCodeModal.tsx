@@ -5,6 +5,7 @@ import { generateQRCode } from '@/services/api';
 import Image from 'next/image';
 import { AxiosError } from 'axios';
 import { Download, Loader2, QrCode } from 'lucide-react';
+import { QRCodeResponse as ApiQRCodeResponse } from '@/types/api';
 
 type QRCodeType = 'volunteer' | 'recipient';
 
@@ -16,11 +17,6 @@ interface QRCodeData {
   eventTitle: string;
   eventLocation: string;
   eventType: string;
-}
-
-interface QRCodeResponse {
-  message: string;
-  qrCode: QRCodeData;
 }
 
 interface QRCodeModalProps {
@@ -55,8 +51,8 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
         throw new Error('Invalid response from server');
       }
 
-      // Handle the new response format
-      const qrCodeData = (response.data as QRCodeResponse).qrCode;
+      // Handle the response using the imported type
+      const qrCodeData = (response.data as unknown as ApiQRCodeResponse).qrCode;
       if (!qrCodeData || !qrCodeData.qrImage) {
         console.error('Response data:', response.data);
         throw new Error('QR code image not found in response');
@@ -66,9 +62,8 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
       setQrCodeUrl(qrCodeData.qrImage);
       onQRCodeGenerated?.(qrCodeData.qrImage);
       
-      // Show success message with event details if available
-      const eventTitle = qrCodeData.eventTitle || 'Event';
-      toast.success(`QR code generated successfully for ${eventTitle}`);
+      // Show success message
+      toast.success('QR code generated successfully');
     } catch (error) {
       console.error('Error generating QR code:', error);
       // More specific error message

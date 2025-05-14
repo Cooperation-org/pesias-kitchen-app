@@ -12,7 +12,9 @@ import {
   RewardsResponse, 
   NFTsResponse, 
   NFTDetails,
-  SWR_ENDPOINTS
+  SWR_ENDPOINTS,
+  QRCodeVerifyResponse,
+  QRCodeVerifyAndMintResponse
 } from "@/types/api";
 import { buildApiUrl } from "@/utils/swr-config";
 
@@ -112,7 +114,7 @@ export const generateQRCode = (
  */
 export const verifyQRCode = (
   qrData: string
-): Promise<AxiosResponse<any>> => {
+): Promise<AxiosResponse<QRCodeVerifyResponse>> => {
   return api.post("/qr/verify", { qrData });
 };
 
@@ -123,7 +125,7 @@ export const verifyQRAndMintNFT = (
   qrData: string,
   quantity?: number,
   notes?: string
-): Promise<AxiosResponse<any>> => {
+): Promise<AxiosResponse<QRCodeVerifyAndMintResponse>> => {
   return api.post("/qr/verify-and-mint", { qrData, quantity, notes });
 };
 
