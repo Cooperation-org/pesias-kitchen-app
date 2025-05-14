@@ -1,45 +1,8 @@
 'use client';
-import { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from "recharts";
-import { getallActivities } from '@/services/api';
-import { toast } from 'sonner';
 import Link from "next/link";
-
-// Define types for our data
-interface Activity {
-  _id: string;
-  event: {
-    _id: string;
-    title: string;
-    description: string;
-    location: string;
-    date: string;
-    activityType: string;
-    capacity: number;
-    defaultQuantity: number;
-    participants: any[];
-    createdBy: string;
-    createdAt: string;
-    __v: number;
-  };
-  qrCode: string;
-  user: {
-    _id: string;
-    walletAddress: string;
-    name: string;
-  };
-  quantity: number;
-  verified: boolean;
-  nftId: string | null;
-  txHash: string | null;
-  notes: string;
-  timestamp: string;
-  __v: number;
-  // Optional fields that might exist in some activities
-  rewardAmount?: number;
-  nftMinted?: boolean;
-  nftTokenId?: string;
-}
+import { useActivities } from '@/hooks/useActivities';
 
 interface ChartData {
   name: string;
@@ -55,268 +18,79 @@ interface MetricData {
   icon: string;
 }
 
-interface RecentActivity {
-  title: string;
-  time: string;
-  location: string;
-  color: string;
+interface ActiveShapeProps {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  innerRadius: number;
+  outerRadius: number;
+  startAngle: number;
+  endAngle: number;
+  fill: string;
+  payload: ChartData;
+  percent: number;
+  value: number;
+  name: string;
+  index: number;
 }
 
 export default function ImpactDashboard() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
-  const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
-  
-  // Data states
-  const [participationData, setParticipationData] = useState<ChartData[]>([]);
-  const [impactMetrics, setImpactMetrics] = useState<MetricData[]>([]);
-  const [recentActivities, setRecentActivities] = useState<RecentActivity[]>([]);
+  const { activities, metrics, recentActivities, isLoading, error } = useActivities();
 
-  // Fetch activities data
-  useEffect(() => {
-    const fetchActivities = async () => {
-      try {
-        setLoading(true);
-        const response = await getallActivities();
-        setActivities(response.data || []);
-      } catch (err) {
-        console.error('Error fetching activities:', err);
-        setError('Failed to load impact data. Please try again later.');
-        toast.error('Failed to load impact data');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchActivities();
-  }, []);
-
-  // Process data when activities change
-  useEffect(() => {
-    if (activities.length > 0) {
-      processActivitiesData();
+  // Create participation chart data
+  const participationData: ChartData[] = [
+    { 
+      name: "Volunteers", 
+      value: metrics.uniqueVolunteers, 
+      color: "#3B82F6", 
+      description: "Active community members"
+    },
+    { 
+      name: "Recipients", 
+      value: metrics.uniqueRecipients, 
+      color: "#10B981", 
+      description: "Individuals receiving aid"
     }
-  }, [activities]);
+  ];
 
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
-
-  // Process activities data to create chart data and metrics
-  const processActivitiesData = () => {
-    // Get unique volunteers and recipients
-    const uniqueVolunteers = new Set();
-    const uniqueRecipients = new Set();
-    
-    let totalGDollars = 0;
-    let totalNFTs = 0;
-    let totalFoodDistributed = 0;
-    let totalMealsProvided = 0;
-    let totalWasteReduced = 0;
-    
-    // Process activities to extract data
-    activities.forEach(activity => {
-      // Count users as volunteers for food_sorting activities
-      if (activity.event.activityType === 'food_sorting') {
-        uniqueVolunteers.add(activity.user._id);
-        // Estimate waste reduced - using quantity as a proxy (1 unit = 2kg waste reduced)
-        totalWasteReduced += activity.quantity * 2;
-      }
-      
-      // Count users as recipients for food_distribution activities
-      if (activity.event.activityType === 'food_distribution') {
-        uniqueRecipients.add(activity.user._id);
-        // Estimate food distributed - using quantity as a proxy (1 unit = 1kg food)
-        totalFoodDistributed += activity.quantity;
-        // Estimate meals provided - using quantity as a proxy (1kg = 12.5 meals)
-        totalMealsProvided += Math.round(activity.quantity * 12.5);
-      }
-      
-      // Count G$ rewards
-      if (activity.rewardAmount) {
-        totalGDollars += activity.rewardAmount;
-      }
-      
-      // Count NFTs
-      if (activity.nftMinted || activity.nftId) {
-        totalNFTs++;
-      }
-    });
-    
-    // Create participation chart data
-    const chartData: ChartData[] = [
-      { 
-        name: "Volunteers", 
-        value: uniqueVolunteers.size, 
-        color: "#3B82F6", 
-        description: "Active community members"
-      },
-      { 
-        name: "Recipients", 
-        value: uniqueRecipients.size, 
-        color: "#10B981", 
-        description: "Individuals receiving aid"
-      }
-    ];
-    
-    // Default to placeholder values if no data available
-    if (uniqueVolunteers.size === 0 && uniqueRecipients.size === 0) {
-      chartData[0].value = 1;
-      chartData[1].value = 0;
+  // Create metrics data
+  const impactMetrics: MetricData[] = [
+    { 
+      name: "Total G$ Rewarded", 
+      value: `$${metrics.totalGDollars.toFixed(2)}`, 
+      color: "#F59E0B", 
+      icon: "💰" 
+    },
+    { 
+      name: "NFTs Rewarded", 
+      value: metrics.totalNFTs.toString(), 
+      color: "#8B5CF6", 
+      icon: "🏆" 
+    },
+    { 
+      name: "Food Distributed", 
+      value: `${metrics.totalFoodDistributed}kg`, 
+      color: "#EC4899", 
+      icon: "🍲" 
+    },
+    { 
+      name: "Meals Provided", 
+      value: metrics.totalMealsProvided.toLocaleString(), 
+      color: "#F97316", 
+      icon: "🍽️" 
+    },
+    { 
+      name: "Waste Reduced", 
+      value: `${metrics.totalWasteReduced}kg`, 
+      color: "#84CC16", 
+      icon: "♻️" 
     }
-    
-    setParticipationData(chartData);
-    
-    // Create metrics data
-    const metrics: MetricData[] = [
-      { 
-        name: "Total G$ Rewarded", 
-        value: `$${totalGDollars.toFixed(2)}`, 
-        color: "#F59E0B", 
-        icon: "💰" 
-      },
-      { 
-        name: "NFTs Rewarded", 
-        value: totalNFTs.toString(), 
-        color: "#8B5CF6", 
-        icon: "🏆" 
-      },
-      { 
-        name: "Food Distributed", 
-        value: `${totalFoodDistributed}kg`, 
-        color: "#EC4899", 
-        icon: "🍲" 
-      },
-      { 
-        name: "Meals Provided", 
-        value: totalMealsProvided.toLocaleString(), 
-        color: "#F97316", 
-        icon: "🍽️" 
-      },
-      { 
-        name: "Waste Reduced", 
-        value: `${totalWasteReduced}kg`, 
-        color: "#84CC16", 
-        icon: "♻️" 
-      }
-    ];
-    
-    setImpactMetrics(metrics);
-    
-    // Create recent activities data - getting the 3 most recent activities
-    const sortedActivities = [...activities].sort((a, b) => 
-      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-    );
-    
-    const recent: RecentActivity[] = sortedActivities.slice(0, 3).map(activity => {
-      // Determine color based on activity type
-      let color = "#6B7280"; // Default gray
-      if (activity.event.activityType === 'food_sorting') {
-        color = "#3B82F6"; // Blue
-      } else if (activity.event.activityType === 'food_distribution') {
-        color = "#10B981"; // Green
-      } else if (activity.event.activityType === 'food_pickup') {
-        color = "#8B5CF6"; // Purple
-      }
-      
-      // Format date
-      const date = new Date(activity.timestamp);
-      const isToday = new Date().toDateString() === date.toDateString();
-      const isYesterday = new Date(Date.now() - 86400000).toDateString() === date.toDateString();
-      
-      let timeText = date.toLocaleDateString('en-US', { 
-        month: 'short', 
-        day: 'numeric', 
-        year: 'numeric' 
-      });
-      
-      if (isToday) {
-        timeText = `Today, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-      } else if (isYesterday) {
-        timeText = `Yesterday, ${date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`;
-      }
-      
-      // Create readable title based on activity type
-      let title = activity.event.title;
-      if (!title && activity.event.activityType) {
-        const activityType = activity.event.activityType.replace('_', ' ');
-        title = activityType.charAt(0).toUpperCase() + activityType.slice(1) + " Activity";
-      }
-      
-      return {
-        title,
-        time: timeText,
-        location: activity.event.location || "Unknown location",
-        color
-      };
-    });
-    
-    // If no recent activities, add placeholder
-    if (recent.length === 0) {
-      recent.push({
-        title: "No recent activities",
-        time: "N/A",
-        location: "N/A",
-        color: "#6B7280"
-      });
-    }
-    
-    setRecentActivities(recent);
-  };
+  ];
 
-  const onPieEnter = (_: any, index: number) => {
-    setActiveIndex(index);
-  };
-
-  const renderActiveShape = (props: any) => {
-    const { cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
-  
-    return (
-      <g>
-        <text x={cx} y={cy - 20} dy={8} textAnchor="middle" fill={fill} fontSize={windowWidth < 768 ? 16 : 24} fontWeight="bold">
-          {payload.name}
-        </text>
-        <text x={cx} y={cy + 10} textAnchor="middle" fill="#666" fontSize={windowWidth < 768 ? 14 : 18}>
-          {value} People
-        </text>
-        <text x={cx} y={cy + 35} textAnchor="middle" fill="#999" fontSize={windowWidth < 768 ? 12 : 14}>
-          {(percent * 100).toFixed(0)}% of Total
-        </text>
-        <Sector
-          cx={cx}
-          cy={cy}
-          innerRadius={innerRadius}
-          outerRadius={outerRadius + 8}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          fill={fill}
-        />
-        <Sector
-          cx={cx}
-          cy={cy}
-          startAngle={startAngle}
-          endAngle={endAngle}
-          innerRadius={outerRadius + 10}
-          outerRadius={outerRadius + 15}
-          fill={fill}
-        />
-      </g>
-    );
-  };
-
-  // Calculate key insights based on actual data
+  // Calculate key insights
   const getKeyInsights = () => {
-    if (participationData.length < 2 || participationData[0].value === 0 || participationData[1].value === 0) {
+    if (metrics.uniqueVolunteers === 0 || metrics.uniqueRecipients === 0) {
       return [
         "Not enough data to generate insights yet",
         "Start recording activities to see community impact",
@@ -324,13 +98,11 @@ export default function ImpactDashboard() {
       ];
     }
     
-    const volunteers = participationData[0].value;
-    const recipients = participationData[1].value;
-    const ratio = (recipients / volunteers).toFixed(2);
+    const ratio = (metrics.uniqueRecipients / metrics.uniqueVolunteers).toFixed(2);
     
-    // Calculate month-over-month growth if possible
+    // Calculate month-over-month growth
     const lastMonthActivities = activities.filter(a => {
-      const date = new Date(a.timestamp);
+      const date = new Date(a.date);
       const now = new Date();
       const lastMonth = new Date();
       lastMonth.setMonth(now.getMonth() - 1);
@@ -338,7 +110,7 @@ export default function ImpactDashboard() {
     });
     
     const twoMonthsAgoActivities = activities.filter(a => {
-      const date = new Date(a.timestamp);
+      const date = new Date(a.date);
       const lastMonth = new Date();
       const twoMonthsAgo = new Date();
       lastMonth.setMonth(lastMonth.getMonth() - 1);
@@ -352,7 +124,7 @@ export default function ImpactDashboard() {
     }
     
     return [
-      `We have a ${volunteers}:${recipients} ratio of volunteers to recipients`,
+      `We have a ${metrics.uniqueVolunteers}:${metrics.uniqueRecipients} ratio of volunteers to recipients`,
       `Each volunteer helps approximately ${ratio} recipients on average`,
       growthRate !== 0 
         ? `Community engagement has ${growthRate > 0 ? 'increased' : 'decreased'} by ${Math.abs(growthRate)}% compared to last month`
@@ -361,7 +133,7 @@ export default function ImpactDashboard() {
   };
 
   // Loading state
-  if (loading) {
+  if (isLoading) {
     return (
       <div className="w-full bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-8 flex items-center justify-center">
         <div className="text-center">
@@ -379,7 +151,7 @@ export default function ImpactDashboard() {
         <div className="text-center max-w-md mx-auto p-6 bg-white rounded-xl shadow-md">
           <div className="text-red-500 text-5xl mb-4">⚠️</div>
           <h2 className="text-2xl font-bold text-gray-800 mb-2">Unable to Load Data</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <p className="text-gray-600 mb-4">Failed to load impact data. Please try again later.</p>
           <button 
             onClick={() => window.location.reload()} 
             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
@@ -397,107 +169,77 @@ export default function ImpactDashboard() {
   return (
     <div className="w-full bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <header className="mb-10 text-center">
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">Community Impact Dashboard</h1>
-          <p className="text-lg text-gray-600 max-w-3xl mx-auto">
-            Tracking our collective efforts to reduce food waste and support communities in need
-          </p>
+        <header className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900">Impact Dashboard</h1>
+          <p className="text-gray-600 mt-2">Track community impact and engagement</p>
         </header>
 
+        {/* Key Insights */}
+        <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Key Insights</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {keyInsights.map((insight, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-md p-6">
+                <p className="text-gray-700">{insight}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column: Chart */}
-          <div className="lg:col-span-2 bg-white rounded-2xl shadow-md p-6 md:p-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-6">Community Participation</h2>
-            
-            <div className="h-80 w-full mb-6">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    activeIndex={activeIndex}
-                    activeShape={renderActiveShape}
-                    data={participationData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={windowWidth < 768 ? 60 : 80}
-                    outerRadius={windowWidth < 768 ? 80 : 110}
-                    fill="#8884d8"
-                    dataKey="value"
-                    onMouseEnter={onPieEnter}
-                    paddingAngle={3}
-                  >
-                    {participationData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} stroke="#fff" strokeWidth={2} />
-                    ))}
-                  </Pie>
-                  <Tooltip 
-                    formatter={(value, name, props) => [`${value} People`, name]}
-                    contentStyle={{ 
-                      backgroundColor: '#fff', 
-                      borderRadius: '8px', 
-                      padding: '10px 14px',
-                      boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-                    }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
+          {/* Left Column - Participation Chart */}
+          <div className="lg:col-span-2 space-y-8">
+            {/* Participation Chart */}
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Community Participation</h2>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      activeIndex={activeIndex}
+                      activeShape={renderActiveShape as any}
+                      data={participationData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      paddingAngle={5}
+                      dataKey="value"
+                      onMouseEnter={(_, index) => setActiveIndex(index)}
+                    >
+                      {participationData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                    <Legend />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-            
-            {/* Legend & Descriptions */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-8">
-              {participationData.map((entry, index) => (
-                <div key={index} className="flex items-start space-x-3">
-                  <div className={`w-5 h-5 rounded-full mt-1`} style={{ backgroundColor: entry.color }}></div>
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{entry.name}: {entry.value}</h3>
-                    <p className="text-sm text-gray-600">{entry.description}</p>
+
+            {/* Impact Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {impactMetrics.map((metric, index) => (
+                <div key={index} className="bg-white rounded-xl shadow-md p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-gray-500">{metric.name}</p>
+                      <p className="text-2xl font-bold mt-1" style={{ color: metric.color }}>
+                        {metric.value}
+                      </p>
+                    </div>
+                    <span className="text-3xl">{metric.icon}</span>
                   </div>
                 </div>
               ))}
             </div>
-            
-            <div className="mt-8 pt-6 border-t border-gray-200">
-              <h3 className="text-xl font-semibold text-gray-800 mb-3">Key Insights</h3>
-              <ul className="space-y-2">
-                {keyInsights.map((insight, index) => (
-                  <li key={index} className="flex items-start space-x-2">
-                    <span className="text-blue-500">•</span>
-                    <span className="text-gray-700">{insight}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
           </div>
 
-          {/* Right Column: Metrics */}
-          <div className="lg:col-span-1 space-y-6">
-            <div className="bg-white rounded-2xl shadow-md p-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Impact Metrics</h2>
-              
-              <div className="space-y-4">
-                {impactMetrics.map((metric, index) => (
-                  <div 
-                    key={index} 
-                    className="flex justify-between items-center p-4 rounded-xl transition-all hover:shadow-md"
-                    style={{ backgroundColor: `${metric.color}10` }}  // 10% opacity of the color
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-white"
-                        style={{ backgroundColor: metric.color }}
-                      >
-                        <span className="text-lg">{metric.icon}</span>
-                      </div>
-                      <span className="font-medium text-gray-800">{metric.name}</span>
-                    </div>
-                    <span className="text-xl font-bold" style={{ color: metric.color }}>
-                      {metric.value}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            {/* Recent Activity Card */}
+          {/* Right Column - Recent Activity */}
+          <div className="space-y-8">
             <div className="bg-white rounded-2xl shadow-md p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Activity</h2>
               
@@ -509,15 +251,75 @@ export default function ImpactDashboard() {
                   </div>
                 ))}
               </div>
-              <Link href="/admin/activity" >
-              <button className="mt-6 w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-800 font-medium transition-colors">
-                View All Activities
-              </button>
+              <Link href="/admin/activity">
+                <button className="mt-6 w-full py-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-800 font-medium transition-colors">
+                  View All Activities
+                </button>
               </Link>
             </div>
           </div>
         </div>
       </div>
     </div>
+  );
+}
+
+// Custom active shape for the pie chart
+function renderActiveShape(props: ActiveShapeProps) {
+  const RADIAN = Math.PI / 180;
+  const { cx, cy, midAngle, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent, value } = props;
+  const sin = Math.sin(-RADIAN * midAngle);
+  const cos = Math.cos(-RADIAN * midAngle);
+  const mx = cx + (outerRadius + 30) * cos;
+  const my = cy + (outerRadius + 30) * sin;
+  const ex = mx + (cos >= 0 ? 1 : -1) * 22;
+  const ey = my;
+  const textAnchor = cos >= 0 ? 'start' : 'end';
+
+  return (
+    <g>
+      <text x={cx} y={cy} dy={8} textAnchor="middle" fill={fill} className="text-lg font-bold">
+        {payload.name}
+      </text>
+      <Sector
+        cx={cx}
+        cy={cy}
+        innerRadius={innerRadius}
+        outerRadius={outerRadius}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        fill={fill}
+      />
+      <Sector
+        cx={cx}
+        cy={cy}
+        startAngle={startAngle}
+        endAngle={endAngle}
+        innerRadius={outerRadius + 6}
+        outerRadius={outerRadius + 10}
+        fill={fill}
+      />
+      <path d={`M${mx},${my}L${ex},${ey}`} stroke={fill} fill="none" />
+      <circle cx={ex} cy={ey} r={2} fill={fill} stroke="none" />
+      <text
+        x={ex + (cos >= 0 ? 1 : -1) * 12}
+        y={ey}
+        textAnchor={textAnchor}
+        fill="#333"
+        className="text-sm"
+      >
+        {`${value} ${payload.description}`}
+      </text>
+      <text
+        x={ex + (cos >= 0 ? 1 : -1) * 12}
+        y={ey}
+        dy={18}
+        textAnchor={textAnchor}
+        fill="#999"
+        className="text-xs"
+      >
+        {`(${(percent * 100).toFixed(0)}%)`}
+      </text>
+    </g>
   );
 }

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { createEvent } from '@/services/api'; // Using the API endpoint directly
 import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Event } from '@/hooks/useEvents'; // Import the Event type
 
 type ActivityType = 'food_sorting' | 'food_distribution' | 'food_pickup';
 
@@ -29,9 +30,10 @@ interface CreateEventData {
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onEventCreated?: (event: Event) => void; // Use the Event type instead of any
 }
 
-export default function CreateEventModal({ isOpen, onClose }: CreateEventModalProps) {
+export default function CreateEventModal({ isOpen, onClose, onEventCreated }: CreateEventModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<CreateEventData>({
     title: '',
@@ -62,9 +64,17 @@ export default function CreateEventModal({ isOpen, onClose }: CreateEventModalPr
         date: combinedDateTime
       };
 
-      // Send the request
-      await createEvent(requestData);
+      // Send the request and get the response
+      const response = await createEvent(requestData);
+      const createdEvent = response.data; // Assuming the API returns the created event
+      
       toast.success('Event created successfully!');
+      
+      // Call the callback with the created event
+      if (onEventCreated) {
+        onEventCreated(createdEvent);
+      }
+      
       onClose();
     } catch (error) {
       toast.error('Failed to create event. Please try again.');

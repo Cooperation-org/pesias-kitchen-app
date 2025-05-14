@@ -1,422 +1,136 @@
 "use client"
-import { useState, useMemo } from "react";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import { useActivities } from '@/hooks/useActivities';
-import { useRewards } from '@/hooks/useRewards';
-import { useNFTs } from '@/hooks/useNFTs';
-import { useAuth } from '@/providers/web3Provider';
-import { getEventById } from '@/services/api';
-import { formatDate, formatTime } from '@/utils/event-utils';
+
+import { useState, useCallback, useMemo } from "react"
+import useSWR from 'swr'
+import { Activity, NFT, Reward } from '@/types/api'
+import { getUserActivities, getRewardsHistory, getUserNFTs } from "@/services/api"
+import { StatsCard } from './dashboard/StatsCard'
+import { ActivityList } from './dashboard/ActivityList'
+import { EventModal } from './dashboard/EventModal'
+import { LoadingSkeleton } from './dashboard/LoadingSkeleton'
+import { ErrorState } from './dashboard/ErrorState'
 
 
-// Activity type definition
-interface Activity {
-  _id: string;
-  title: string;
-  activityType: string;
-  location: string;
-  date: string;
-  time: string;
-  amount: string;
-  hasNFT: boolean;
-  timestamp?: string;
-  quantity: number;
-}
+// Custom hook for fetching dashboard data
+function useDashboardData() {
+  const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities } = useSWR(
+    'user-activities',
+    async () => {
+      const response = await getUserActivities()
+      return response.data // The API returns ActivitiesResponse directly
+    },
+    { 
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 5000
+    }
+  );
 
-interface EventDetails {
-  title: string;
-  activityType: string;
-  location: string;
-}
+  const { data: rewardsData, error: rewardsError, isLoading: isLoadingRewards } = useSWR(
+    'user-rewards',
+    () => getRewardsHistory(), // RewardsResponse is already the data we want
+    { 
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 5000
+    }
+  );
 
-interface RawActivity {
-  _id: string;
-  id?: string;
-  event?: EventDetails | string;
-  nftId?: string;
-  timestamp?: string;
-  quantity?: number;
-}
+  const { data: nftsData, error: nftsError, isLoading: isLoadingNFTs } = useSWR(
+    'user-nfts',
+    () => getUserNFTs(), // NFTsResponse is already the data we want
+    { 
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 5000
+    }
+  );
 
-// Reward type for displaying in the dashboard
-interface Reward {
-  activityId: string;
-  nftId: string;
-  activityType: string;
-  location: string;
-  date: string;
-  rewardAmount: number;
-}
+  const isLoading = isLoadingActivities || isLoadingRewards || isLoadingNFTs;
+  const error = activitiesError || rewardsError || nftsError;
 
-// NFT interface
-interface NFT {
-  id: string;
-  name: string;
-  imageUrl: string;
-  activityType: string;
-  location: string;
-  quantity: number;
-  date: string;
-  txHash: string;
-}
+  const activities = useMemo(() => {
+    if (!activitiesData) return [];
+    return activitiesData.map((activity: Activity) => {
+      const timestamp = new Date(activity.timestamp);
+      const date = timestamp.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      const time = timestamp.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
 
-interface ActivitiesResponse {
-  data: RawActivity[];
+      return {
+        ...activity,
+        title: typeof activity.event === 'object' ? activity.event.title : 'Activity',
+        activityType: typeof activity.event === 'object' ? activity.event.activityType : 'other',
+        location: typeof activity.event === 'object' ? activity.event.location : 'Unknown Location',
+        date,
+        time,
+        hasNFT: nftsData?.nfts?.some((nft: NFT) => nft.activityId === activity._id) || false,
+        amount: rewardsData?.rewards?.find((r: Reward) => r.activityId === activity._id)?.rewardAmount || 0
+      };
+    });
+  }, [activitiesData, nftsData, rewardsData]);
+
+  const stats = useMemo(() => ({
+    activitiesCount: activities.length,
+    goodDollarsEarned: rewardsData?.totalRewards || 0,
+    nftCount: nftsData?.nfts?.length || 0
+  }), [activities.length, rewardsData?.totalRewards, nftsData?.nfts?.length]);
+
+  return {
+    activities,
+    stats,
+    isLoading,
+    error: error ? 'Failed to load dashboard data' : null
+  };
 }
 
 export default function DashboardClient() {
-  const { activities, isLoading: activitiesLoading } = useActivities();
-  const { rewards, totalRewards, isLoading: rewardsLoading } = useRewards();
-  const { nfts, isLoading: nftsLoading } = useNFTs();
-  
-  const [showEventModal, setShowEventModal] = useState(false);
-  const [selectedActivity, setSelectedActivity] = useState(null);
-  const [sortBy, setSortBy] = useState("date");
-  const [filterType, setFilterType] = useState("all");
-  
-  const isLoading = activitiesLoading || rewardsLoading || nftsLoading;
-  const nftCount = nfts.length;
-  const activitiesCount = activities.length;
+  const [showEventModal, setShowEventModal] = useState(false)
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
+  const { activities, stats, isLoading, error } = useDashboardData()
 
-  // Fetch all data: activities, rewards, and NFTs
-  const processedActivities = useMemo(() => {
-    return activities.map(activity => {
-      // Process activity data
-      const activityType = activity.event?.activityType || 'default';
-      
-      // Format the date/time
-      const timestamp = activity.timestamp ? new Date(activity.timestamp) : new Date();
-      const formattedDate = formatDate(timestamp);
-      const formattedTime = formatTime(timestamp);
-      
-      // Check if this activity has an NFT
-      const hasNFT = !!activity.nftId || !!activity.nftMinted;
-      
-      // Return formatted activity
-      return {
-        ...activity,
-        title: activity.event?.title || 'Activity',
-        activityType,
-        location: activity.event?.location || 'Unknown Location',
-        date: formattedDate,
-        time: formattedTime,
-        timestamp,
-        amount: activity.rewardAmount || '0',
-        hasNFT
-      };
-    });
-  }, [activities]);
-  
-  const handleActivityClick = (activity: Activity) => {
-    setSelectedActivity(activity);
-    setShowEventModal(true);
-  };
-  
-  const closeEventModal = () => {
-    setShowEventModal(false);
-    setSelectedActivity(null);
-  };
-  
-  // Loading skeleton component
-  const LoadingSkeleton = () => (
-    <div className="animate-pulse">
-      <div className="h-24 bg-gray-200 rounded-lg mb-4"></div>
-      <div className="h-10 bg-gray-200 rounded-lg mb-4"></div>
-      <div className="h-64 bg-gray-200 rounded-lg"></div>
-    </div>
-  );
-  
+  const handleActivityClick = useCallback((activity: Activity) => {
+    setSelectedActivity(activity)
+    setShowEventModal(true)
+  }, [])
+
+  const closeEventModal = useCallback(() => {
+    setShowEventModal(false)
+    setSelectedActivity(null)
+  }, [])
+
   if (isLoading) {
-    return (
-      <div className="min-h-screen bg-white p-4">
-        <LoadingSkeleton />
-      </div>
-    );
+    return <LoadingSkeleton />
   }
-  
+
   if (error) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
-        <div className="text-red-500 mb-4">
-          <svg className="w-12 h-12 mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </div>
-        <p className="text-center text-gray-700">{error}</p>
-        <button 
-          onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
-        >
-          Try Again
-        </button>
-      </div>
-    );
+    return <ErrorState error={error} />
   }
-  
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
-      {/* Header */}
-      
-    
       {/* Stats Card */}
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.1 }}
-        className="mx-4 mt-4 bg-white rounded-lg shadow-lg overflow-hidden"
-      >
-        <div className="p-6 flex justify-between">
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="flex flex-col items-center"
-          >
-            <div className="bg-yellow-100 p-3 rounded-full mb-3">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M14 8.5H10C9.45 8.5 9 8.95 9 9.5V10C9 10.55 9.45 11 10 11H14C14.55 11 15 10.55 15 10V9.5C15 8.95 14.55 8.5 14 8.5Z" fill="#FFD54F"/>
-                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM16.25 16H7.75C7.34 16 7 15.66 7 15.25C7 14.84 7.34 14.5 7.75 14.5H16.25C16.66 14.5 17 14.84 17 15.25C17 15.66 16.66 16 16.25 16ZM16.25 12.5H7.75C7.34 12.5 7 12.16 7 11.75C7 11.34 7.34 11 7.75 11H16.25C16.66 11 17 11.34 17 11.75C17 12.16 16.66 12.5 16.25 12.5ZM16.25 9H7.75C7.34 9 7 8.66 7 8.25C7 7.84 7.34 7.5 7.75 7.5H16.25C16.66 7.5 17 7.84 17 8.25C17 8.66 16.66 9 16.25 9Z" fill="#FFD54F"/>
-              </svg>
-            </div>
-            <div className="text-2xl font-bold">{activitiesCount}</div>
-            <div className="text-sm text-gray-500">Activities</div>
-          </motion.div>
-          
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="flex flex-col items-center"
-          >
-            <div className="bg-blue-100 p-3 rounded-full mb-3">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="#2196F3"/>
-                <path d="M12.5 7H11V13L16.2 16.2L17 14.9L12.5 12.2V7Z" fill="#2196F3"/>
-              </svg>
-            </div>
-            <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.5, duration: 1 }}
-              className="text-2xl font-bold"
-            >
-              {goodDollarsEarned}
-            </motion.div>
-            <div className="text-sm text-gray-500">G$ earned</div>
-          </motion.div>
-          
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="flex flex-col items-center"
-          >
-            <div className="bg-green-100 p-3 rounded-full mb-3">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z" fill="#4CAF50"/>
-              </svg>
-            </div>
-            <div className="text-2xl font-bold">{nftCount}</div>
-            <div className="text-sm text-gray-500">NFTs Minted</div>
-          </motion.div>
-        </div>
-      </motion.div>
-      
+      <StatsCard stats={stats} />
+
       {/* Recent Activities Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="mx-4 mt-6 mb-8"
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold">Recent Activities</h2>
-          <Link href="/activities" className="text-blue-500 text-sm flex items-center">
-            See all
-            <svg className="w-4 h-4 ml-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8.59 16.59L13.17 12L8.59 7.41L10 6L16 12L10 18L8.59 16.59Z" fill="currentColor"/>
-            </svg>
-          </Link>
-        </div>
-        
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <AnimatePresence>
-            {activities.length > 0 ? (
-              activities.slice(0, 5).map((activity, index) => (
-                <motion.div 
-                  key={activity._id || index}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3, delay: index * 0.1 }}
-                  className={`p-4 ${index !== activities.slice(0, 5).length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50 transition-colors cursor-pointer`}
-                  onClick={() => handleActivityClick(activity)}
-                >
-                  <div className="flex justify-between items-center mb-2">
-                    <div className="flex items-center">
-                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
-                        activity.activityType === 'food_sorting' ? 'bg-green-100 text-green-500' : 
-                        activity.activityType === 'food_distribution' ? 'bg-blue-100 text-blue-500' : 
-                        'bg-purple-100 text-purple-500'
-                      }`}>
-                        {activity.hasNFT ? (
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM10.67 18L5 12.33L7.13 10.21L10.67 13.75L16.88 7.54L19 9.66L10.67 18Z" fill="currentColor"/>
-                          </svg>
-                        ) : (
-                          activity.activityType === 'food_sorting' ? (
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z" fill="currentColor"/>
-                            </svg>
-                          ) : (
-                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-3.54-4.46a1 1 0 0 1 1.42-1.42 3 3 0 0 0 4.24 0 1 1 0 0 1 1.42 1.42 5 5 0 0 1-7.08 0zM9 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fill="currentColor"/>
-                            </svg>
-                          )
-                        )}
-                      </div>
-                      <div>
-                        <h3 className="font-medium text-gray-800">{activity.title || "Activity"}</h3>
-                        <p className="text-xs text-gray-500">{activity.date} at {activity.time}</p>
-                      </div>
-                    </div>
-                    <div className="flex flex-col items-end">
-                      <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
-                        {activity.amount} G$
-                      </div>
-                      {activity.hasNFT && (
-                        <span className="text-xs text-green-600 mt-1 flex items-center">
-                          <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
-                          </svg>
-                          NFT Minted
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex justify-between text-xs text-gray-500 mt-2">
-                    <div>
-                      <span className="inline-flex items-center">
-                        <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
-                        </svg>
-                        {activity.location}
-                      </span>
-                    </div>
-                    <div>
-                      <span className={`px-2 py-1 rounded-full ${
-                        activity.activityType === 'food_sorting' ? 'bg-green-50 text-green-600' : 
-                        activity.activityType === 'food_distribution' ? 'bg-blue-50 text-blue-600' : 
-                        'bg-purple-50 text-purple-600'
-                      }`}>
-                        {activity.activityType?.replace('_', ' ')}
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))
-            ) : (
-              <motion.div 
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="p-8 text-center text-gray-500"
-              >
-                <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M11 7H13V9H11V7ZM11 11H13V17H11V11ZM12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM12 20C7.59 20 4 16.41 4 12C4 7.59 7.59 4 12 4C16.41 4 20 7.59 20 12C20 16.41 16.41 20 12 20Z" fill="currentColor"/>
-                </svg>
-                <p>No activities recorded yet</p>
-                <motion.button 
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
-                >
-                  Scan QR to get started
-                </motion.button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      </motion.div>
-      
-      {/* Event Details Modal - Only if an activity is selected */}
+      <ActivityList 
+        activities={activities}
+        onActivityClick={handleActivityClick}
+      />
+
+      {/* Event Details Modal */}
       {showEventModal && selectedActivity && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full relative overflow-hidden shadow-xl">
-            {/* Modal header */}
-            <div className={`bg-gradient-to-r ${
-              selectedActivity.activityType === 'food_sorting' ? 'from-green-500 to-green-600' : 
-              selectedActivity.activityType === 'food_distribution' ? 'from-blue-500 to-blue-600' : 
-              'from-purple-500 to-purple-600'
-            } h-32 p-6`}>
-              <button 
-                onClick={closeEventModal}
-                className="absolute top-4 right-4 bg-white/20 rounded-full p-2"
-              >
-                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </button>
-              <h3 className="text-xl font-bold text-white mt-6">{selectedActivity.title}</h3>
-            </div>
-            
-            {/* Modal content */}
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4">
-                <div className="flex items-center">
-                  <div className="bg-blue-100 p-2 rounded-full">
-                    <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 8V12L15 15M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                  </div>
-                  <span className="ml-2 text-sm">{selectedActivity.date} • {selectedActivity.time}</span>
-                </div>
-                <div className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-                  {selectedActivity.amount} G$
-                </div>
-              </div>
-              
-              <div className="border-t border-gray-100 pt-4">
-                <h4 className="font-medium mb-2">Location</h4>
-                <div className="flex items-center text-gray-600 mb-4">
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2C8.13 2 5 5.13 5 9C5 13.17 9.42 18.92 11.24 21.11C11.64 21.59 12.37 21.59 12.77 21.11C14.58 18.92 19 13.17 19 9C19 5.13 15.87 2 12 2ZM12 11.5C10.62 11.5 9.5 10.38 9.5 9C9.5 7.62 10.62 6.5 12 6.5C13.38 6.5 14.5 7.62 14.5 9C14.5 10.38 13.38 11.5 12 11.5Z" fill="currentColor"/>
-                  </svg>
-                  {selectedActivity.location}
-                </div>
-                
-                <h4 className="font-medium mb-2">Activity Details</h4>
-                <div className="bg-gray-50 p-4 rounded-lg mb-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-500">Activity Type</span>
-                    <span className="font-medium capitalize">{selectedActivity.activityType?.replace('_', ' ')}</span>
-                  </div>
-                  <div className="flex justify-between mb-2">
-                    <span className="text-gray-500">Quantity</span>
-                    <span className="font-medium">{selectedActivity.quantity}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">NFT Status</span>
-                    {selectedActivity.hasNFT ? (
-                      <span className="font-medium text-green-600">Minted</span>
-                    ) : (
-                      <span className="font-medium text-yellow-600">Available to Mint</span>
-                    )}
-                  </div>
-                </div>
-                
-                <div className="flex space-x-3">
-                  {!selectedActivity.hasNFT && (
-                    <button className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium">
-                      Mint NFT
-                    </button>
-                  )}
-                  <button 
-                    onClick={closeEventModal}
-                    className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <EventModal
+          activity={selectedActivity}
+          onClose={closeEventModal}
+        />
       )}
     </div>
-  );
+  )
 }

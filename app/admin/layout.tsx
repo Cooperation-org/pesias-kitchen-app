@@ -4,23 +4,31 @@ import Link from "next/link";
 import { ConnectKitButton } from "connectkit";
 import { usePathname } from 'next/navigation';
 import CreateEventModal from '@/components/CreateEventModal';
+import "../globals.css";
 
-export default function DashboardLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+
+  const handleEventCreated = (event: any) => {
+    // Close the modal
+    setShowCreateModal(false);
+    // Refresh the page to show the new event
+    window.location.reload();
+  };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header with menu and notifications */}
-      <header className="p-4 flex justify-end items-center border-b border-gray-100 fixed w-full bg-white z-20">
+      <header className="p-4 flex justify-end items-center border-b border-gray-100 fixed w-full bg-white z-20 shadow-sm">
         <div className="flex items-center gap-4">
           {/* Wallet Connection Button */}
           <ConnectKitButton.Custom>
-            {({ isConnected, isConnecting, show, hide, address, ensName }) => {
+            {({ isConnected, isConnecting, show, address, ensName }) => {
               return (
                 <button
                   onClick={show}
@@ -41,16 +49,20 @@ export default function DashboardLayout({
           </ConnectKitButton.Custom>
         </div>
       </header>
-      <main className="flex-1 pb-24 mt-[4rem]">{children}</main>
 
-      {/* Fixed bottom navigation with shadow effect on horizontal line */}
-      <div className="fixed bottom-0 left-0 right-0 z-10">
+      {/* Main content with proper spacing */}
+      <main className="flex-1 pb-24 mt-[4rem] px-4 sm:px-6 lg:px-8">
+        {children}
+      </main>
+
+      {/* Fixed bottom navigation with shadow effect */}
+      <div className="fixed bottom-0 left-0 right-0 z-10 bg-white">
         {/* Border with shadow effect */}
         <div className="h-px w-full bg-gradient-to-b from-gray-200 to-transparent shadow-sm"></div>
 
-        {/* Navigation container with increased height */}
-        <div className="bg-white py-4">
-          <div className="flex justify-around items-end">
+        {/* Navigation container */}
+        <div className="py-4">
+          <div className="flex justify-around items-end max-w-md mx-auto">
             {/* Home button */}
             <Link
               href="/dashboard"
@@ -62,7 +74,7 @@ export default function DashboardLayout({
                 viewBox="0 0 24 24"
                 fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="mb-2 text-gray-500"
+                className={`mb-2 ${pathname === "/dashboard" ? "text-yellow-400" : "text-gray-500"}`}
               >
                 <path
                   d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
@@ -72,11 +84,13 @@ export default function DashboardLayout({
                   strokeLinejoin="round"
                 />
               </svg>
-              <span className="text-xs text-gray-500">Home</span>
-              <div className="w-1 h-1 bg-gray-900 rounded-full mt-1"></div>
+              <span className={`text-xs ${pathname === "/dashboard" ? "text-yellow-400" : "text-gray-500"}`}>Home</span>
+              {pathname === "/dashboard" && (
+                <div className="w-1 h-1 bg-yellow-400 rounded-full mt-1"></div>
+              )}
             </Link>
 
-            {/* Activities button */}
+            {/* Events button */}
             <Link
               href="/admin/event"
               className="flex flex-col items-center w-16"
@@ -90,7 +104,7 @@ export default function DashboardLayout({
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="mb-2 text-gray-500"
+                className={`mb-2 ${pathname === "/admin/event" ? "text-yellow-400" : "text-gray-500"}`}
               >
                 <path d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3z" />
                 <path
@@ -99,20 +113,19 @@ export default function DashboardLayout({
                   strokeDasharray="0.5 3"
                 />
               </svg>
-              <span className="text-xs text-gray-500">Events</span>
+              <span className={`text-xs ${pathname === "/admin/event" ? "text-yellow-400" : "text-gray-500"}`}>Events</span>
+              {pathname === "/admin/event" && (
+                <div className="w-1 h-1 bg-yellow-400 rounded-full mt-1"></div>
+              )}
             </Link>
 
-            {/* Centered QR Code Button with inset effect */}
-            <div className="flex flex-col items-center -mt-10 relative cursor-pointer" onClick={() => setIsModalOpen(true)}>
-              {/* Recessed area/inset effect */}
+            {/* Centered QR Code Button */}
+            <div className="flex flex-col items-center -mt-10 relative cursor-pointer" onClick={() => setShowCreateModal(true)}>
               <div className="absolute -top-5 w-24 h-24 bg-gray-100 rounded-full shadow-inner flex items-center justify-center">
-                {/* QR Code Button in center of recessed area */}
                 <div className="relative">
-                  {/* White outer glow/shadow effect */}
                   <button
                     className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center z-10 shadow-lg hover:bg-yellow-500 transition-colors"
                   >
-                    {/* QR Code SVG */}
                     <svg
                       width="76"
                       height="76"
@@ -122,11 +135,7 @@ export default function DashboardLayout({
                     >
                       <g filter="url(#filter0_d_0_1)">
                         <circle cx="38" cy="42" r="31" />
-                        <circle
-                          cx="38"
-                          cy="42"
-                          r="32.5"
-                        />
+                        <circle cx="38" cy="42" r="32.5" />
                       </g>
                       <path
                         d="M49.7732 42.304H39.5492V52.672H35.4692V42.304H25.2932V38.608H35.4692V28.192H39.5492V38.608H49.7732V42.304Z"
@@ -141,10 +150,7 @@ export default function DashboardLayout({
                           height="76"
                           filterUnits="userSpaceOnUse"
                         >
-                          <feFlood
-                            floodOpacity="0"
-                            result="BackgroundImageFix"
-                          />
+                          <feFlood floodOpacity="0" result="BackgroundImageFix" />
                           <feColorMatrix
                             in="SourceAlpha"
                             type="matrix"
@@ -175,16 +181,12 @@ export default function DashboardLayout({
                   </button>
                 </div>
               </div>
-
-              <span
-                className="text-xs text-gray-500 mt-16"
-                style={{ visibility: "hidden" }}
-              >
+              <span className="text-xs text-gray-500 mt-16" style={{ visibility: "hidden" }}>
                 Scan
               </span>
             </div>
 
-            {/* Rewards button */}
+            {/* Activities button */}
             <Link
               href="/admin/activity"
               className="flex flex-col items-center w-16"
@@ -198,15 +200,21 @@ export default function DashboardLayout({
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="mb-2 text-gray-500"
+                className={`mb-2 ${pathname === "/admin/activity" ? "text-yellow-400" : "text-gray-500"}`}
               >
                 <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <span className="text-xs text-gray-500">Activities</span>
+              <span className={`text-xs ${pathname === "/admin/activity" ? "text-yellow-400" : "text-gray-500"}`}>Activities</span>
+              {pathname === "/admin/activity" && (
+                <div className="w-1 h-1 bg-yellow-400 rounded-full mt-1"></div>
+              )}
             </Link>
 
             {/* NFTs button */}
-            <Link href="/nfts" className="flex flex-col items-center w-16">
+            <Link 
+              href="/admin/nfts" 
+              className="flex flex-col items-center w-16"
+            >
               <svg
                 width="24"
                 height="24"
@@ -216,11 +224,14 @@ export default function DashboardLayout({
                 strokeWidth="1.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                className="mb-2 text-gray-500"
+                className={`mb-2 ${pathname === "/admin/nfts" ? "text-yellow-400" : "text-gray-500"}`}
               >
                 <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
               </svg>
-              <span className="text-xs text-gray-500">NFTs</span>
+              <span className={`text-xs ${pathname === "/admin/nfts" ? "text-yellow-400" : "text-gray-500"}`}>NFTs</span>
+              {pathname === "/admin/nfts" && (
+                <div className="w-1 h-1 bg-yellow-400 rounded-full mt-1"></div>
+              )}
             </Link>
           </div>
         </div>
@@ -228,8 +239,9 @@ export default function DashboardLayout({
 
       {/* Create Event Modal */}
       <CreateEventModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onEventCreated={handleEventCreated}
       />
     </div>
   );

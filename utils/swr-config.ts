@@ -1,5 +1,6 @@
 // utils/swr-config.ts
-import { getToken } from '@/services/authServices';
+import { mutate, MutatorCallback, MutatorOptions } from 'swr';
+import { getAuthHeaders } from '@/utils/api-client';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api';
 
@@ -44,7 +45,7 @@ const CACHE_TTL = 5 * 60 * 1000; // 5 minutes in milliseconds
 
 // Storage utility for caching
 const storage = {
-  get: (key: string) => {
+  get: (key: string): unknown => {
     if (typeof window === 'undefined') return null;
     
     try {
@@ -65,7 +66,7 @@ const storage = {
       return null;
     }
   },
-  set: (key: string, data: any, ttl = CACHE_TTL) => {
+  set: <T>(key: string, data: T, ttl = CACHE_TTL): void => {
     if (typeof window === 'undefined') return;
     
     try {
@@ -80,55 +81,161 @@ const storage = {
   }
 };
 
-// Enhanced fetcher with caching
-export const fetcher = async (url: string) => {
+// Add proper types for API responses
+export interface ApiResponse<T> {
+  data: T;
+  message?: string;
+  status?: number;
+}
+
+// Add cache TTL configuration per endpoint
+export const CACHE_TTL_CONFIG = {
+  EVENTS: 5 * 60 * 1000, // 5 minutes
+  USER_PROFILE: 30 * 60 * 1000, // 30 minutes
+  ACTIVITIES: 5 * 60 * 1000, // 5 minutes
+  NFTS: 10 * 60 * 1000, // 10 minutes
+  REWARDS: 5 * 60 * 1000, // 5 minutes
+  USERS: 5 * 60 * 1000, // 5 minutes
+} as const;
+
+// Add proper error types
+interface SWRError extends Error {
+  info?: {
+    message: string;
+    code?: string;
+  };
+  status?: number;
+}
+
+// Enhanced fetcher with proper typing and more logging
+export const fetcher = async <T>(url: string): Promise<T> => {
+  console.log('Fetcher called with URL:', url);
+  
   // Check cache first
   const cacheKey = `swr-cache:${url}`;
   const cachedData = storage.get(cacheKey);
   
   if (cachedData) {
-    // Return cached data immediately
-    return cachedData;
+    console.log('Using cached data for:', url);
+    return cachedData as T;
   }
   
-  // If not in cache, make the actual request
-  const token = getToken();
+  console.log('No cached data found, fetching from API:', url);
+  const headers = getAuthHeaders();
+  console.log('Request headers:', headers);
   
-  const headers: HeadersInit = {
-    'Content-Type': 'application/json',
-  };
-  
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  
-  const response = await fetch(url, { headers });
-  
-  if (!response.ok) {
-    const error = new Error('An error occurred while fetching the data.');
-    const data = await response.json().catch(() => null);
-    (error as any).info = data;
-    (error as any).status = response.status;
+  try {
+    console.log('Making fetch request to:', url);
+    const response = await fetch(url, { 
+      headers,
+      mode: 'cors' // Explicitly set CORS mode
+    });
+    
+    console.log('Fetch response status:', response.status);
+    
+    if (!response.ok) {
+      const error = new Error('An error occurred while fetching the data.') as SWRError;
+      const data = await response.json().catch(() => null);
+      console.error('Fetch error:', { status: response.status, data });
+      error.info = data;
+      error.status = response.status;
+      throw error;
+    }
+    
+    const data = await response.json();
+    console.log('Raw API response:', data);
+    console.log('Response structure:', {
+      isObject: typeof data === 'object',
+      keys: Object.keys(data),
+      hasDataProperty: 'data' in data,
+      dataType: typeof data.data,
+      isArray: Array.isArray(data.data)
+    });
+    
+    // Get the appropriate TTL for this endpoint
+    const endpoint = Object.entries(CACHE_TTL_CONFIG).find(([key]) => 
+      url.includes(key.toLowerCase())
+    );
+    const ttl = endpoint ? endpoint[1] : CACHE_TTL_CONFIG.EVENTS;
+    
+    // Cache the result with endpoint-specific TTL
+    storage.set(cacheKey, data, ttl);
+    
+    return data as T;
+  } catch (error) {
+    console.error('Fetch error:', error);
     throw error;
   }
-  
-  const data = await response.json();
-  
-  // Cache the result
-  storage.set(cacheKey, data);
-  
-  return data;
 };
 
-/**
- * SWR configuration options with reasonable defaults
- */
+// Error transformation utility
+const transformError = (error: SWRError): { message: string; code?: string } => {
+  if (error.status === 401) {
+    return { message: 'Please log in to continue', code: 'UNAUTHORIZED' };
+  }
+  if (error.status === 403) {
+    return { message: 'You do not have permission to perform this action', code: 'FORBIDDEN' };
+  }
+  if (error.status === 404) {
+    return { message: 'The requested resource was not found', code: 'NOT_FOUND' };
+  }
+  if (error.info?.message) {
+    return { message: error.info.message, code: error.info.code };
+  }
+  return { message: 'An unexpected error occurred', code: 'UNKNOWN' };
+};
+
+// Cache invalidation helper
+export const invalidateCache = (key: string) => {
+  if (typeof window !== 'undefined') {
+    localStorage.removeItem(`swr-cache:${key}`);
+  }
+};
+
+// Add proper types for optimistic updates
+type OptimisticUpdateFn<T> = (current: T | undefined) => T;
+
+// Optimistic update helper with proper typing
+export const withOptimisticUpdate = <T>(
+  key: string,
+  updateFn: OptimisticUpdateFn<T>,
+  mutationFn: () => Promise<void>
+) => {
+  return async () => {
+    try {
+      await mutate(
+        key,
+        updateFn as MutatorCallback<T>,
+        { revalidate: false } as MutatorOptions
+      );
+      await mutationFn();
+      await mutate(key);
+      return true;
+    } catch (error: unknown) {
+      await mutate(key);
+      throw error;
+    }
+  };
+};
+
+// Consolidated SWR configuration
 export const swrConfig = {
   fetcher,
-  revalidateOnFocus: false, // Don't revalidate when window is focused
-  revalidateOnReconnect: true, // Revalidate when browser regains connection
-  refreshInterval: 0, // No polling by default
-  shouldRetryOnError: true, // Retry on error
-  errorRetryCount: 3, // Number of retries
-  dedupingInterval: 2000, // Dedupe requests in this time span
+  revalidateOnFocus: false,
+  revalidateIfStale: true,
+  revalidateOnReconnect: true,
+  errorRetryCount: 3,
+  dedupingInterval: 2000,
+  focusThrottleInterval: 5000,
+  loadingTimeout: 3000,
+  suspense: false,
+  onError: (error: SWRError, key: string) => {
+    console.error(`SWR Error for ${key}:`, error);
+    const transformedError = transformError(error);
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('swr-error', { 
+        detail: { message: transformedError.message, code: transformedError.code }
+      }));
+    }
+  }
 };
