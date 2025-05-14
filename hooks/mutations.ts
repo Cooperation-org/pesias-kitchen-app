@@ -20,7 +20,7 @@ const CACHE_KEYS = {
   ALL_ACTIVITIES: 'activities',
   NFTS: 'user-nfts',
   REWARDS: 'user-rewards'
-};
+} as const;
 
 // Join event with optimistic update
 export async function joinEventMutation(eventId: string, userId: string) {
@@ -257,7 +257,7 @@ export async function updateEventMutation(eventId: string, eventData: Partial<Ev
       async (current: EventsResponse | undefined) => {
         if (current?.data) {
           const updatedEvents = current.data.map((event: Event) => 
-            event._id === eventId || event.id === eventId
+            event._id === eventId
               ? { ...event, ...eventData }
               : event
           );
@@ -306,7 +306,7 @@ export async function deleteEventMutation(eventId: string) {
       async (current: EventsResponse | undefined) => {
         if (current?.data) {
           const filteredEvents = current.data.filter((event: Event) =>
-            event._id !== eventId && event.id !== eventId
+            event._id !== eventId
           );
           return { ...current, data: filteredEvents };
         }
@@ -385,7 +385,7 @@ export async function generateQRCodeMutation(eventId: string, qrCodeType: 'volun
       async (current: EventsResponse | undefined) => {
         if (current?.data) {
           const updatedEvents = current.data.map((event: Event) => 
-            event._id === eventId || event.id === eventId
+            event._id === eventId
               ? { ...event, hasQrCode: true }
               : event
           );
@@ -433,16 +433,18 @@ export async function batchMintNFTsMutation(activityIds: string[]) {
     }
     
     // Revalidate all related caches
-    mutate(CACHE_KEYS.USER_ACTIVITIES);
-    mutate(CACHE_KEYS.NFTS);
-    mutate(CACHE_KEYS.REWARDS);
+    await Promise.all([
+      mutate(CACHE_KEYS.USER_ACTIVITIES),
+      mutate(CACHE_KEYS.NFTS),
+      mutate(CACHE_KEYS.REWARDS)
+    ]);
     
     return {
       total: activityIds.length,
       successful: successCount,
       results
     };
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error batch minting NFTs:', error);
     toast.error('Failed to batch mint NFTs');
     
@@ -455,8 +457,8 @@ export async function batchMintNFTsMutation(activityIds: string[]) {
 }
 
 // Use this to refresh all caches after multiple operations
-export function refreshAllCaches() {
-  Object.values(CACHE_KEYS).forEach(key => {
-    mutate(key);
-  });
+export async function refreshAllCaches() {
+  await Promise.all(
+    Object.values(CACHE_KEYS).map(key => mutate(key))
+  );
 }

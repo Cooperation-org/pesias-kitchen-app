@@ -1,8 +1,8 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
-import useSWR, { mutate } from 'swr'
-import { Activity, NFT, Reward } from '@/types/api'
+import useSWR from 'swr'
+import { Activity, NFT, Reward, ActivitiesResponse, RewardsResponse, NFTsResponse } from '@/types/api'
 import { getUserActivities, getRewardsHistory, getUserNFTs } from "@/services/api"
 import { StatsCard } from './dashboard/StatsCard'
 import { ActivityList } from './dashboard/ActivityList'
@@ -10,14 +10,16 @@ import { EventModal } from './dashboard/EventModal'
 import { LoadingSkeleton } from './dashboard/LoadingSkeleton'
 import { ErrorState } from './dashboard/ErrorState'
 
-
 // Custom hook for fetching dashboard data
 function useDashboardData() {
-  const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities } = useSWR(
+  const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities } = useSWR<ActivitiesResponse>(
     'user-activities',
     async () => {
       const response = await getUserActivities()
-      return response.data // The API returns ActivitiesResponse directly
+      return {
+        data: response.data,
+        total: response.data.length
+      } as ActivitiesResponse
     },
     { 
       revalidateOnFocus: false,
@@ -26,9 +28,12 @@ function useDashboardData() {
     }
   );
 
-  const { data: rewardsData, error: rewardsError, isLoading: isLoadingRewards } = useSWR(
+  const { data: rewardsData, error: rewardsError, isLoading: isLoadingRewards } = useSWR<RewardsResponse>(
     'user-rewards',
-    () => getRewardsHistory(), // RewardsResponse is already the data we want
+    async () => {
+      const response = await getRewardsHistory()
+      return response // The API already returns RewardsResponse
+    },
     { 
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -36,9 +41,12 @@ function useDashboardData() {
     }
   );
 
-  const { data: nftsData, error: nftsError, isLoading: isLoadingNFTs } = useSWR(
+  const { data: nftsData, error: nftsError, isLoading: isLoadingNFTs } = useSWR<NFTsResponse>(
     'user-nfts',
-    () => getUserNFTs(), // NFTsResponse is already the data we want
+    async () => {
+      const response = await getUserNFTs()
+      return response // The API already returns NFTsResponse
+    },
     { 
       revalidateOnFocus: false,
       revalidateOnReconnect: false,
@@ -49,44 +57,9 @@ function useDashboardData() {
   const isLoading = isLoadingActivities || isLoadingRewards || isLoadingNFTs;
   const error = activitiesError || rewardsError || nftsError;
 
-  // Function to optimistically update activities when joining an event
-  const addActivity = useCallback((newActivity: Activity) => {
-    // Optimistically update the activities list
-    mutate('user-activities', (currentData: Activity[]) => {
-      if (!currentData) return [newActivity];
-      
-      const timestamp = new Date(newActivity.timestamp);
-      const date = timestamp.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: 'numeric' 
-      });
-      const time = timestamp.toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      const formattedActivity = {
-        ...newActivity,
-        title: typeof newActivity.event === 'object' ? newActivity.event.title : 'Activity',
-        activityType: typeof newActivity.event === 'object' ? newActivity.event.activityType : 'other',
-        location: typeof newActivity.event === 'object' ? newActivity.event.location : 'Unknown Location',
-        date,
-        time,
-        hasNFT: false,
-        amount: 0
-      };
-
-      return [formattedActivity, ...currentData];
-    }, false); // false means don't revalidate immediately
-
-    // Trigger a revalidation in the background
-    mutate('user-activities');
-  }, []);
-
   const activities = useMemo(() => {
-    if (!activitiesData) return [];
-    return activitiesData.map((activity: Activity) => {
+    if (!activitiesData?.data) return [];
+    return activitiesData.data.map((activity: Activity) => {
       const timestamp = new Date(activity.timestamp);
       const date = timestamp.toLocaleDateString('en-GB', { 
         day: '2-digit', 
@@ -105,8 +78,8 @@ function useDashboardData() {
         location: typeof activity.event === 'object' ? activity.event.location : 'Unknown Location',
         date,
         time,
-        hasNFT: nftsData?.nfts?.some((nft: NFT) => nft.activityId === activity._id) || false,
-        amount: rewardsData?.rewards?.find((r: Reward) => r.activityId === activity._id)?.rewardAmount || 0
+        nftMinted: nftsData?.nfts?.some((nft: NFT) => nft.activityId === activity._id) || false,
+        rewardAmount: rewardsData?.rewards?.find((r: Reward) => r.activityId === activity._id)?.rewardAmount || 0
       };
     });
   }, [activitiesData, nftsData, rewardsData]);
@@ -121,15 +94,14 @@ function useDashboardData() {
     activities,
     stats,
     isLoading,
-    error: error ? 'Failed to load dashboard data' : null,
-    addActivity // Expose the mutation function
+    error: error ? 'Failed to load dashboard data' : null
   };
 }
 
 export default function DashboardClient() {
   const [showEventModal, setShowEventModal] = useState(false)
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
-  const { activities, stats, isLoading, error, addActivity } = useDashboardData()
+  const { activities, stats, isLoading, error } = useDashboardData()
 
   const handleActivityClick = useCallback((activity: Activity) => {
     setSelectedActivity(activity)

@@ -1,23 +1,42 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import Link from "next/link"
 import { motion, AnimatePresence } from "framer-motion"
 import { getUserActivities, getEventById, getRewardsHistory, getUserNFTs } from "@/services/api"
+import { Activity as ApiActivity, Participant } from '@/types/api'
+
+// Define the EventType interface to match the API response
+interface EventType {
+  _id: string;
+  title: string;
+  description: string;
+  location: string;
+  date: string;
+  activityType: "food_sorting" | "food_distribution" | "other";
+  capacity: number;
+  defaultQuantity: number;
+  participants: Participant[];
+  createdBy: string;
+  createdAt: string;
+  __v: number;
+}
 
 // Activity type definition
 interface Activity {
-  _id?: string;
-  id?: string;
+  _id: string;
   event: string | EventType;
   qrCode: string;
-  user: string;
+  user: string | {
+    _id: string;
+    walletAddress: string;
+    name: string;
+  };
   quantity: number;
   notes: string;
-  nftId?: string;
-  txHash?: string;
-  verified?: boolean;
-  timestamp?: string;
+  nftId: string | null;
+  txHash: string | null;
+  verified: boolean;
+  timestamp: string;
   title?: string; 
   date?: string; 
   amount?: string; 
@@ -25,22 +44,7 @@ interface Activity {
   activityType?: string;
   hasNFT?: boolean;
   time?: string;
-}
-
-// Event type definition
-interface EventType {
-  _id: string;
-  title: string;
-  description: string;
-  location: string;
-  date: string;
-  activityType: string;
-  capacity: number;
-  defaultQuantity: number;
-  participants: string[];
-  createdBy: string;
-  createdAt: string;
-  __v: number;
+  nftTokenId?: string;
 }
 
 // Reward type for displaying in the dashboard
@@ -88,7 +92,7 @@ export default function ActivitiesClient() {
           getUserNFTs()
         ]);
         
-        const activitiesData = activitiesResponse.data;
+        const activitiesData = activitiesResponse.data as ApiActivity[];
         const rewardsData = rewardsResponse.rewards || [];
         const nftsData = nftsResponse.nfts || [];
         
@@ -102,7 +106,7 @@ export default function ActivitiesClient() {
       }
     };
 
-    const processActivities = async (activitiesData: any[], rewardsData: Reward[], nftsData: NFT[]) => {
+    const processActivities = async (activitiesData: ApiActivity[], rewardsData: Reward[], nftsData: NFT[]) => {
       try {
         // Create a map of activity IDs to rewards for quick lookup
         const activityRewardsMap = rewardsData.reduce((map, reward) => {
@@ -147,7 +151,7 @@ export default function ActivitiesClient() {
           const activityType = eventDetails?.activityType || 'default';
           
           // Get reward amount from rewards history if available
-          const activityId = activity._id || activity.id || '';
+          const activityId = activity._id;
           const reward = activityRewardsMap[activityId];
           const rewardAmount = reward ? reward.rewardAmount : (
             activityType === 'food_sorting' ? 5 : 
@@ -155,7 +159,7 @@ export default function ActivitiesClient() {
           );
           
           // Format the date/time
-          const timestamp = activity.timestamp ? new Date(activity.timestamp) : new Date();
+          const timestamp = new Date(activity.timestamp);
           const formattedDate = timestamp.toLocaleDateString('en-GB', { 
             day: '2-digit', 
             month: 'short', 
@@ -177,7 +181,7 @@ export default function ActivitiesClient() {
             location: eventDetails?.location || 'Unknown Location',
             date: formattedDate,
             time: formattedTime,
-            timestamp: timestamp,
+            timestamp: activity.timestamp,
             amount: `${rewardAmount}`,
             hasNFT: hasNFT
           };
@@ -329,7 +333,7 @@ export default function ActivitiesClient() {
         className="mx-4 mt-4 mb-8 flex-1"
       >
         {Object.entries(groupedActivities).length > 0 ? (
-          Object.entries(groupedActivities).map(([month, monthActivities], monthIndex) => (
+          Object.entries(groupedActivities).map(([month, monthActivities]) => (
             <div key={month} className="mb-6">
               <h2 className="text-lg font-semibold mb-3 text-gray-700">{month}</h2>
               <div className="bg-white rounded-lg shadow-md overflow-hidden">

@@ -9,8 +9,18 @@ interface ActivityListProps {
   onActivityClick: (activity: Activity) => void
 }
 
+type DisplayableEventProperty = 'title' | 'location' | 'date' | 'activityType';
+
 export function ActivityList({ activities, onActivityClick }: ActivityListProps) {
-  console.log(activities, 'activities')
+  // Helper function to get event properties safely
+  const getEventProperty = (activity: Activity, property: DisplayableEventProperty): string | null => {
+    if (typeof activity.event === 'string') {
+      return null;
+    }
+    const value = activity.event[property];
+    return typeof value === 'string' ? value : null;
+  };
+
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
@@ -31,79 +41,86 @@ export function ActivityList({ activities, onActivityClick }: ActivityListProps)
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
         <AnimatePresence>
           {activities.length > 0 ? (
-            activities.slice(0, 5).map((activity, index) => (
-              <motion.div 
-                key={activity._id || index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 20 }}
-                transition={{ duration: 0.3, delay: index * 0.1 }}
-                className={`p-4 ${index !== activities.slice(0, 5).length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50 transition-colors cursor-pointer`}
-                onClick={() => onActivityClick(activity)}
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <div className="flex items-center">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
-                      activity.activityType === 'food_sorting' ? 'bg-green-100 text-green-500' : 
-                      activity.activityType === 'food_distribution' ? 'bg-blue-100 text-blue-500' : 
-                      'bg-purple-100 text-purple-500'
-                    }`}>
-                      {activity.hasNFT ? (
-                        <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM10.67 18L5 12.33L7.13 10.21L10.67 13.75L16.88 7.54L19 9.66L10.67 18Z" fill="currentColor"/>
-                        </svg>
-                      ) : (
-                        activity.activityType === 'food_sorting' ? (
+            activities.slice(0, 5).map((activity, index) => {
+              const activityType = getEventProperty(activity, 'activityType');
+              const title = getEventProperty(activity, 'title');
+              const location = getEventProperty(activity, 'location');
+              const date = getEventProperty(activity, 'date');
+              
+              return (
+                <motion.div 
+                  key={activity._id || index}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.3, delay: index * 0.1 }}
+                  className={`p-4 ${index !== activities.slice(0, 5).length - 1 ? 'border-b border-gray-100' : ''} hover:bg-gray-50 transition-colors cursor-pointer`}
+                  onClick={() => onActivityClick(activity)}
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <div className="flex items-center">
+                      <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-3 ${
+                        activityType === 'food_sorting' ? 'bg-green-100 text-green-500' : 
+                        activityType === 'food_distribution' ? 'bg-blue-100 text-blue-500' : 
+                        'bg-purple-100 text-purple-500'
+                      }`}>
+                        {activity.nftMinted ? (
                           <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z" fill="currentColor"/>
+                            <path d="M19 3H5C3.9 3 3 3.9 3 5V19C3 20.1 3.9 21 5 21H19C20.1 21 21 20.1 21 19V5C21 3.9 20.1 3 19 3ZM10.67 18L5 12.33L7.13 10.21L10.67 13.75L16.88 7.54L19 9.66L10.67 18Z" fill="currentColor"/>
                           </svg>
                         ) : (
-                          <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-3.54-4.46a1 1 0 0 1 1.42-1.42 3 3 0 0 0 4.24 0 1 1 0 0 1 1.42 1.42 5 5 0 0 1-7.08 0zM9 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fill="currentColor"/>
+                          activityType === 'food_sorting' ? (
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M14 6l-4.22 5.63 1.25 1.67L14 9.33 19 16h-8.46l-4.01-5.37L1 18h22L14 6zM5 16l1.52-2.03L8.04 16H5z" fill="currentColor"/>
+                            </svg>
+                          ) : (
+                            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M12 22a10 10 0 1 1 0-20 10 10 0 0 1 0 20zm0-2a8 8 0 1 0 0-16 8 8 0 0 0 0 16zm-3.54-4.46a1 1 0 0 1 1.42-1.42 3 3 0 0 0 4.24 0 1 1 0 0 1 1.42 1.42 5 5 0 0 1-7.08 0zM9 11a1 1 0 1 1 0-2 1 1 0 0 1 0 2zm6 0a1 1 0 1 1 0-2 1 1 0 0 1 0 2z" fill="currentColor"/>
+                            </svg>
+                          )
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="font-medium text-gray-800">{title || "Activity"}</h3>
+                        <p className="text-xs text-gray-500">{date}</p>
+                      </div>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
+                        {activity.rewardAmount || 0} G$
+                      </div>
+                      {activity.nftMinted && (
+                        <span className="text-xs text-green-600 mt-1 flex items-center">
+                          <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
                           </svg>
-                        )
+                          NFT Minted
+                        </span>
                       )}
                     </div>
+                  </div>
+                  <div className="flex justify-between text-xs text-gray-500 mt-2">
                     <div>
-                      <h3 className="font-medium text-gray-800">{activity.title || "Activity"}</h3>
-                      <p className="text-xs text-gray-500">{activity.date} at {activity.time}</p>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end">
-                    <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
-                      {activity.amount} G$
-                    </div>
-                    {activity.hasNFT && (
-                      <span className="text-xs text-green-600 mt-1 flex items-center">
+                      <span className="inline-flex items-center">
                         <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" fill="currentColor"/>
+                          <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
                         </svg>
-                        NFT Minted
+                        {location}
                       </span>
-                    )}
+                    </div>
+                    <div>
+                      <span className={`px-2 py-1 rounded-full ${
+                        activityType === 'food_sorting' ? 'bg-green-50 text-green-600' : 
+                        activityType === 'food_distribution' ? 'bg-blue-50 text-blue-600' : 
+                        'bg-purple-50 text-purple-600'
+                      }`}>
+                        {activityType?.replace('_', ' ')}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex justify-between text-xs text-gray-500 mt-2">
-                  <div>
-                    <span className="inline-flex items-center">
-                      <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor"/>
-                      </svg>
-                      {activity.location}
-                    </span>
-                  </div>
-                  <div>
-                    <span className={`px-2 py-1 rounded-full ${
-                      activity.activityType === 'food_sorting' ? 'bg-green-50 text-green-600' : 
-                      activity.activityType === 'food_distribution' ? 'bg-blue-50 text-blue-600' : 
-                      'bg-purple-50 text-purple-600'
-                    }`}>
-                      {activity.activityType?.replace('_', ' ')}
-                    </span>
-                  </div>
-                </div>
-              </motion.div>
-            ))
+                </motion.div>
+              );
+            })
           ) : (
             <motion.div 
               initial={{ opacity: 0 }}

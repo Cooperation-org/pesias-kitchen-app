@@ -377,3 +377,17 @@ export interface ApiError {
     code?: string;
     status?: number;
 }
+
+export interface QRCodeVerifyResponse {
+    success: boolean;
+    message: string;
+    activity?: Activity;
+}
+
+export interface QRCodeVerifyAndMintResponse {
+    success: boolean;
+    message: string;
+    activity: Activity;
+    nftId?: string;
+    txHash?: string;
+}
