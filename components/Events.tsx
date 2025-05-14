@@ -205,37 +205,13 @@ export default function EventsPage({
     });
   };
 
-  const handleQRCodeGenerated = (qrCodeUrl: string) => {
+  const handleQRCodeGenerated = () => {
     // Refresh the events list to update the QR code status
     mutate();
     toast.success('QR code generated successfully');
   };
 
   // Function to open edit event modal
-  const openEditModal = (eventId: string) => {
-    console.log('Opening edit modal with eventId:', eventId); // Debug log
-    if (!eventId) {
-      console.error('Cannot open edit modal: eventId is undefined');
-      toast.error('Error: Cannot edit this event');
-      return;
-    }
-    
-    // Close event details modal when opening edit modal
-    closeEventDetails();
-    
-    setEditEventModal({
-      isOpen: true,
-      eventId: eventId
-    });
-  };
-
-  // Function to close edit event modal
-  const closeEditModal = () => {
-    setEditEventModal({
-      isOpen: false,
-      eventId: undefined
-    });
-  };
   
   // Function to open event details modal
   const openEventDetails = (event: Event) => {
@@ -246,13 +222,6 @@ export default function EventsPage({
     });
   };
   
-  // Function to close event details modal
-  const closeEventDetails = () => {
-    setEventDetailsModal({
-      isOpen: false,
-      event: null
-    });
-  };
 
   // Function to check if the current user is the creator of an event
   const isEventCreator = (event: Event) => {

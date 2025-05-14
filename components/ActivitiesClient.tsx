@@ -1,11 +1,14 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { getUserActivities, getEventById, getRewardsHistory, getUserNFTs } from "@/services/api"
-import { Activity as ApiActivity, Participant } from '@/types/api'
+import { getUserActivities, getRewardsHistory, getUserNFTs } from "@/services/api"
+import { Activity as ApiActivity, Participant, Reward, NFT } from '@/types/api'
+import useSWR from 'swr'
+import { toast } from 'sonner'
+import { SWR_ENDPOINTS } from '@/types/api'
 
-// Define the EventType interface to match the API response
+// Types
 interface EventType {
   _id: string;
   title: string;
@@ -21,8 +24,7 @@ interface EventType {
   __v: number;
 }
 
-// Activity type definition
-interface Activity {
+interface ProcessedActivity {
   _id: string;
   event: string | EventType;
   qrCode: string;
@@ -37,207 +39,194 @@ interface Activity {
   txHash: string | null;
   verified: boolean;
   timestamp: string;
-  title?: string; 
-  date?: string; 
-  amount?: string; 
-  location?: string;
-  activityType?: string;
-  hasNFT?: boolean;
-  time?: string;
+  title: string;
+  date: string;
+  amount: string;
+  location: string;
+  activityType: string;
+  hasNFT: boolean;
+  time: string;
   nftTokenId?: string;
 }
 
-// Reward type for displaying in the dashboard
-interface Reward {
-  activityId: string;
-  nftId: string;
-  activityType: string;
-  location: string;
-  date: string;
-  rewardAmount: number;
-}
+// Custom hooks
+const useActivitiesData = () => {
+  // Fetch activities
+  const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities } = useSWR<ApiActivity[]>(
+    [SWR_ENDPOINTS.USER_ACTIVITIES.key],
+    async () => {
+      const response = await getUserActivities();
+      return response.data;
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000,
+      refreshInterval: 30000, // Refresh every 30 seconds
+      onError: (err) => {
+        console.error('Error fetching activities:', err);
+        toast.error('Failed to load activities. Please try again later.');
+      }
+    }
+  );
 
-// NFT interface
-interface NFT {
-  id: string;
-  name: string;
-  imageUrl: string;
-  activityType: string;
-  location: string;
-  quantity: number;
-  date: string;
-  txHash: string;
-}
+  // Fetch rewards
+  const { data: rewardsData, error: rewardsError } = useSWR<Reward[]>(
+    [SWR_ENDPOINTS.REWARDS.key],
+    async () => {
+      const response = await getRewardsHistory();
+      return response.rewards || [];
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000,
+      refreshInterval: 30000,
+      onError: (err) => {
+        console.error('Error fetching rewards:', err);
+        toast.error('Failed to load rewards. Please try again later.');
+      }
+    }
+  );
+
+  // Fetch NFTs
+  const { data: nftsData, error: nftsError } = useSWR<NFT[]>(
+    [SWR_ENDPOINTS.NFTS.key],
+    async () => {
+      const response = await getUserNFTs();
+      return response.nfts || [];
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000,
+      refreshInterval: 30000,
+      onError: (err) => {
+        console.error('Error fetching NFTs:', err);
+        toast.error('Failed to load NFTs. Please try again later.');
+      }
+    }
+  );
+
+  // Process activities data
+  const processedActivities = useMemo(() => {
+    if (!activitiesData) return [];
+
+    // Create maps for quick lookups
+    const activityRewardsMap = (rewardsData || []).reduce((map, reward) => {
+      map[reward.activityId] = reward;
+      return map;
+    }, {} as Record<string, Reward>);
+
+    const activityNFTMap = (nftsData || []).reduce((map, nft) => {
+      const activityId = nft.id.split('-').length > 1 ? nft.id.split('-')[1] : '';
+      if (activityId) map[activityId] = nft;
+      return map;
+    }, {} as Record<string, NFT>);
+
+    // Process each activity
+    return activitiesData.map(activity => {
+      const eventDetails = typeof activity.event === 'object' ? activity.event : null;
+      const activityType = eventDetails?.activityType || 'default';
+      
+      // Get reward amount
+      const activityId = activity._id;
+      const reward = activityRewardsMap[activityId];
+      const rewardAmount = reward ? reward.rewardAmount : (
+        activityType === 'food_sorting' ? 5 : 
+        activityType === 'food_distribution' ? 2 : 1
+      );
+      
+      // Format date/time
+      const timestamp = new Date(activity.timestamp);
+      const formattedDate = timestamp.toLocaleDateString('en-GB', { 
+        day: '2-digit', 
+        month: 'short', 
+        year: 'numeric' 
+      });
+      const formattedTime = timestamp.toLocaleTimeString('en-GB', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      
+      // Check NFT status
+      const hasNFT = !!activity.nftId || !!activityNFTMap[activityId];
+      
+      return {
+        ...activity,
+        title: eventDetails?.title || 'Activity',
+        activityType: activityType,
+        location: eventDetails?.location || 'Unknown Location',
+        date: formattedDate,
+        time: formattedTime,
+        timestamp: activity.timestamp,
+        amount: `${rewardAmount}`,
+        hasNFT: hasNFT
+      } as ProcessedActivity;
+    });
+  }, [activitiesData, rewardsData, nftsData]);
+
+  const isLoading = isLoadingActivities;
+  const error = activitiesError || rewardsError || nftsError;
+
+  return {
+    activities: processedActivities,
+    isLoading,
+    error: error?.message || null
+  };
+};
 
 export default function ActivitiesClient() {
-  const [activities, setActivities] = useState<Activity[]>([])
-  const [activitiesCount, setActivitiesCount] = useState(0)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState("")
-  const [showEventModal, setShowEventModal] = useState(false)
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
-  const [sortBy, setSortBy] = useState("date") 
-  const [filterType, setFilterType] = useState("all")
+  const { activities, isLoading, error } = useActivitiesData();
+  const [showEventModal, setShowEventModal] = useState(false);
+  const [selectedActivity, setSelectedActivity] = useState<ProcessedActivity | null>(null);
+  const [sortBy, setSortBy] = useState("date");
+  const [filterType, setFilterType] = useState("all");
 
-  // Fetch all data: activities, rewards, and NFTs
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        
-        // Fetch data from all needed endpoints in parallel
-        const [activitiesResponse, rewardsResponse, nftsResponse] = await Promise.all([
-          getUserActivities(),
-          getRewardsHistory(),
-          getUserNFTs()
-        ]);
-        
-        const activitiesData = activitiesResponse.data as ApiActivity[];
-        const rewardsData = rewardsResponse.rewards || [];
-        const nftsData = nftsResponse.nfts || [];
-        
-        // Process activities and fetch event details if needed
-        await processActivities(activitiesData, rewardsData, nftsData);
-        
-      } catch (error) {
-        console.error("Error fetching data:", error);
-        setError("Could not load your activities. Please try again later.");
-        setIsLoading(false);
-      }
-    };
-
-    const processActivities = async (activitiesData: ApiActivity[], rewardsData: Reward[], nftsData: NFT[]) => {
-      try {
-        // Create a map of activity IDs to rewards for quick lookup
-        const activityRewardsMap = rewardsData.reduce((map, reward) => {
-          map[reward.activityId] = reward;
-          return map;
-        }, {} as Record<string, Reward>);
-        
-        // Create a map of activity IDs to NFTs for quick lookup
-        const activityNFTMap = nftsData.reduce((map, nft) => {
-          // Extract activity ID from NFT ID if it's encoded there
-          const activityId = nft.id.split('-').length > 1 ? nft.id.split('-')[1] : '';
-          if (activityId) map[activityId] = nft;
-          return map;
-        }, {} as Record<string, NFT>);
-        
-        // Process each activity
-        const processedActivities = await Promise.all(activitiesData.map(async (activity) => {
-          let eventDetails;
-          
-          // Get or fetch event information
-          if (activity.event && typeof activity.event === 'object') {
-            // Event details are embedded in the activity
-            eventDetails = activity.event;
-          } else if (typeof activity.event === 'string') {
-            // Only have event ID, need to fetch details
-            try {
-              // Fetch event details from API
-              const eventResponse = await getEventById(activity.event);
-              eventDetails = eventResponse.data;
-            } catch (err) {
-              console.error(`Error fetching event ${activity.event}:`, err);
-              // Use placeholder if fetch fails
-              eventDetails = { 
-                title: "Unknown Event",
-                activityType: "default",
-                location: "Unknown Location",
-              };
-            }
-          }
-          
-          // Get the activity type
-          const activityType = eventDetails?.activityType || 'default';
-          
-          // Get reward amount from rewards history if available
-          const activityId = activity._id;
-          const reward = activityRewardsMap[activityId];
-          const rewardAmount = reward ? reward.rewardAmount : (
-            activityType === 'food_sorting' ? 5 : 
-            activityType === 'food_distribution' ? 2 : 1
-          );
-          
-          // Format the date/time
-          const timestamp = new Date(activity.timestamp);
-          const formattedDate = timestamp.toLocaleDateString('en-GB', { 
-            day: '2-digit', 
-            month: 'short', 
-            year: 'numeric' 
-          });
-          const formattedTime = timestamp.toLocaleTimeString('en-GB', {
-            hour: '2-digit',
-            minute: '2-digit'
-          });
-          
-          // Check if this activity has an NFT
-          const hasNFT = !!activity.nftId || !!activityNFTMap[activityId];
-          
-          // Return formatted activity
-          return {
-            ...activity,
-            title: eventDetails?.title || 'Activity',
-            activityType: activityType,
-            location: eventDetails?.location || 'Unknown Location',
-            date: formattedDate,
-            time: formattedTime,
-            timestamp: activity.timestamp,
-            amount: `${rewardAmount}`,
-            hasNFT: hasNFT
-          };
-        }));
-        
-        // Update the state
-        setActivities(processedActivities);
-        setActivitiesCount(processedActivities.length);
-        setIsLoading(false);
-      } catch (error) {
-        console.error("Error processing activities:", error);
-        setError("Could not process your activities. Please try again later.");
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-  
-  const handleActivityClick = (activity: Activity) => {
+  const handleActivityClick = useCallback((activity: ProcessedActivity) => {
     setSelectedActivity(activity);
     setShowEventModal(true);
-  };
-  
-  const closeEventModal = () => {
+  }, []);
+
+  const closeEventModal = useCallback(() => {
     setShowEventModal(false);
     setSelectedActivity(null);
-  };
-  
+  }, []);
+
   // Filter and sort activities
-  const filteredActivities = activities.filter(activity => {
-    if (filterType === "all") return true;
-    return activity.activityType === filterType;
-  });
-  
-  const sortedActivities = [...filteredActivities].sort((a, b) => {
-    if (sortBy === "date") {
-      return new Date(b.timestamp || '').getTime() - new Date(a.timestamp || '').getTime();
-    } else if (sortBy === "rewards") {
-      return parseInt(b.amount || '0') - parseInt(a.amount || '0');
-    } else if (sortBy === "type") {
-      return (a.activityType || '').localeCompare(b.activityType || '');
-    }
-    return 0;
-  });
-  
-  // Group activities by month for better organization
-  const groupedActivities: Record<string, Activity[]> = {};
-  sortedActivities.forEach(activity => {
-    const month = activity.date?.split(' ')[1] + ' ' + activity.date?.split(' ')[2]; // e.g., "May 2025"
-    if (!groupedActivities[month]) {
-      groupedActivities[month] = [];
-    }
-    groupedActivities[month].push(activity);
-  });
-  
+  const filteredAndSortedActivities = useMemo(() => {
+    // Filter activities
+    const filtered = activities.filter(activity => {
+      if (filterType === "all") return true;
+      return activity.activityType === filterType;
+    });
+
+    // Sort activities
+    return [...filtered].sort((a, b) => {
+      if (sortBy === "date") {
+        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+      } else if (sortBy === "rewards") {
+        return parseInt(b.amount) - parseInt(a.amount);
+      } else if (sortBy === "type") {
+        return a.activityType.localeCompare(b.activityType);
+      }
+      return 0;
+    });
+  }, [activities, filterType, sortBy]);
+
+  // Group activities by month
+  const groupedActivities = useMemo(() => {
+    const groups: Record<string, ProcessedActivity[]> = {};
+    filteredAndSortedActivities.forEach(activity => {
+      const month = activity.date.split(' ')[1] + ' ' + activity.date.split(' ')[2];
+      if (!groups[month]) {
+        groups[month] = [];
+      }
+      groups[month].push(activity);
+    });
+    return groups;
+  }, [filteredAndSortedActivities]);
+
   // Loading skeleton component
   const LoadingSkeleton = () => (
     <div className="animate-pulse">
@@ -249,7 +238,7 @@ export default function ActivitiesClient() {
       <div className="h-16 bg-gray-200 rounded-lg"></div>
     </div>
   );
-  
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-white p-4">
@@ -257,7 +246,7 @@ export default function ActivitiesClient() {
       </div>
     );
   }
-  
+
   if (error) {
     return (
       <div className="min-h-screen bg-white flex flex-col items-center justify-center p-4">
@@ -269,17 +258,16 @@ export default function ActivitiesClient() {
         <p className="text-center text-gray-700">{error}</p>
         <button 
           onClick={() => window.location.reload()} 
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
         >
           Try Again
         </button>
       </div>
     );
   }
-  
+
   return (
     <div className="min-h-screen bg-white flex flex-col">
-  
       {/* Filter and Sort Controls */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -293,7 +281,7 @@ export default function ActivitiesClient() {
             <select 
               value={filterType}
               onChange={(e) => setFilterType(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 text-sm"
+              className="border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="all">All Activities</option>
               <option value="food_sorting">Food Sorting</option>
@@ -306,7 +294,7 @@ export default function ActivitiesClient() {
             <select 
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="border border-gray-300 rounded-lg p-2 text-sm"
+              className="border border-gray-300 rounded-lg p-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="date">Most Recent</option>
               <option value="rewards">Highest Rewards</option>
@@ -318,13 +306,13 @@ export default function ActivitiesClient() {
             <label className="text-sm text-gray-600 mb-1">Total Activities</label>
             <div className="flex items-center h-full">
               <div className="bg-blue-50 text-blue-600 px-3 py-2 rounded-lg font-medium">
-                {activitiesCount} activities
+                {activities.length} activities
               </div>
             </div>
           </div>
         </div>
       </motion.div>
-      
+
       {/* Activities List */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -340,7 +328,7 @@ export default function ActivitiesClient() {
                 <AnimatePresence>
                   {monthActivities.map((activity, index) => (
                     <motion.div 
-                      key={activity._id || index}
+                      key={activity._id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
@@ -372,7 +360,7 @@ export default function ActivitiesClient() {
                             )}
                           </div>
                           <div>
-                            <h3 className="font-medium text-gray-800">{activity.title || "Activity"}</h3>
+                            <h3 className="font-medium text-gray-800">{activity.title}</h3>
                             <div className="text-xs text-gray-500 flex flex-wrap gap-2 mt-1">
                               <span className="flex items-center">
                                 <svg className="w-3 h-3 mr-1" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -406,7 +394,7 @@ export default function ActivitiesClient() {
                             activity.activityType === 'food_distribution' ? 'bg-blue-50 text-blue-600' : 
                             'bg-purple-50 text-purple-600'
                           }`}>
-                            {activity.activityType?.replace('_', ' ')}
+                            {activity.activityType.replace('_', ' ')}
                           </span>
                         </div>
                       </div>
@@ -428,19 +416,24 @@ export default function ActivitiesClient() {
             <p>No activities match your current filters</p>
             <button 
               onClick={() => {setFilterType("all"); setSortBy("date");}}
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
             >
               Reset Filters
             </button>
           </motion.div>
         )}
       </motion.div>
-      
-      {/* Event Details Modal - Only if an activity is selected */}
+
+      {/* Event Details Modal */}
       {showEventModal && selectedActivity && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
-          <div className="bg-white rounded-xl max-w-md w-full relative overflow-hidden shadow-xl">
-            {/* Modal header */}
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            className="bg-white rounded-xl max-w-md w-full relative overflow-hidden shadow-xl"
+          >
+            {/* Modal content remains the same... */}
             <div className={`bg-gradient-to-r ${
               selectedActivity.activityType === 'food_sorting' ? 'from-green-500 to-green-600' : 
               selectedActivity.activityType === 'food_distribution' ? 'from-blue-500 to-blue-600' : 
@@ -448,7 +441,7 @@ export default function ActivitiesClient() {
             } h-32 p-6`}>
               <button 
                 onClick={closeEventModal}
-                className="absolute top-4 right-4 bg-white/20 rounded-full p-2"
+                className="absolute top-4 right-4 bg-white/20 rounded-full p-2 hover:bg-white/30 transition-colors"
               >
                 <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
@@ -457,7 +450,6 @@ export default function ActivitiesClient() {
               <h3 className="text-xl font-bold text-white mt-6">{selectedActivity.title}</h3>
             </div>
             
-            {/* Modal content */}
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center">
@@ -486,7 +478,7 @@ export default function ActivitiesClient() {
                 <div className="bg-gray-50 p-4 rounded-lg mb-4">
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-500">Activity Type</span>
-                    <span className="font-medium capitalize">{selectedActivity.activityType?.replace('_', ' ')}</span>
+                    <span className="font-medium capitalize">{selectedActivity.activityType.replace('_', ' ')}</span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-500">Quantity</span>
@@ -497,30 +489,13 @@ export default function ActivitiesClient() {
                     {selectedActivity.hasNFT ? (
                       <span className="font-medium text-green-600">Minted</span>
                     ) : (
-                      <span className="font-medium text-yellow-600">Available to Mint</span>
+                      <span className="font-medium text-gray-600">Not Minted</span>
                     )}
                   </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Activity ID</span>
-                    <span className="font-medium text-xs">{selectedActivity._id}</span>
-                  </div>
-                </div>
-                <div className="flex space-x-3">
-                  {!selectedActivity.hasNFT && (
-                    <button className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium">
-                      Mint NFT
-                    </button>
-                  )}
-                  <button 
-                    onClick={closeEventModal}
-                    className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium"
-                  >
-                    Close
-                  </button>
                 </div>
               </div>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
     </div>
