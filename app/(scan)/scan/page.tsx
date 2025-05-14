@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
 import { QrReader, OnResultFunction } from "react-qr-reader"
 import Link from "next/link"
-import { verifyQRCode, recordActivity, mintActivityNFT } from "@/services/api"
+import { verifyQRCode, recordActivity } from "@/services/api"
 import { toast } from 'sonner'
 import { motion } from 'framer-motion'
 import { AxiosResponse } from 'axios'
@@ -12,17 +12,12 @@ import { AxiosResponse } from 'axios'
 // Types
 interface ScanResult {
   id: string;
-  activity?: {
+  activity: {
     id: string;
     type: string;
     quantity: number;
     notes?: string;
-  };
-  nft?: {
-    nftId?: string;
-    txHash?: string;
-    rewardAmount: number | string;
-    nftTokenId?: string;
+    rewardAmount: number;
   };
   event: {
     title: string;
@@ -33,7 +28,7 @@ interface ScanResult {
 }
 
 type ProcessingStatus = {
-  stage: 'verifying' | 'recording' | 'minting' | 'complete';
+  stage: 'verifying' | 'recording' | 'complete';
   message: string;
   progress: number;
 }
@@ -61,11 +56,6 @@ interface ActivityResponse {
     rewardAmount: number;
     description?: string;
   };
-}
-
-interface NFTMintResponse {
-  nftTokenId: string;
-  rewardAmount: number;
 }
 
 // Custom hooks
@@ -103,7 +93,7 @@ const useScanProcessing = () => {
     setProcessingStatus({
       stage: 'verifying',
       message: 'Verifying QR code...',
-      progress: 33
+      progress: 50
     })
 
     try {
@@ -117,7 +107,7 @@ const useScanProcessing = () => {
       setProcessingStatus({
         stage: 'recording',
         message: 'Recording activity...',
-        progress: 66
+        progress: 100
       })
 
       const activityData = {
@@ -131,16 +121,6 @@ const useScanProcessing = () => {
       const activityResult = recordResponse.data.activity
       const activityId = activityResult._id || activityResult.id
 
-      // Step 3: Mint NFT
-      setProcessingStatus({
-        stage: 'minting',
-        message: 'Minting NFT...',
-        progress: 99
-      })
-
-      const mintResponse = await mintActivityNFT(activityId) as AxiosResponse<NFTMintResponse>
-      const mintResult = mintResponse.data
-
       // Create scan result
       const scanData: ScanResult = {
         id: activityId,
@@ -149,12 +129,7 @@ const useScanProcessing = () => {
           type: activityResult.type || verifyResult.qrCode.type || 'event',
           quantity: activityResult.rewardAmount || verifyResult.qrCode.rewardAmount || 1,
           notes: activityResult.description || '',
-        },
-        nft: {
-          nftId: mintResult.nftTokenId,
-          txHash: undefined,
-          rewardAmount: mintResult.rewardAmount || verifyResult.qrCode.rewardAmount || '~',
-          nftTokenId: mintResult.nftTokenId,
+          rewardAmount: activityResult.rewardAmount || verifyResult.qrCode.rewardAmount || 0
         },
         event: {
           title: eventData.title || '',
@@ -173,6 +148,9 @@ const useScanProcessing = () => {
       setScanResult(scanData)
       localStorage.setItem('lastScanResult', JSON.stringify(scanData))
       localStorage.setItem('showScanPopup', 'true')
+
+      // Show success toast
+      toast.success(`Activity recorded successfully! Earned ${scanData.activity.rewardAmount} G$`)
 
       // Redirect after success
       setTimeout(() => router.push('/dashboard'), 2000)
@@ -327,7 +305,13 @@ export default function ScanPage() {
                     </svg>
                   </motion.div>
                   <div className="text-xl font-bold mb-2">Success!</div>
-                  <div className="text-sm text-gray-400 mb-4">
+                  <div className="text-sm text-gray-400 mb-2">
+                    Activity recorded successfully
+                  </div>
+                  <div className="text-sm text-green-400 font-medium">
+                    Earned {scanResult.activity.rewardAmount} G$
+                  </div>
+                  <div className="text-sm text-gray-400 mt-4">
                     Redirecting to dashboard...
                   </div>
                 </motion.div>
