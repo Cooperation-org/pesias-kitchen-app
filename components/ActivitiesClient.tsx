@@ -2,7 +2,7 @@
 
 import { useState, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { getUserActivities, getRewardsHistory, getUserNFTs } from "@/services/api"
+import { getUserActivities, getRewardsHistory, getUserNFTs, mintActivityNFT } from "@/services/api"
 import { Activity as ApiActivity, Participant, Reward, NFT } from '@/types/api'
 import useSWR from 'swr'
 import { toast } from 'sonner'
@@ -108,6 +108,29 @@ const useActivitiesData = () => {
     }
   );
 
+  // Add mutate function for activities
+  const { mutate: mutateActivities } = useSWR([SWR_ENDPOINTS.USER_ACTIVITIES.key]);
+  const { mutate: mutateNFTs } = useSWR([SWR_ENDPOINTS.NFTS.key]);
+
+  // Function to handle NFT minting
+  const handleMintNFT = useCallback(async (activityId: string) => {
+    try {
+      toast.loading('Minting NFT...', { id: 'mint-nft' });
+      await mintActivityNFT(activityId);
+      
+      // Revalidate both activities and NFTs data
+      await Promise.all([
+        mutateActivities(),
+        mutateNFTs()
+      ]);
+
+      toast.success('NFT minted successfully!', { id: 'mint-nft' });
+    } catch (error) {
+      console.error('Error minting NFT:', error);
+      toast.error('Failed to mint NFT. Please try again.', { id: 'mint-nft' });
+    }
+  }, [mutateActivities, mutateNFTs]);
+
   // Process activities data
   const processedActivities = useMemo(() => {
     if (!activitiesData) return [];
@@ -172,16 +195,18 @@ const useActivitiesData = () => {
   return {
     activities: processedActivities,
     isLoading,
-    error: error?.message || null
+    error: error?.message || null,
+    handleMintNFT
   };
 };
 
 export default function ActivitiesClient() {
-  const { activities, isLoading, error } = useActivitiesData();
+  const { activities, isLoading, error, handleMintNFT } = useActivitiesData();
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<ProcessedActivity | null>(null);
   const [sortBy, setSortBy] = useState("date");
   const [filterType, setFilterType] = useState("all");
+  const [isMinting, setIsMinting] = useState(false);
 
   const handleActivityClick = useCallback((activity: ProcessedActivity) => {
     setSelectedActivity(activity);
@@ -226,6 +251,19 @@ export default function ActivitiesClient() {
     });
     return groups;
   }, [filteredAndSortedActivities]);
+
+  const handleMintClick = useCallback(async (activity: ProcessedActivity) => {
+    if (isMinting) return;
+    
+    setIsMinting(true);
+    try {
+      await handleMintNFT(activity._id);
+      // Close modal after successful mint
+      closeEventModal();
+    } finally {
+      setIsMinting(false);
+    }
+  }, [handleMintNFT, isMinting, closeEventModal]);
 
   // Loading skeleton component
   const LoadingSkeleton = () => (
@@ -433,7 +471,6 @@ export default function ActivitiesClient() {
             exit={{ opacity: 0, scale: 0.95 }}
             className="bg-white rounded-xl max-w-md w-full relative overflow-hidden shadow-xl"
           >
-            {/* Modal content remains the same... */}
             <div className={`bg-gradient-to-r ${
               selectedActivity.activityType === 'food_sorting' ? 'from-green-500 to-green-600' : 
               selectedActivity.activityType === 'food_distribution' ? 'from-blue-500 to-blue-600' : 
@@ -493,6 +530,44 @@ export default function ActivitiesClient() {
                     )}
                   </div>
                 </div>
+
+                {/* Add Mint NFT Button */}
+                {!selectedActivity.hasNFT && (
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={() => handleMintClick(selectedActivity)}
+                      disabled={isMinting}
+                      className={`flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium flex items-center justify-center ${
+                        isMinting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-blue-600'
+                      } transition-colors`}
+                    >
+                      {isMinting ? (
+                        <>
+                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Minting...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                          Mint NFT
+                        </>
+                      )}
+                    </button>
+                    <button 
+                      onClick={closeEventModal}
+                      className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </motion.div>

@@ -1,5 +1,5 @@
 // services/api.ts
-import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
+import axios, { AxiosInstance, AxiosResponse } from "axios";
 import { 
   User, 
   Event, 
@@ -16,7 +16,6 @@ import {
   QRCodeVerifyResponse,
   QRCodeVerifyAndMintResponse
 } from "@/types/api";
-import { buildApiUrl } from "@/utils/swr-config";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
 
