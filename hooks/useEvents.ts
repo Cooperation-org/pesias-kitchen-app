@@ -2,32 +2,14 @@
 import useSWR, { mutate } from 'swr';
 import { buildApiUrl, fetcher } from '@/utils/swr-config';
 import { toast } from 'sonner';
+import { Event } from '@/components/EventDetailsModal';
 
-export interface Event {
-  _id: string;
-  title: string;
-  description?: string;
-  date?: string;
-  location?: string;
-  capacity?: number;
-  participants: Array<{
-    _id?: string;
-    id?: string;
-    walletAddress?: string;
-    name?: string;
-  }>;
-  activityType?: string;
-  hasQrCode?: boolean;
-  createdBy?: {
-    _id?: string;
-    id?: string;
-    walletAddress?: string;
-    name?: string;
-  };
-  createdAt?: string;
+export type TimeFilter = 'upcoming' | 'past' | 'all';
+
+export interface EventsResponse {
+  events: Event[];
+  total: number;
 }
-
-export type TimeFilter = 'all' | 'upcoming' | 'past';
 
 /**
  * Custom hook for fetching and filtering events

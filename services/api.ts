@@ -17,7 +17,6 @@ import {
   SWR_ENDPOINTS,
   QRCodeVerifyResponse,
   QRCodeVerifyAndMintResponse,
-  ActivityMetrics,
   FoodHeroesImpactResponse
 } from "@/types/api";
 

@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Organization Information */}
           <div>
-            <h3 className="text-lg font-semibold mb-4">Pesia's Kitchen</h3>
+            <h3 className="text-lg font-semibold mb-4">Pesia&apos;s Kitchen</h3>
             <p className="text-gray-400 mb-4">
               Merging food rescue with financial empowerment using GoodDollar (G$) tokens.
             </p>
@@ -87,7 +87,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
           <p>
-            &copy; {new Date().getFullYear()} Pesia's Kitchen EAT Initiative. All rights reserved.
+            &copy; {new Date().getFullYear()} Pesia&apos;s Kitchen EAT Initiative. All rights reserved.
           </p>
         </div>
       </div>
