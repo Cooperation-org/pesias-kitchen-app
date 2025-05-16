@@ -14,7 +14,9 @@ import {
   NFTDetails,
   SWR_ENDPOINTS,
   QRCodeVerifyResponse,
-  QRCodeVerifyAndMintResponse
+  QRCodeVerifyAndMintResponse,
+  ActivityMetrics,
+  FoodHeroesImpactResponse
 } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
@@ -288,6 +290,13 @@ export const getUserNFTs = async (): Promise<NFTsResponse> => {
 export const getNFTDetails = async (nftId: string): Promise<NFTDetails> => {
   const response = await api.get(`/nft/${nftId}`);
   return response.data;
+};
+
+/**
+ * Get food heroes impact analytics
+ */
+export const getFoodHeroesImpact = (): Promise<AxiosResponse<FoodHeroesImpactResponse>> => {
+  return api.get('/analytics/food-heroes-impact');
 };
 
 export default api;

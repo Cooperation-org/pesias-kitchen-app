@@ -13,9 +13,10 @@ interface ChartData {
 
 interface MetricData {
   name: string;
-  value: string;
+  value: string | number;
   color: string;
   icon: string;
+  description?: string;
 }
 
 interface ActiveShapeProps {
@@ -42,13 +43,13 @@ export default function ImpactDashboard() {
   const participationData: ChartData[] = [
     { 
       name: "Volunteers", 
-      value: metrics.uniqueVolunteers, 
+      value: metrics?.uniqueVolunteers || 0, 
       color: "#3B82F6", 
       description: "Active community members"
     },
     { 
       name: "Recipients", 
-      value: metrics.uniqueRecipients, 
+      value: metrics?.uniqueRecipients || 0, 
       color: "#10B981", 
       description: "Individuals receiving aid"
     }
@@ -58,39 +59,69 @@ export default function ImpactDashboard() {
   const impactMetrics: MetricData[] = [
     { 
       name: "Total G$ Rewarded", 
-      value: `$${metrics.totalGDollars.toFixed(2)}`, 
+      value: `$${(metrics?.totalGDollars || 0).toFixed(2)}`, 
       color: "#F59E0B", 
-      icon: "💰" 
+      icon: "💰",
+      description: `${(metrics?.avgRewardsPerEvent || 0).toFixed(2)} G$ per event`
     },
     { 
       name: "NFTs Rewarded", 
-      value: metrics.totalNFTs.toString(), 
+      value: metrics?.totalNFTs || 0, 
       color: "#8B5CF6", 
-      icon: "🏆" 
+      icon: "🏆",
+      description: `${metrics?.totalNFTs || 0} NFTs minted`
     },
     { 
       name: "Food Distributed", 
-      value: `${metrics.totalFoodDistributed}kg`, 
+      value: `${metrics?.totalFoodDistributed || 0}kg`, 
       color: "#EC4899", 
-      icon: "🍲" 
+      icon: "🍲",
+      description: `${(metrics?.avgFoodPerEvent || 0).toFixed(2)}kg per event`
     },
     { 
-      name: "Meals Provided", 
-      value: metrics.totalMealsProvided.toLocaleString(), 
+      name: "Total Events", 
+      value: metrics?.totalEvents || 0, 
       color: "#F97316", 
-      icon: "🍽️" 
+      icon: "📅",
+      description: `${metrics?.totalActivities || 0} activities completed`
     },
     { 
-      name: "Waste Reduced", 
-      value: `${metrics.totalWasteReduced}kg`, 
+      name: "Unique Participants", 
+      value: metrics?.totalUniqueParticipants || 0, 
       color: "#84CC16", 
-      icon: "♻️" 
+      icon: "👥",
+      description: "Active community members"
+    }
+  ];
+
+  // Create QR stats metrics
+  const qrMetrics: MetricData[] = [
+    {
+      name: "Total QR Codes",
+      value: metrics?.qrStats?.totalCodes || 0,
+      color: "#3B82F6",
+      icon: "📱",
+      description: "Generated QR codes"
+    },
+    {
+      name: "Total Scans",
+      value: metrics?.qrStats?.totalScans || 0,
+      color: "#10B981",
+      icon: "📲",
+      description: "QR code scans"
+    },
+    {
+      name: "Avg Scans/Code",
+      value: (metrics?.qrStats?.avgScansPerCode || 0).toFixed(2),
+      color: "#8B5CF6",
+      icon: "📊",
+      description: "Average scans per code"
     }
   ];
 
   // Calculate key insights
   const getKeyInsights = () => {
-    if (metrics.uniqueVolunteers === 0 || metrics.uniqueRecipients === 0) {
+    if (metrics?.uniqueVolunteers === 0 || metrics?.uniqueRecipients === 0) {
       return [
         "Not enough data to generate insights yet",
         "Start recording activities to see community impact",
@@ -98,7 +129,7 @@ export default function ImpactDashboard() {
       ];
     }
     
-    const ratio = (metrics.uniqueRecipients / metrics.uniqueVolunteers).toFixed(2);
+    const ratio = (metrics?.uniqueRecipients / metrics?.uniqueVolunteers || 0).toFixed(2);
     
     // Calculate month-over-month growth
     const lastMonthActivities = activities.filter(a => {
@@ -124,7 +155,7 @@ export default function ImpactDashboard() {
     }
     
     return [
-      `We have a ${metrics.uniqueVolunteers}:${metrics.uniqueRecipients} ratio of volunteers to recipients`,
+      `We have a ${metrics?.uniqueVolunteers}:${metrics?.uniqueRecipients} ratio of volunteers to recipients`,
       `Each volunteer helps approximately ${ratio} recipients on average`,
       growthRate !== 0 
         ? `Community engagement has ${growthRate > 0 ? 'increased' : 'decreased'} by ${Math.abs(growthRate)}% compared to last month`
@@ -230,6 +261,9 @@ export default function ImpactDashboard() {
                       <p className="text-2xl font-bold mt-1" style={{ color: metric.color }}>
                         {metric.value}
                       </p>
+                      {metric.description && (
+                        <p className="text-sm text-gray-500 mt-1">{metric.description}</p>
+                      )}
                     </div>
                     <span className="text-3xl">{metric.icon}</span>
                   </div>
@@ -238,11 +272,32 @@ export default function ImpactDashboard() {
             </div>
           </div>
 
-          {/* Right Column - Recent Activity */}
+          {/* Right Column - QR Stats and Recent Activity */}
           <div className="space-y-8">
+            {/* QR Stats */}
+            <div className="bg-white rounded-2xl shadow-md p-6">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">QR Code Statistics</h2>
+              <div className="space-y-4">
+                {qrMetrics.map((metric, index) => (
+                  <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div>
+                      <p className="text-sm text-gray-500">{metric.name}</p>
+                      <p className="text-xl font-bold mt-1" style={{ color: metric.color }}>
+                        {metric.value}
+                      </p>
+                      {metric.description && (
+                        <p className="text-sm text-gray-500 mt-1">{metric.description}</p>
+                      )}
+                    </div>
+                    <span className="text-2xl">{metric.icon}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Recent Activity */}
             <div className="bg-white rounded-2xl shadow-md p-6">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Recent Activity</h2>
-              
               <div className="space-y-4">
                 {recentActivities.map((activity, index) => (
                   <div key={index} className={`border-l-4 pl-4 py-1`} style={{ borderColor: activity.color }}>
