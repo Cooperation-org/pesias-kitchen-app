@@ -45,7 +45,6 @@ interface QRCodeModalState {
   isOpen: boolean;
   eventId: string;
   eventTitle: string;
-  qrCodeType: 'volunteer' | 'recipient';
 }
 
 interface EventDetailsModalState {
@@ -68,7 +67,6 @@ export default function EventsPage({
     isOpen: false,
     eventId: '',
     eventTitle: '',
-    qrCodeType: 'volunteer'
   });
   const [editEventModal, setEditEventModal] = useState<{
     isOpen: boolean;
@@ -140,6 +138,21 @@ export default function EventsPage({
       // Optimistically update the UI
       await mutate();
       toast.success('Successfully joined the event');
+      
+      // Refresh the details modal if it's open
+      if (eventDetailsModal.isOpen && eventDetailsModal.event?._id === eventId) {
+        const updatedEvent = {...eventDetailsModal.event};
+        if (user) {
+          updatedEvent.participants.push({
+            _id: user.id,
+            walletAddress: user.walletAddress
+          });
+        }
+        setEventDetailsModal({
+          isOpen: true,
+          event: updatedEvent
+        });
+      }
     } catch {
       toast.error('Failed to join event');
     }
@@ -167,17 +180,28 @@ export default function EventsPage({
 
       // Optimistically update the UI
       await mutate();
+      toast.success('Successfully left the event');
+      
+      // Refresh the details modal if it's open
+      if (eventDetailsModal.isOpen && eventDetailsModal.event?._id === eventId) {
+        const updatedEvent = {...eventDetailsModal.event};
+        updatedEvent.participants = updatedEvent.participants.filter(
+          participant => typeof participant === 'object' && participant._id !== user.id
+        );
+        setEventDetailsModal({
+          isOpen: true,
+          event: updatedEvent
+        });
+      }
     } catch {
       toast.error('Failed to leave event');
     }
   };
   
   // Function to handle deleting an event
-  const handleDeleteEvent = async () => {
-    if (!eventDetailsModal.event?._id) return;
-
+  const handleDeleteEvent = async (eventId: string) => {
     try {
-      const response = await fetch(buildApiUrl(`event/${eventDetailsModal.event._id}`), {
+      const response = await fetch(buildApiUrl(`event/${eventId}`), {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -188,40 +212,84 @@ export default function EventsPage({
         throw new Error('Failed to delete event');
       }
 
-      // Optimistically update the UI
-      await mutate();
+      // Close the details modal
       setEventDetailsModal({ isOpen: false, event: null });
+      
+      // Optimistically update the events list
+      await mutate(
+        (currentEvents: Event[] = []) => {
+          return currentEvents.filter(event => event._id !== eventId);
+        },
+        false
+      );
+      
+      // Then force revalidation
+      setTimeout(() => mutate(), 300);
+      
+      toast.success('Event deleted successfully');
     } catch {
       toast.error('Failed to delete event');
     }
   };
 
-  const handleGenerateQRCode = (eventId: string, eventTitle: string, type: 'volunteer' | 'recipient') => {
+  // Simplified QR code generation function
+  const handleGenerateQRCode = (eventId: string, eventTitle: string) => {
     setQrModalState({
       isOpen: true,
       eventId,
-      eventTitle,
-      qrCodeType: type
+      eventTitle
     });
   };
 
   const handleQRCodeGenerated = () => {
     // Refresh the events list to update the QR code status
     mutate();
+    
+    // Update the event details modal if it's open
+    if (eventDetailsModal.isOpen && eventDetailsModal.event) {
+      // We need to fetch the updated event with the new QR code
+      setTimeout(() => {
+        fetch(buildApiUrl(`event/${eventDetailsModal.event?._id}`), {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.data) {
+            setEventDetailsModal({
+              isOpen: true,
+              event: data.data
+            });
+          }
+        })
+        .catch(err => console.error('Error fetching updated event:', err));
+      }, 500);
+    }
+    
     toast.success('QR code generated successfully');
   };
 
-  // Function to open edit event modal
-  
+  // Function to handle editing an event
+  const handleEditEvent = (eventId: string) => {
+    if (eventId) {
+      setEditEventModal({
+        isOpen: true,
+        eventId
+      });
+    } else {
+      console.error('Cannot edit: No event ID available');
+      toast.error('Error: Cannot edit this event');
+    }
+  };
+
   // Function to open event details modal
   const openEventDetails = (event: Event) => {
-    console.log('Opening event details with event:', event); // Debug log
     setEventDetailsModal({
       isOpen: true,
       event
     });
   };
-  
 
   // Function to check if the current user is the creator of an event
   const isEventCreator = (event: Event) => {
@@ -316,19 +384,6 @@ export default function EventsPage({
       </p>
     </div>
   );
-
-  const handleEditEvent = (eventId: string) => {
-    console.log('Edit button clicked with eventId:', eventId);
-    if (eventId) {
-      setEditEventModal({
-        isOpen: true,
-        eventId
-      });
-    } else {
-      console.error('Cannot edit: No event ID available');
-      toast.error('Error: Cannot edit this event');
-    }
-  };
 
   if (isLoading) {
     return (
@@ -425,7 +480,7 @@ export default function EventsPage({
                         ) : isCreator ? (
                           <div className="text-blue-600 text-sm flex items-center gap-1">
                             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 016 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                             </svg>
                             <span>You created this event</span>
                           </div>
@@ -460,8 +515,7 @@ export default function EventsPage({
         onEdit={handleEditEvent}
         onDelete={handleDeleteEvent}
         onLeave={handleLeaveEvent}
-        onGenerateQR={(eventId, eventTitle) => handleGenerateQRCode(eventId, eventTitle, 'volunteer')}
-        onViewQR={(eventId, eventTitle) => handleGenerateQRCode(eventId, eventTitle, 'volunteer')}
+        onGenerateQR={handleGenerateQRCode}
         onJoin={handleJoinEvent}
         isAdmin={isAdmin}
         isAuthenticated={isAuthenticated}
@@ -487,6 +541,7 @@ export default function EventsPage({
         isOpen={qrModalState.isOpen}
         onClose={() => setQrModalState(prev => ({ ...prev, isOpen: false }))}
         eventId={qrModalState.eventId}
+        eventTitle={qrModalState.eventTitle}
         onQRCodeGenerated={handleQRCodeGenerated}
       />
     </div>
