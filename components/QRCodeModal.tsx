@@ -4,7 +4,6 @@ import { toast } from 'sonner';
 import { generateQRCode } from '@/services/api';
 import { AxiosError } from 'axios';
 import { Download, Loader2, QrCode, Eye } from 'lucide-react';
-import { QRCodeResponse as ApiQRCodeResponse } from '@/types/api';
 
 type QRCodeType = 'volunteer' | 'recipient';
 
@@ -26,7 +25,7 @@ interface QRCodeModalProps {
       ipfsCid?: string;
     };
   };
-  onQRCodeGenerated?: (type?: QRCodeType) => void;
+  onQRCodeGenerated?: (type: QRCodeType) => void;
 }
 
 const QRCodeModal: React.FC<QRCodeModalProps> = ({
@@ -42,81 +41,81 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [qrCodeType, setQrCodeType] = useState<QRCodeType>(initialType);
   
-  console.log('Event QR Codes:', eventQRCodes);
-  
   // Check if QR codes exist
-  const hasVolunteerQRCode = !!eventQRCodes?.volunteer?.ipfsCid;
-  const hasRecipientQRCode = !!eventQRCodes?.recipient?.ipfsCid;
+  const hasVolunteerQRCode = !!eventQRCodes?.volunteer?.ipfsCid || !!eventQRCodes?.volunteer?.qrImage;
+  const hasRecipientQRCode = !!eventQRCodes?.recipient?.ipfsCid || !!eventQRCodes?.recipient?.qrImage;
   
   // Log QR code status for debugging
-  console.log('Has Volunteer QR:', hasVolunteerQRCode);
-  console.log('Has Recipient QR:', hasRecipientQRCode);
+  console.log('Event QR Codes:', eventQRCodes);
   
-  // Get IPFS gateway URL for a CID
-  const getIpfsUrl = (cid: string) => `https://gateway.pinata.cloud/ipfs/${cid}`;
+  // Get IPFS gateway URL for a CID - try multiple gateways
+  const getIpfsUrl = (cid: string) => {
+    if (!cid) return null;
+    // Try a more reliable gateway
+    return `https://ipfs.io/ipfs/${cid}`;
+  };
   
   // Reset state when modal opens or type changes
   useEffect(() => {
     if (isOpen) {
       setQrCodeType(initialType);
       setIsGenerating(false);
-      
-      // Check if current type has a QR code and set the URL accordingly
-      if (initialType === 'volunteer' && hasVolunteerQRCode && eventQRCodes?.volunteer?.ipfsCid) {
-        setQrCodeUrl(getIpfsUrl(eventQRCodes.volunteer.ipfsCid));
-      } else if (initialType === 'recipient' && hasRecipientQRCode && eventQRCodes?.recipient?.ipfsCid) {
-        setQrCodeUrl(getIpfsUrl(eventQRCodes.recipient.ipfsCid));
-      } else {
-        setQrCodeUrl(null);
-      }
+      // Clear the current QR code URL when opening modal
+      setQrCodeUrl(null);
+      // Then update with the correct QR code
+      updateQrCodeUrl();
     }
-  }, [isOpen, initialType, hasVolunteerQRCode, hasRecipientQRCode, eventQRCodes]);
+  }, [isOpen, initialType]);
   
   // Update QR code URL when type changes
   useEffect(() => {
-    if (qrCodeType === 'volunteer' && hasVolunteerQRCode && eventQRCodes?.volunteer?.ipfsCid) {
-      setQrCodeUrl(getIpfsUrl(eventQRCodes.volunteer.ipfsCid));
-    } else if (qrCodeType === 'recipient' && hasRecipientQRCode && eventQRCodes?.recipient?.ipfsCid) {
-      setQrCodeUrl(getIpfsUrl(eventQRCodes.recipient.ipfsCid));
-    } else {
-      setQrCodeUrl(null);
-    }
-  }, [qrCodeType, hasVolunteerQRCode, hasRecipientQRCode, eventQRCodes]);
-
-  // Option labels with dynamic text based on QR code existence
-  const volunteerLabel = hasVolunteerQRCode ? 'View Volunteer QR Code' : 'Generate Volunteer QR Code';
-  const recipientLabel = hasRecipientQRCode ? 'View Recipient QR Code' : 'Generate Recipient QR Code';
+    // Clear current QR code when type changes
+    setQrCodeUrl(null);
+    // Then update with the new type's QR code
+    updateQrCodeUrl();
+  }, [qrCodeType]);
   
-  // QR code type options
-  const qrCodeTypeOptions = [
-    { 
-      value: 'volunteer', 
-      label: volunteerLabel,
-      description: 'QR code for volunteer check-in at the event',
-      exists: hasVolunteerQRCode
-    },
-    { 
-      value: 'recipient', 
-      label: recipientLabel,
-      description: 'QR code for recipient check-in and verification',
-      exists: hasRecipientQRCode
-    },
-  ];
-
   const handleTypeChange = (type: QRCodeType) => {
-    console.log('Changing type to:', type);
-    setQrCodeType(type);
+    if (type !== qrCodeType) {
+      console.log('Changing type to:', type);
+      // Clear current QR code before changing type
+      setQrCodeUrl(null);
+      setQrCodeType(type);
+    }
+  };
+
+  // Centralized function to update QR code URL from eventQRCodes
+  const updateQrCodeUrl = () => {
+    let url = null;
     
-    // URL will be updated by the effect
+    if (qrCodeType === 'volunteer' && hasVolunteerQRCode) {
+      if (eventQRCodes?.volunteer?.qrImage?.startsWith('data:image')) {
+        url = eventQRCodes.volunteer.qrImage;
+      } else if (eventQRCodes?.volunteer?.ipfsCid) {
+        url = getIpfsUrl(eventQRCodes.volunteer.ipfsCid);
+      }
+    } else if (qrCodeType === 'recipient' && hasRecipientQRCode) {
+      if (eventQRCodes?.recipient?.qrImage?.startsWith('data:image')) {
+        url = eventQRCodes.recipient.qrImage;
+      } else if (eventQRCodes?.recipient?.ipfsCid) {
+        url = getIpfsUrl(eventQRCodes.recipient.ipfsCid);
+      }
+    }
+    
+    console.log(`Setting QR URL for ${qrCodeType} type:`, url);
+    
+    // Always update the URL and force re-render when type changes
+    setQrCodeUrl(url);
   };
 
   const handleGenerateQRCode = async () => {
     // Check if current type already has a QR code
     const hasQRCode = qrCodeType === 'volunteer' ? hasVolunteerQRCode : hasRecipientQRCode;
     
-    // If QR code already exists, we don't need to generate it
+    // If QR code already exists, just display it
     if (hasQRCode) {
-      console.log('QR code already exists, no need to generate');
+      console.log('QR code already exists, updating display');
+      updateQrCodeUrl();
       return;
     }
     
@@ -125,31 +124,39 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
     
     try {
       const response = await generateQRCode({ eventId, type: qrCodeType });
-      console.log('Generated QR code response:', response.data);
+      console.log('Generated QR code response:', response);
       
       // Validate response
-      if (!response || !response.data) {
-        throw new Error('Invalid response from server');
+      if (!response?.data?.qrCode) {
+        throw new Error('QR code data not found in response');
       }
 
-      // Handle the response
-      const qrCodeData = (response.data as unknown as ApiQRCodeResponse).qrCode;
-      if (!qrCodeData || !qrCodeData.qrImage) {
-        console.error('Response data:', response.data);
-        throw new Error('QR code image not found in response');
-      }
-
-      // Set the QR code URL
-      setQrCodeUrl(qrCodeData.qrImage);
+      const { qrCode } = response.data;
       
-      // Notify parent component
+      // Set the QR code URL - handle both IPFS and base64
+      let qrCodeUrl = null;
+      if (qrCode.qrImage?.startsWith('data:image')) {
+        // If we have a base64 image, use it directly
+        qrCodeUrl = qrCode.qrImage;
+      } else if (qrCode.ipfsCid) {
+        // If we have an IPFS CID, use the gateway URL
+        qrCodeUrl = getIpfsUrl(qrCode.ipfsCid);
+      } else {
+        throw new Error('No valid QR code image found in response');
+      }
+
+      console.log('Setting QR code URL:', qrCodeUrl);
+      
+      // Update the local state with the new QR code
+      setQrCodeUrl(qrCodeUrl);
+      
+      // Notify parent immediately with the new QR code
       onQRCodeGenerated?.(qrCodeType);
       
       // Show success message
       toast.success(`${qrCodeType === 'volunteer' ? 'Volunteer' : 'Recipient'} QR code generated successfully`);
     } catch (error) {
       console.error('Error generating QR code:', error);
-      // More specific error message
       const errorMessage = error instanceof AxiosError 
         ? error.response?.data?.message || error.message 
         : error instanceof Error 
@@ -164,9 +171,8 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
   const handleDownload = () => {
     if (qrCodeUrl) {
       try {
-        // Create a temporary link to download the QR code
         const link = document.createElement('a');
-        link.href = qrCodeUrl; // This is already a data URL
+        link.href = qrCodeUrl;
         link.download = `${eventTitle}-${qrCodeType}-qr.png`;
         document.body.appendChild(link);
         link.click();
@@ -194,6 +200,26 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
     }
   };
 
+  // Option labels with dynamic text based on QR code existence
+  const volunteerLabel = hasVolunteerQRCode ? 'View Volunteer QR Code' : 'Generate Volunteer QR Code';
+  const recipientLabel = hasRecipientQRCode ? 'View Recipient QR Code' : 'Generate Recipient QR Code';
+  
+  // QR code type options
+  const qrCodeTypeOptions = [
+    { 
+      value: 'volunteer' as QRCodeType, 
+      label: volunteerLabel,
+      description: 'QR code for volunteer check-in at the event',
+      exists: hasVolunteerQRCode
+    },
+    { 
+      value: 'recipient' as QRCodeType, 
+      label: recipientLabel,
+      description: 'QR code for recipient check-in and verification',
+      exists: hasRecipientQRCode
+    },
+  ];
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-md">
@@ -216,7 +242,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                       ? 'border-primary bg-primary/5'
                       : 'border-gray-300 bg-white'
                   }`}
-                  onClick={() => handleTypeChange(option.value as QRCodeType)}
+                  onClick={() => handleTypeChange(option.value)}
                 >
                   <div className="flex flex-1">
                     <div className="flex flex-col">
@@ -241,7 +267,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                       name="qr-code-type"
                       value={option.value}
                       checked={qrCodeType === option.value}
-                      onChange={() => handleTypeChange(option.value as QRCodeType)}
+                      onChange={() => handleTypeChange(option.value)}
                       className="h-4 w-4 border-gray-300 text-primary focus:ring-primary"
                     />
                   </div>
@@ -253,8 +279,9 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
           {qrCodeUrl ? (
             <div className="space-y-4">
               <div className="flex justify-center">
-                <div className="relative h-64 w-64">
+                <div className="relative h-64 w-64 overflow-hidden border rounded-md">
                   <img
+                    key={`qr-image-${qrCodeType}-${qrCodeUrl.substring(0, 50)}`}
                     src={qrCodeUrl}
                     alt={`${currentTypeLabel} QR Code`}
                     className="object-contain w-full h-full"

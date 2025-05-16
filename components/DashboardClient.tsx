@@ -1,14 +1,14 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useCallback, useMemo } from "react"
 import useSWR from 'swr'
 import { Activity, NFT, Reward, ActivitiesResponse, RewardsResponse, NFTsResponse } from '@/types/api'
-import { getUserActivities, getRewardsHistory, getUserNFTs } from "@/services/api"
+import { getUserActivities, getRewardsHistory, getUserNFTs, mintActivityNFT } from "@/services/api"
 import { StatsCard } from './dashboard/StatsCard'
-import { ActivityList } from './dashboard/ActivityList'
-import { EventModal } from './dashboard/EventModal'
+import { RecentActivities } from './RecentActivities'
 import { LoadingSkeleton } from './dashboard/LoadingSkeleton'
 import { ErrorState } from './dashboard/ErrorState'
+import { toast } from 'sonner'
 
 // Custom hook for fetching dashboard data
 function useDashboardData() {
@@ -90,35 +90,47 @@ function useDashboardData() {
     nftCount: nftsData?.nfts?.length || 0
   }), [activities.length, rewardsData?.totalRewards, nftsData?.nfts?.length]);
 
+  // Add mutate function for activities and NFTs
+  const { mutate: mutateActivities } = useSWR('user-activities');
+  const { mutate: mutateNFTs } = useSWR('user-nfts');
+
+  // Function to handle NFT minting
+  const handleMintNFT = useCallback(async (activityId: string) => {
+    try {
+      toast.loading('Minting NFT...', { id: 'mint-nft' });
+      await mintActivityNFT(activityId);
+      
+      // Revalidate both activities and NFTs data
+      await Promise.all([
+        mutateActivities(),
+        mutateNFTs()
+      ]);
+
+      toast.success('NFT minted successfully!', { id: 'mint-nft' });
+    } catch (error) {
+      console.error('Error minting NFT:', error);
+      toast.error('Failed to mint NFT. Please try again.', { id: 'mint-nft' });
+    }
+  }, [mutateActivities, mutateNFTs]);
+
   return {
     activities,
     stats,
     isLoading,
-    error: error ? 'Failed to load dashboard data' : null
+    error: error ? 'Failed to load dashboard data' : null,
+    handleMintNFT
   };
 }
 
 export default function DashboardClient() {
-  const [showEventModal, setShowEventModal] = useState(false)
-  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null)
-  const { activities, stats, isLoading, error } = useDashboardData()
-
-  const handleActivityClick = useCallback((activity: Activity) => {
-    setSelectedActivity(activity)
-    setShowEventModal(true)
-  }, [])
-
-  const closeEventModal = useCallback(() => {
-    setShowEventModal(false)
-    setSelectedActivity(null)
-  }, [])
+  const { activities, stats, isLoading, error, handleMintNFT } = useDashboardData();
 
   if (isLoading) {
-    return <LoadingSkeleton />
+    return <LoadingSkeleton />;
   }
 
   if (error) {
-    return <ErrorState error={error} />
+    return <ErrorState error={error} />;
   }
 
   return (
@@ -127,18 +139,14 @@ export default function DashboardClient() {
       <StatsCard stats={stats} />
 
       {/* Recent Activities Section */}
-      <ActivityList 
-        activities={activities}
-        onActivityClick={handleActivityClick}
-      />
-
-      {/* Event Details Modal */}
-      {showEventModal && selectedActivity && (
-        <EventModal
-          activity={selectedActivity}
-          onClose={closeEventModal}
+      <div className="mx-4 mt-6">
+        <RecentActivities 
+          activities={activities}
+          onMintNFT={handleMintNFT}
+          maxItems={5}
+          showViewAll={true}
         />
-      )}
+      </div>
     </div>
-  )
+  );
 }

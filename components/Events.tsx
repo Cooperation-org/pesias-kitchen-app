@@ -41,10 +41,23 @@ const isEventPast = (event: Event): boolean => {
   return eventDate < now;
 };
 
+// Updated QR code modal state interface to include QR code data
 interface QRCodeModalState {
   isOpen: boolean;
   eventId: string;
   eventTitle: string;
+  eventQRCodes?: {
+    volunteer?: {
+      qrImage?: string;
+      _id?: string;
+      ipfsCid?: string;
+    };
+    recipient?: {
+      qrImage?: string;
+      _id?: string;
+      ipfsCid?: string;
+    };
+  };
 }
 
 interface EventDetailsModalState {
@@ -63,11 +76,15 @@ export default function EventsPage({
 }: EventsPageProps) {
   const [timeFilter, setTimeFilter] = useState<TimeFilter>('upcoming');
   const [searchQuery] = useState('');
+  
+  // Updated QR modal state to include the QR code data
   const [qrModalState, setQrModalState] = useState<QRCodeModalState>({
     isOpen: false,
     eventId: '',
     eventTitle: '',
+    eventQRCodes: undefined
   });
+  
   const [editEventModal, setEditEventModal] = useState<{
     isOpen: boolean;
     eventId: string | undefined;
@@ -75,10 +92,12 @@ export default function EventsPage({
     isOpen: false,
     eventId: undefined
   });
+  
   const [eventDetailsModal, setEventDetailsModal] = useState<EventDetailsModalState>({
     isOpen: false,
     event: null
   });
+  
   const { user, isAuthenticated } = useAuthContext();
   const router = useRouter();
 
@@ -232,42 +251,50 @@ export default function EventsPage({
     }
   };
 
-  // Simplified QR code generation function
-  const handleGenerateQRCode = (eventId: string, eventTitle: string) => {
-    setQrModalState({
-      isOpen: true,
-      eventId,
-      eventTitle
+  // UPDATED: Improved QR code generated handler
+  const handleQRCodeGenerated = (type?: string) => {
+    console.log(`QR code generated for ${type} type`);
+    
+    // Just update the events list in the background without triggering a re-render
+    mutate(undefined, { 
+      revalidate: false,
+      optimisticData: (currentData: Event[] = []) => currentData
     });
   };
 
-  const handleQRCodeGenerated = () => {
-    // Refresh the events list to update the QR code status
-    mutate();
-    
-    // Update the event details modal if it's open
-    if (eventDetailsModal.isOpen && eventDetailsModal.event) {
-      // We need to fetch the updated event with the new QR code
-      setTimeout(() => {
-        fetch(buildApiUrl(`event/${eventDetailsModal.event?._id}`), {
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
-        })
-        .then(res => res.json())
-        .then(data => {
-          if (data.data) {
-            setEventDetailsModal({
-              isOpen: true,
-              event: data.data
-            });
-          }
-        })
-        .catch(err => console.error('Error fetching updated event:', err));
-      }, 500);
+  // UPDATED: Improved QR code generation function
+  const handleGenerateQRCode = (eventId: string, eventTitle: string, eventQRCodes?: {
+    volunteer?: {
+      qrImage?: string;
+      _id?: string;
+      ipfsCid?: string;
+    };
+    recipient?: {
+      qrImage?: string;
+      _id?: string;
+      ipfsCid?: string;
+    };
+  }) => {
+    // Only open the modal if it's not already open
+    if (!qrModalState.isOpen) {
+      setQrModalState({
+        isOpen: true,
+        eventId,
+        eventTitle,
+        eventQRCodes
+      });
     }
-    
-    toast.success('QR code generated successfully');
+  };
+
+  // UPDATED: Improved modal close handler
+  const handleCloseQRModal = () => {
+    // Clear the modal state completely
+    setQrModalState({
+      isOpen: false,
+      eventId: '',
+      eventTitle: '',
+      eventQRCodes: undefined
+    });
   };
 
   // Function to handle editing an event
@@ -515,7 +542,8 @@ export default function EventsPage({
         onEdit={handleEditEvent}
         onDelete={handleDeleteEvent}
         onLeave={handleLeaveEvent}
-        onGenerateQR={handleGenerateQRCode}
+        onGenerateQR={(eventId, eventTitle) => 
+          handleGenerateQRCode(eventId, eventTitle, eventDetailsModal.event?.qrCodes)}
         onJoin={handleJoinEvent}
         isAdmin={isAdmin}
         isAuthenticated={isAuthenticated}
@@ -536,12 +564,13 @@ export default function EventsPage({
         />
       )}
 
-      {/* QR Code Modal */}
+      {/* UPDATED: QR Code Modal */}
       <QRCodeModal
         isOpen={qrModalState.isOpen}
-        onClose={() => setQrModalState(prev => ({ ...prev, isOpen: false }))}
+        onClose={handleCloseQRModal}
         eventId={qrModalState.eventId}
         eventTitle={qrModalState.eventTitle}
+        eventQRCodes={qrModalState.eventQRCodes}
         onQRCodeGenerated={handleQRCodeGenerated}
       />
     </div>
