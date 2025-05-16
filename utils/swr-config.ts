@@ -56,64 +56,51 @@ interface SWRError extends Error {
  * Enhanced fetcher with proper typing and disabled caching for real-time data
  */
 export const fetcher = async <T>(url: string): Promise<T> => {
-  console.log('Fetcher called with URL:', url);
-  
   try {
-    // Get authentication headers
     const headers = getAuthHeaders();
-    
-    // Add cache-busting parameter for event endpoints
     const isEventEndpoint = url.includes('/event');
-    const urlWithCacheBuster = isEventEndpoint 
-      ? `${url}${url.includes('?') ? '&' : '?'}_t=${Date.now()}`
-      : url;
     
-    console.log('Making fetch request to:', urlWithCacheBuster);
+    // Define headers with proper type
+    const headersInit: HeadersInit = {
+      ...headers,
+      'Cache-Control': isEventEndpoint 
+        ? 'no-cache, no-store'
+        : 'max-age=300, stale-while-revalidate=60',
+      ...(isEventEndpoint ? { 'Pragma': 'no-cache' } : {})
+    };
     
-    // Make the request with proper headers
-    const response = await fetch(urlWithCacheBuster, { 
-      headers: {
-        ...headers,
-        'Cache-Control': isEventEndpoint ? 'no-cache, no-store' : 'max-age=300',
-        'Pragma': isEventEndpoint ? 'no-cache' : ''
-      },
-      mode: 'cors'
+    const response = await fetch(url, { 
+      headers: headersInit,
+      mode: 'cors',
+      next: { revalidate: isEventEndpoint ? 0 : 300 }
     });
     
     if (!response.ok) {
       const error = new Error('An error occurred while fetching the data.') as SWRError;
-      try {
-        const errorData = await response.json();
-        error.info = errorData;
-      } catch {
-        error.info = { message: response.statusText };
-      }
       error.status = response.status;
+      error.info = { message: response.statusText };
       throw error;
     }
     
     const data = await response.json();
-    
-    // Handle different response formats
-    const result = data.data !== undefined ? data.data : data;
-    
-    return result as T;
+    return (data.data !== undefined ? data.data : data) as T;
   } catch (error) {
-    console.error('Fetch error:', error);
     throw error;
   }
 };
 
-// Consolidated SWR configuration for real-time data
+// Optimized SWR configuration
 export const swrConfig = {
   fetcher,
-  revalidateOnFocus: true,
+  revalidateOnFocus: false, // Disabled to reduce unnecessary refetches
   revalidateIfStale: true,
   revalidateOnReconnect: true,
-  errorRetryCount: 3,
-  dedupingInterval: 0, // Always refetch when mutate is called
-  refreshInterval: 30000, // Refresh every 30 seconds automatically
-  focusThrottleInterval: 5000,
-  loadingTimeout: 3000,
-  suspense: false
+  errorRetryCount: 2, // Reduced retry count
+  dedupingInterval: 0, // Keep 0 for immediate refetch on mutate
+  refreshInterval: 30000,
+  focusThrottleInterval: 10000, // Increased to reduce focus events
+  loadingTimeout: 5000,
+  suspense: false,
+  keepPreviousData: true, // Keep old data while loading new data
+  compare: (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b) // Deep comparison
 };

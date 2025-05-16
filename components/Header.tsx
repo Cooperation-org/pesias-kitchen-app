@@ -27,7 +27,7 @@ export default function Header() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <Link href={ROUTES.HOME} className="flex items-center">
-            <span className="font-medium text-xl">Pesia's Kitchen</span>
+            <span className="font-medium text-xl">Pesia&apos;s Kitchen</span>
           </Link>
           
           {/* Desktop Navigation */}

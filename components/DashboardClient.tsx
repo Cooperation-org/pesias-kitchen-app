@@ -1,117 +1,80 @@
 "use client"
 
-import { useCallback, useMemo } from "react"
+import { useCallback, useMemo, memo } from "react"
 import useSWR from 'swr'
-import { Activity, NFT, Reward, ActivitiesResponse, RewardsResponse, NFTsResponse } from '@/types/api'
+import { Activity, NFT, Reward } from '@/types/api'
 import { getUserActivities, getRewardsHistory, getUserNFTs, mintActivityNFT } from "@/services/api"
+import { swrConfig } from '@/utils/swr-config'
 import { StatsCard } from './dashboard/StatsCard'
 import { RecentActivities } from './RecentActivities'
 import { LoadingSkeleton } from './dashboard/LoadingSkeleton'
 import { ErrorState } from './dashboard/ErrorState'
 import { toast } from 'sonner'
 
+// Memoized activity transformer
+const transformActivity = (activity: Activity, nfts: NFT[] = [], rewards: Reward[] = []) => {
+  const timestamp = new Date(activity.timestamp);
+  return {
+    ...activity,
+    title: typeof activity.event === 'object' ? activity.event.title : 'Activity',
+    activityType: typeof activity.event === 'object' ? activity.event.activityType : 'other',
+    location: typeof activity.event === 'object' ? activity.event.location : 'Unknown Location',
+    date: timestamp.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }),
+    time: timestamp.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
+    nftMinted: nfts.some(nft => nft.activityId === activity._id),
+    rewardAmount: rewards.find(r => r.activityId === activity._id)?.rewardAmount || 0
+  };
+};
+
 // Custom hook for fetching dashboard data
 function useDashboardData() {
-  const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities } = useSWR<ActivitiesResponse>(
-    'user-activities',
+  const { data: dashboardData, error, isLoading, mutate } = useSWR(
+    'dashboard-data',
     async () => {
-      const response = await getUserActivities()
+      const [activitiesRes, rewardsRes, nftsRes] = await Promise.all([
+        getUserActivities(),
+        getRewardsHistory(),
+        getUserNFTs()
+      ]);
+      
       return {
-        data: response.data,
-        total: response.data.length
-      } as ActivitiesResponse
+        activities: activitiesRes.data,
+        rewards: rewardsRes.rewards,
+        nfts: nftsRes.nfts,
+        totalRewards: rewardsRes.totalRewards
+      };
     },
     { 
+      ...swrConfig,
       revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 5000
+      revalidateOnReconnect: false
     }
   );
-
-  const { data: rewardsData, error: rewardsError, isLoading: isLoadingRewards } = useSWR<RewardsResponse>(
-    'user-rewards',
-    async () => {
-      const response = await getRewardsHistory()
-      return response // The API already returns RewardsResponse
-    },
-    { 
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 5000
-    }
-  );
-
-  const { data: nftsData, error: nftsError, isLoading: isLoadingNFTs } = useSWR<NFTsResponse>(
-    'user-nfts',
-    async () => {
-      const response = await getUserNFTs()
-      return response // The API already returns NFTsResponse
-    },
-    { 
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false,
-      dedupingInterval: 5000
-    }
-  );
-
-  const isLoading = isLoadingActivities || isLoadingRewards || isLoadingNFTs;
-  const error = activitiesError || rewardsError || nftsError;
 
   const activities = useMemo(() => {
-    if (!activitiesData?.data) return [];
-    return activitiesData.data.map((activity: Activity) => {
-      const timestamp = new Date(activity.timestamp);
-      const date = timestamp.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: 'numeric' 
-      });
-      const time = timestamp.toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-
-      return {
-        ...activity,
-        title: typeof activity.event === 'object' ? activity.event.title : 'Activity',
-        activityType: typeof activity.event === 'object' ? activity.event.activityType : 'other',
-        location: typeof activity.event === 'object' ? activity.event.location : 'Unknown Location',
-        date,
-        time,
-        nftMinted: nftsData?.nfts?.some((nft: NFT) => nft.activityId === activity._id) || false,
-        rewardAmount: rewardsData?.rewards?.find((r: Reward) => r.activityId === activity._id)?.rewardAmount || 0
-      };
-    });
-  }, [activitiesData, nftsData, rewardsData]);
+    if (!dashboardData?.activities) return [];
+    return dashboardData.activities.map(activity => 
+      transformActivity(activity, dashboardData.nfts, dashboardData.rewards)
+    );
+  }, [dashboardData]);
 
   const stats = useMemo(() => ({
     activitiesCount: activities.length,
-    goodDollarsEarned: rewardsData?.totalRewards || 0,
-    nftCount: nftsData?.nfts?.length || 0
-  }), [activities.length, rewardsData?.totalRewards, nftsData?.nfts?.length]);
+    goodDollarsEarned: dashboardData?.totalRewards || 0,
+    nftCount: dashboardData?.nfts?.length || 0
+  }), [activities.length, dashboardData?.totalRewards, dashboardData?.nfts?.length]);
 
-  // Add mutate function for activities and NFTs
-  const { mutate: mutateActivities } = useSWR('user-activities');
-  const { mutate: mutateNFTs } = useSWR('user-nfts');
-
-  // Function to handle NFT minting
   const handleMintNFT = useCallback(async (activityId: string) => {
     try {
       toast.loading('Minting NFT...', { id: 'mint-nft' });
       await mintActivityNFT(activityId);
-      
-      // Revalidate both activities and NFTs data
-      await Promise.all([
-        mutateActivities(),
-        mutateNFTs()
-      ]);
-
+      await mutate(); // Single mutate call to refresh all data
       toast.success('NFT minted successfully!', { id: 'mint-nft' });
     } catch (error) {
       console.error('Error minting NFT:', error);
       toast.error('Failed to mint NFT. Please try again.', { id: 'mint-nft' });
     }
-  }, [mutateActivities, mutateNFTs]);
+  }, [mutate]);
 
   return {
     activities,
@@ -122,7 +85,8 @@ function useDashboardData() {
   };
 }
 
-export default function DashboardClient() {
+// Memoized dashboard component
+const DashboardClient = memo(function DashboardClient() {
   const { activities, stats, isLoading, error, handleMintNFT } = useDashboardData();
 
   if (isLoading) {
@@ -149,4 +113,6 @@ export default function DashboardClient() {
       </div>
     </div>
   );
-}
+});
+
+export default DashboardClient;
