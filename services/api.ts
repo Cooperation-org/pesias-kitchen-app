@@ -1,5 +1,7 @@
 // services/api.ts
 import axios, { AxiosInstance, AxiosResponse } from "axios";
+import { mutate } from "swr";
+import { buildApiUrl } from "@/utils/swr-config";
 import { 
   User, 
   Event, 
@@ -20,6 +22,9 @@ import {
 } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
+
+// Define the events cache key for consistent usage
+const EVENTS_CACHE_KEY = buildApiUrl('event');
 
 /**
  * Configured Axios instance for API requests
@@ -208,7 +213,7 @@ export const updateUserRole = (
   return api.put(`/user/${userId}/role`, { role });
 };
 
-// ===== Event Endpoints =====
+// ===== Event Endpoints with SWR Integration =====
 
 /**
  * Get all events
@@ -225,45 +230,175 @@ export const getEventById = (eventId: string): Promise<AxiosResponse<Event>> => 
 };
 
 /**
- * Create a new event
+ * Create a new event with immediate SWR cache update
  */
-export const createEvent = (
+export const createEvent = async (
   data: Partial<Event>
 ): Promise<AxiosResponse<Event>> => {
-  return api.post(SWR_ENDPOINTS.EVENTS.url, data);
+  try {
+    // Send API request
+    const response = await api.post(SWR_ENDPOINTS.EVENTS.url, data);
+    const createdEvent = response.data;
+    
+    // Update the SWR cache immediately
+    await mutate(
+      EVENTS_CACHE_KEY,
+      (currentEvents: Event[] = []) => {
+        // Add the new event to the existing list
+        return [...currentEvents, createdEvent];
+      },
+      false // Don't revalidate immediately to avoid race conditions
+    );
+    
+    // Force a revalidation after a short delay
+    setTimeout(() => {
+      mutate(EVENTS_CACHE_KEY);
+    }, 300);
+    
+    return response;
+  } catch (error) {
+    // If there's an error, revalidate the cache to ensure it's in sync
+    mutate(EVENTS_CACHE_KEY);
+    throw error;
+  }
 };
 
 /**
- * Update an event
+ * Update an event with immediate SWR cache update
  */
-export const updateEvent = (
+export const updateEvent = async (
   eventId: string,
   data: Partial<Event>
 ): Promise<AxiosResponse<Event>> => {
-  return api.put(`/event/${eventId}`, data);
+  try {
+    // Send API request
+    const response = await api.put(`/event/${eventId}`, data);
+    const updatedEvent = response.data;
+    
+    // Update the SWR cache immediately
+    await mutate(
+      EVENTS_CACHE_KEY,
+      (currentEvents: Event[] = []) => {
+        // Replace the updated event in the array
+        return currentEvents.map(event => 
+          event._id === eventId ? updatedEvent : event
+        );
+      },
+      false
+    );
+    
+    // Force a revalidation after a short delay
+    setTimeout(() => {
+      mutate(EVENTS_CACHE_KEY);
+    }, 300);
+    
+    return response;
+  } catch (error) {
+    // If there's an error, revalidate the cache
+    mutate(EVENTS_CACHE_KEY);
+    throw error;
+  }
 };
 
 /**
- * Delete an event
+ * Delete an event with immediate SWR cache update
  */
-export const deleteEvent = (
+export const deleteEvent = async (
   eventId: string
 ): Promise<AxiosResponse<{ message: string }>> => {
-  return api.delete(`/event/${eventId}`);
+  try {
+    // Send API request
+    const response = await api.delete(`/event/${eventId}`);
+    
+    // Update the SWR cache immediately
+    await mutate(
+      EVENTS_CACHE_KEY,
+      (currentEvents: Event[] = []) => {
+        // Remove the deleted event from the array
+        return currentEvents.filter(event => event._id !== eventId);
+      },
+      false
+    );
+    
+    // Force a revalidation after a short delay
+    setTimeout(() => {
+      mutate(EVENTS_CACHE_KEY);
+    }, 300);
+    
+    return response;
+  } catch (error) {
+    // If there's an error, revalidate the cache
+    mutate(EVENTS_CACHE_KEY);
+    throw error;
+  }
 };
 
 /**
- * Join an event
+ * Join an event with immediate SWR cache update
  */
-export const joinEvent = (eventId: string): Promise<AxiosResponse<Event>> => {
-  return api.post(`/event/${eventId}/join`);
+export const joinEvent = async (eventId: string): Promise<AxiosResponse<Event>> => {
+  try {
+    // Send API request
+    const response = await api.post(`/event/${eventId}/join`);
+    const updatedEvent = response.data;
+    
+    // Update the SWR cache immediately
+    await mutate(
+      EVENTS_CACHE_KEY,
+      (currentEvents: Event[] = []) => {
+        // Replace the updated event in the array
+        return currentEvents.map(event => 
+          event._id === eventId ? updatedEvent : event
+        );
+      },
+      false
+    );
+    
+    // Force a revalidation after a short delay
+    setTimeout(() => {
+      mutate(EVENTS_CACHE_KEY);
+    }, 300);
+    
+    return response;
+  } catch (error) {
+    // If there's an error, revalidate the cache
+    mutate(EVENTS_CACHE_KEY);
+    throw error;
+  }
 };
 
 /**
- * Leave an event
+ * Leave an event with immediate SWR cache update
  */
-export const leaveEvent = (eventId: string): Promise<AxiosResponse<Event>> => {
-  return api.post(`/event/${eventId}/leave`);
+export const leaveEvent = async (eventId: string): Promise<AxiosResponse<Event>> => {
+  try {
+    // Send API request
+    const response = await api.post(`/event/${eventId}/leave`);
+    const updatedEvent = response.data;
+    
+    // Update the SWR cache immediately
+    await mutate(
+      EVENTS_CACHE_KEY,
+      (currentEvents: Event[] = []) => {
+        // Replace the updated event in the array
+        return currentEvents.map(event => 
+          event._id === eventId ? updatedEvent : event
+        );
+      },
+      false
+    );
+    
+    // Force a revalidation after a short delay
+    setTimeout(() => {
+      mutate(EVENTS_CACHE_KEY);
+    }, 300);
+    
+    return response;
+  } catch (error) {
+    // If there's an error, revalidate the cache
+    mutate(EVENTS_CACHE_KEY);
+    throw error;
+  }
 };
 
 // ===== Rewards and NFTs =====

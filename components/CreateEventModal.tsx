@@ -3,9 +3,10 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
-import { createEvent } from '@/services/api'; // Using the API endpoint directly
+import { createEvent } from '@/services/api';
 import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Event } from '@/hooks/useEvents'; // Import the Event type
+import { Event } from '@/hooks/useEvents';
+import { mutate } from 'swr';
 
 type ActivityType = 'food_sorting' | 'food_distribution' | 'food_pickup';
 
@@ -30,10 +31,16 @@ interface CreateEventData {
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onEventCreated?: (event: Event) => void; // Use the Event type instead of any
+  onEventCreated?: (event: Event) => void;
+  eventsApiUrl: string; // Add this prop to access the correct SWR cache key
 }
 
-export default function CreateEventModal({ isOpen, onClose, onEventCreated }: CreateEventModalProps) {
+export default function CreateEventModal({ 
+  isOpen, 
+  onClose, 
+  onEventCreated,
+  eventsApiUrl 
+}: CreateEventModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<CreateEventData>({
     title: '',
@@ -46,6 +53,20 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
     imageUrl: '',
     activityType: 'food_sorting',
   });
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      date: '',
+      time: '',
+      location: '',
+      capacity: 0,
+      price: 0,
+      imageUrl: '',
+      activityType: 'food_sorting',
+    });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,9 +85,27 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
         date: combinedDateTime
       };
 
-      // Send the request and get the response
+      // Optimistically update the cache before the API call
+      // This makes the new event appear immediately in the UI
+      const optimisticEvent = {
+        _id: `temp-${Date.now()}`, // Temporary ID that will be replaced
+        ...requestData,
+        participants: [],
+        createdAt: new Date().toISOString(),
+      } as Event;
+
+      // Update the SWR cache optimistically
+      await mutate(
+        eventsApiUrl,
+        (currentEvents: Event[] = []) => {
+          return [...currentEvents, optimisticEvent];
+        },
+        false // Don't revalidate yet
+      );
+
+      // Send the request to create the event
       const response = await createEvent(requestData);
-      const createdEvent = response.data; // Assuming the API returns the created event
+      const createdEvent = response.data;
       
       toast.success('Event created successfully!');
       
@@ -75,10 +114,18 @@ export default function CreateEventModal({ isOpen, onClose, onEventCreated }: Cr
         onEventCreated(createdEvent);
       }
       
+      // Force refresh the cache to get the actual event with real ID
+      mutate(eventsApiUrl);
+      
+      // Reset form and close modal
+      resetForm();
       onClose();
     } catch (error) {
       toast.error('Failed to create event. Please try again.');
       console.error('Error creating event:', error);
+      
+      // Revalidate cache on error to remove optimistic update
+      mutate(eventsApiUrl);
     } finally {
       setIsSubmitting(false);
     }
