@@ -323,13 +323,30 @@ export interface QRCode {
 }
 
 export interface ActivityMetrics {
+    // Core Impact Metrics
     totalGDollars: number;
     totalNFTs: number;
     totalFoodDistributed: number;
-    totalMealsProvided: number;
     totalWasteReduced: number;
     uniqueVolunteers: number;
     uniqueRecipients: number;
+    totalUniqueParticipants: number;
+    totalActivities: number;
+    totalEvents: number;
+    avgFoodPerEvent: number;
+    avgRewardsPerEvent: number;
+    
+    // QR Code Statistics
+    qrStats: {
+        totalCodes: number;
+        totalScans: number;
+        avgScansPerCode: number;
+    };
+    
+    // Metadata
+    generatedAt: string;
+    fromCache: boolean;
+    calculationTime: string;
 }
 
 export interface Participant {
@@ -390,4 +407,72 @@ export interface QRCodeVerifyAndMintResponse {
     activity: Activity;
     nftId?: string;
     txHash?: string;
+}
+
+export interface FoodHeroesImpactResponse {
+  foodHeroesImpact: {
+    totalVolunteers: number;
+    totalRecipients: number;
+    totalUniqueParticipants: number;
+    totalGDollarsDistributed: number;
+    totalNFTsMinted: number;
+    totalFoodRescued: number;
+    totalActivities: number;
+    totalEvents: number;
+    avgFoodPerEvent: number;
+    avgRewardsPerEvent: number;
+  };
+  participantBreakdown: {
+    volunteers: {
+      count: number;
+      activities: number;
+      foodProcessed: number;
+      nftsMinted: number;
+    };
+    recipients: {
+      count: number;
+      activities: number;
+      foodReceived: number;
+      nftsMinted: number;
+    };
+  };
+  rewardBreakdown: {
+    [key: string]: {
+      activities: number;
+      totalRewards: number;
+      rewardPerActivity: number;
+    };
+  };
+  foodByActivityType: Array<{
+    _id: string;
+    totalFood: number;
+    activities: number;
+    activitiesWithNFT: number;
+  }>;
+  eventStats: {
+    total: number;
+    active: number;
+    completed: number;
+    byType: Array<{
+      _id: string;
+      count: number;
+    }>;
+  };
+  qrStats: {
+    totalCodes: number;
+    totalScans: number;
+    avgScansPerCode: number;
+  };
+  recentActivity: Array<{
+    _id: string;
+    volunteers: number;
+    recipients: number;
+    totalActivities: number;
+    totalFood: number;
+    totalNFTs: number;
+  }>;
+  generatedAt: string;
+  fromCache: boolean;
+  calculationTime: string;
+  cachedAt: string;
 }

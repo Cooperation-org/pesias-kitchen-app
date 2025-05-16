@@ -1,6 +1,8 @@
 // hooks/useActivities.ts
 import useSWR from 'swr';
 import { buildApiUrl, fetcher } from '@/utils/swr-config';
+import { getFoodHeroesImpact } from '@/services/api';
+import { ActivityMetrics } from '@/types/api';
 
 export interface Activity {
   _id: string;
@@ -53,23 +55,13 @@ export interface ProcessedActivity {
   verified: boolean;
 }
 
-export interface ActivityMetrics {
-  totalGDollars: number;
-  totalNFTs: number;
-  totalFoodDistributed: number;
-  totalMealsProvided: number;
-  totalWasteReduced: number;
-  uniqueVolunteers: number;
-  uniqueRecipients: number;
-}
-
 export function useActivities(filter?: string) {
   console.log('useActivities hook called with filter:', filter);
   
   const url = buildApiUrl('activity');
-
   
-  const { data, error, isLoading, mutate } = useSWR<Activity[]>(
+  // Fetch activities
+  const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities, mutate } = useSWR<Activity[]>(
     url,
     fetcher,
     {
@@ -85,14 +77,61 @@ export function useActivities(filter?: string) {
     }
   );
 
+  // Fetch analytics data
+  const { data: analyticsData, error: analyticsError, isLoading: isLoadingAnalytics } = useSWR<ActivityMetrics>(
+    'food-heroes-impact',
+    async () => {
+      const response = await getFoodHeroesImpact();
+      console.log('Analytics API Response:', response);
+      
+      // Map the API response to our metrics format using only the needed data
+      const apiData = response.data;
+      const mappedMetrics: ActivityMetrics = {
+        // Core Impact Metrics
+        totalGDollars: apiData.foodHeroesImpact.totalGDollarsDistributed,
+        totalNFTs: apiData.foodHeroesImpact.totalNFTsMinted,
+        totalFoodDistributed: apiData.foodHeroesImpact.totalFoodRescued,
+        totalWasteReduced: apiData.foodHeroesImpact.totalFoodRescued,
+        uniqueVolunteers: apiData.foodHeroesImpact.totalVolunteers,
+        uniqueRecipients: apiData.foodHeroesImpact.totalRecipients,
+        totalUniqueParticipants: apiData.foodHeroesImpact.totalUniqueParticipants,
+        totalActivities: apiData.foodHeroesImpact.totalActivities,
+        totalEvents: apiData.foodHeroesImpact.totalEvents,
+        avgFoodPerEvent: apiData.foodHeroesImpact.avgFoodPerEvent,
+        avgRewardsPerEvent: apiData.foodHeroesImpact.avgRewardsPerEvent,
+        
+        // QR Code Statistics
+        qrStats: apiData.qrStats,
+        
+        // Metadata
+        generatedAt: apiData.generatedAt,
+        fromCache: apiData.fromCache,
+        calculationTime: apiData.calculationTime
+      };
+      
+      console.log('Mapped metrics:', mappedMetrics);
+      return mappedMetrics;
+    },
+    {
+      revalidateOnFocus: true,
+      revalidateOnReconnect: true,
+      dedupingInterval: 5000,
+      onError: (error) => {
+        console.error('Error fetching analytics:', error);
+      }
+    }
+  );
+
   console.log('SWR state:', { 
-    hasData: !!data,
-    isArray: Array.isArray(data),
-    length: data?.length,
-    firstActivity: data?.[0]
+    hasData: !!activitiesData,
+    isArray: Array.isArray(activitiesData),
+    length: activitiesData?.length,
+    firstActivity: activitiesData?.[0]
   });
 
-  const activities = data || [];
+  const activities = activitiesData || [];
+  const isLoading = isLoadingActivities || isLoadingAnalytics;
+  const error = activitiesError || analyticsError;
 
   // Filter activities if filter is provided
   const filteredActivities = filter && filter !== 'all'
@@ -167,37 +206,36 @@ export function useActivities(filter?: string) {
     };
   });
 
-  // Calculate metrics
-  const metrics: ActivityMetrics = filteredActivities.reduce((acc, activity) => {
-    // Count unique volunteers and recipients
-    if (activity.event.activityType === 'food_sorting') {
-      acc.uniqueVolunteers++;
-      acc.totalWasteReduced += activity.quantity * 2; // 1 unit = 2kg waste reduced
-    }
-    if (activity.event.activityType === 'food_distribution') {
-      acc.uniqueRecipients++;
-      acc.totalFoodDistributed += activity.quantity; // 1 unit = 1kg food
-      acc.totalMealsProvided += Math.round(activity.quantity * 12.5); // 1kg = 12.5 meals
-    }
-    
-    // Count rewards
-    if (activity.rewardAmount) {
-      acc.totalGDollars += activity.rewardAmount;
-    }
-    if (activity.nftMinted || activity.nftId) {
-      acc.totalNFTs++;
-    }
-    
-    return acc;
-  }, {
+  // Use analytics data from the API instead of calculating metrics
+  const metrics = analyticsData || {
+    // Core Impact Metrics
     totalGDollars: 0,
     totalNFTs: 0,
     totalFoodDistributed: 0,
-    totalMealsProvided: 0,
     totalWasteReduced: 0,
     uniqueVolunteers: 0,
-    uniqueRecipients: 0
-  });
+    uniqueRecipients: 0,
+    totalUniqueParticipants: 0,
+    totalActivities: 0,
+    totalEvents: 0,
+    avgFoodPerEvent: 0,
+    avgRewardsPerEvent: 0,
+    
+    // QR Code Statistics
+    qrStats: {
+      totalCodes: 0,
+      totalScans: 0,
+      avgScansPerCode: 0
+    },
+    
+    // Metadata
+    generatedAt: new Date().toISOString(),
+    fromCache: false,
+    calculationTime: "0ms"
+  };
+
+  console.log('Final metrics being used:', metrics);
+  console.log('totalGDollars value:', metrics.totalGDollars);
 
   // Get recent activities (last 3)
   const recentActivities = processedActivities.slice(0, 3);
