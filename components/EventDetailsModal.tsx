@@ -10,7 +10,6 @@ import {
   TrashIcon,
   ArrowLeftOnRectangleIcon
 } from '@heroicons/react/24/outline';
-import QRCodeViewer from '@/components/QRCodeViewer';
 import QRCodeModal from '@/components/QRCodeModal';
 
 export interface QRCode {
@@ -19,6 +18,7 @@ export interface QRCode {
   expiresAt: string;
   isActive: boolean;
   usedCount: number;
+  qrImage?: string;
 }
 
 export interface Event {
@@ -85,17 +85,14 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   userHasJoined,
   isCreator
 }) => {
-  // State for QR code viewer
-  const [qrCodeViewer, setQrCodeViewer] = useState<{
+  // State for QR code modal
+  const [qrModalState, setQrModalState] = useState<{
     isOpen: boolean;
     type: 'volunteer' | 'recipient';
   }>({
     isOpen: false,
     type: 'volunteer'
   });
-  
-  // State for QR code generator
-  const [showQrGenerator, setShowQrGenerator] = useState(false);
   
   if (!isOpen || !event) return null;
 
@@ -130,15 +127,6 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
 
   const isPastEvent = isEventPast();
 
-  // Check if event has QR codes
-  const hasVolunteerQRCode = (): boolean => {
-    return !!event.qrCodes?.volunteer;
-  };
-  
-  const hasRecipientQRCode = (): boolean => {
-    return !!event.qrCodes?.recipient;
-  };
-
   // Handle edit button click
   const handleEditClick = () => {
     if (event._id) {
@@ -166,17 +154,18 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     }
   };
 
-  // Handle generate QR code
-  const handleGenerateQR = () => {
-    onGenerateQR(event._id, event.title);
-  };
-
-  // Handle view QR code
-  const handleViewQR = (type: 'volunteer' | 'recipient') => {
-    setQrCodeViewer({
+  // Handle open QR Code modal
+  const handleOpenQRModal = (type: 'volunteer' | 'recipient') => {
+    setQrModalState({
       isOpen: true,
       type
     });
+  };
+
+  // Handle QR code generated
+  const handleQRCodeGenerated = () => {
+    // Call the parent's onGenerateQR to refresh data
+    onGenerateQR(event._id, event.title);
   };
 
   // Handle join event
@@ -228,7 +217,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                 ) : isCreator ? (
                   <div className="text-blue-600 text-sm flex items-center gap-1">
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 016 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     <span>You created this event</span>
                   </div>
@@ -340,26 +329,13 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             {/* QR Code buttons (for creators or admins) */}
             {(isCreator || isAdmin) && (
               <div className="space-y-3">
-                {/* Volunteer QR Code button */}
+                {/* Single QR Code button that opens the improved QRCodeModal */}
                 <button 
-                  onClick={() => handleViewQR('volunteer')} 
+                  onClick={() => handleOpenQRModal('volunteer')} 
                   className="w-full py-2.5 flex items-center justify-center gap-2 bg-green-100 hover:bg-green-200 text-green-700 rounded-lg transition-colors"
                 >
                   <QrCodeIcon className="w-5 h-5" />
-                  {hasVolunteerQRCode() 
-                    ? 'View Volunteer QR Code' 
-                    : 'Generate Volunteer QR Code'}
-                </button>
-                
-                {/* Recipient QR Code button */}
-                <button 
-                  onClick={() => handleViewQR('recipient')} 
-                  className="w-full py-2.5 flex items-center justify-center gap-2 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-lg transition-colors"
-                >
-                  <QrCodeIcon className="w-5 h-5" />
-                  {hasRecipientQRCode() 
-                    ? 'View Recipient QR Code' 
-                    : 'Generate Recipient QR Code'}
+                  Manage QR Codes
                 </button>
               </div>
             )}
@@ -375,33 +351,18 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
         </div>
       </div>
       
-      {/* QR Code Viewer */}
-      <QRCodeViewer 
-        isOpen={qrCodeViewer.isOpen}
-        onClose={() => setQrCodeViewer(prev => ({ ...prev, isOpen: false }))}
+      {/* QR Code Modal with all the smart logic built in */}
+      <QRCodeModal
+        isOpen={qrModalState.isOpen}
+        onClose={() => setQrModalState(prev => ({ ...prev, isOpen: false }))}
         eventId={event._id}
         eventTitle={event.title}
-        qrCodeType={qrCodeViewer.type}
-        qrCodeData={qrCodeViewer.type === 'volunteer' 
-          ? event.qrCodes?.volunteer 
-          : event.qrCodes?.recipient
-        }
-        onGenerateClick={() => {
-          setQrCodeViewer(prev => ({ ...prev, isOpen: false }));
-          setShowQrGenerator(true);
+        initialType={qrModalState.type}
+        eventQRCodes={{
+          volunteer: event.qrCodes?.volunteer,
+          recipient: event.qrCodes?.recipient
         }}
-      />
-      
-      {/* QR Code Generator */}
-      <QRCodeModal
-        isOpen={showQrGenerator}
-        onClose={() => setShowQrGenerator(false)}
-        eventId={event._id}
-        initialType={qrCodeViewer.type}
-        onQRCodeGenerated={() => {
-          // Close the generator and refresh the event data
-          setShowQrGenerator(false);
-        }}
+        onQRCodeGenerated={handleQRCodeGenerated}
       />
     </div>
   );
