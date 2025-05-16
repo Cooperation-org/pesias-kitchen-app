@@ -24,7 +24,7 @@ const DeleteConfirmationModal: React.FC<DeleteConfirmationModalProps> = ({
         <div className="bg-white rounded-lg max-w-md w-full p-6 shadow-xl">
           <h3 className="text-lg font-medium mb-4">Confirm Deletion</h3>
           <p className="mb-6">
-            Are you sure you want to delete the event "{eventTitle}"? This action cannot be undone.
+            Are you sure you want to delete the event &quot;{eventTitle}&quot;? This action cannot be undone.
           </p>
           <div className="flex gap-3 justify-end">
             <button 

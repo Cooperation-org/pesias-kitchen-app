@@ -21,6 +21,12 @@ export interface QRCode {
   qrImage?: string;
 }
 
+export interface Participant {
+  _id: string;
+  walletAddress: string;
+  name: string;
+}
+
 export interface Event {
   _id: string;
   title: string;
@@ -33,7 +39,7 @@ export interface Event {
     volunteer?: QRCode;
     recipient?: QRCode;
   };
-  participants: any[];
+  participants: Participant[];
   createdBy?: {
     _id?: string;
     walletAddress?: string;
@@ -212,7 +218,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                     </svg>
-                    <span>You've joined this event</span>
+                    <span>You&apos;ve joined this event</span>
                   </div>
                 ) : isCreator ? (
                   <div className="text-blue-600 text-sm flex items-center gap-1">

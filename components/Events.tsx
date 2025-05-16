@@ -6,6 +6,7 @@ import { useAuthContext } from '@/providers/web3Provider';
 import EditEventModal from '@/components/EditEventModal';
 import EventDetailsModal, { 
   Event, 
+  Participant,
   ACTIVITY_TYPE_COLORS, 
   ACTIVITY_TYPE_LABELS 
 } from '@/components/EventDetailsModal';
@@ -162,10 +163,12 @@ export default function EventsPage({
       if (eventDetailsModal.isOpen && eventDetailsModal.event?._id === eventId) {
         const updatedEvent = {...eventDetailsModal.event};
         if (user) {
-          updatedEvent.participants.push({
-            _id: user.id,
-            walletAddress: user.walletAddress
-          });
+          const participant: Participant = {
+            _id: typeof user.id === 'string' ? user.id : String(user.id),
+            walletAddress: typeof user.walletAddress === 'string' ? user.walletAddress : '',
+            name: typeof user.name === 'string' ? user.name : 'Anonymous User'
+          };
+          updatedEvent.participants.push(participant);
         }
         setEventDetailsModal({
           isOpen: true,

@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip, Sector } from "recharts";
+import type { PieProps } from "recharts";
 import Link from "next/link";
 import { useActivities } from '@/hooks/useActivities';
 
@@ -229,7 +230,7 @@ export default function ImpactDashboard() {
                   <PieChart>
                     <Pie
                       activeIndex={activeIndex}
-                      activeShape={renderActiveShape as any}
+                      activeShape={renderActiveShape as PieProps['activeShape']}
                       data={participationData}
                       cx="50%"
                       cy="50%"
