@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback } from 'react';
+import React, { useCallback, useMemo, useState, memo } from 'react';
 import {  Sparkles, Trophy, Gift } from 'lucide-react';
 import { Slot } from "@radix-ui/react-slot";
 import { cva, type VariantProps } from "class-variance-authority";
@@ -15,7 +15,8 @@ import { motion } from 'framer-motion';
 import useSWR from 'swr';
 import { toast } from 'sonner';
 import { SWR_ENDPOINTS } from '@/types/api';
-import type { RewardsResponse as APIRewardsResponse } from '@/types/api';
+import type { RewardsResponse as APIRewardsResponse, Reward as APIReward } from '@/types/api';
+import { swrConfig } from '@/utils/swr-config';
 
 // Utility function
 function cn(...inputs: (string | undefined)[]) {
@@ -69,7 +70,40 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
 );
 Button.displayName = "Button";
 
-// Custom hook for rewards data
+// Animation variants
+const containerVariants = {
+  hidden: { opacity: 0 },
+  visible: { 
+    opacity: 1,
+    transition: { 
+      duration: 0.5,
+      staggerChildren: 0.1 
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { y: 20, opacity: 0 },
+  visible: { 
+    y: 0, 
+    opacity: 1,
+    transition: { duration: 0.5 }
+  }
+};
+
+// Memoized reward transformer
+const transformReward = (reward: APIReward) => ({
+  ...reward,
+  formattedDate: format(new Date(reward.date), 'dd MMM yyyy'),
+  formattedType: reward.activityType.split('_')
+    .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' '),
+  isClaimed: reward.nftId.startsWith('nft-')
+});
+
+type TransformedReward = ReturnType<typeof transformReward>;
+
+// Optimized rewards hook
 function useRewards() {
   const { data, error, isLoading, mutate } = useSWR<APIRewardsResponse>(
     [SWR_ENDPOINTS.REWARDS.key],
@@ -78,22 +112,35 @@ function useRewards() {
       return response;
     },
     {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 5000,
-      refreshInterval: 30000, // Refresh every 30 seconds
-      onError: (err) => {
-        console.error('Error fetching rewards:', err);
+      ...swrConfig,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      dedupingInterval: 0,
+      refreshInterval: 60000,
+      onError: () => {
         toast.error('Failed to load rewards. Please try again later.');
       }
     }
   );
 
-  const hasUnclaimedRewards = data?.rewards.some(reward => !reward.nftId.startsWith('nft-')) ?? false;
-  const totalUnclaimedRewards = data?.rewards.filter(reward => !reward.nftId.startsWith('nft-')).length ?? 0;
+  // Memoize transformed rewards
+  const transformedRewards = useMemo(() => {
+    if (!data?.rewards) return [];
+    return data.rewards.map(transformReward);
+  }, [data?.rewards]);
+
+  // Memoize computed values with safe access
+  const { hasUnclaimedRewards, totalUnclaimedRewards } = useMemo(() => {
+    const rewards = data?.rewards || [];
+    return {
+      hasUnclaimedRewards: rewards.some(reward => !reward.nftId.startsWith('nft-')),
+      totalUnclaimedRewards: rewards.filter(reward => !reward.nftId.startsWith('nft-')).length
+    };
+  }, [data?.rewards]);
 
   return {
-    rewardsData: data,
+    rewards: transformedRewards,
+    totalRewards: data?.totalRewards || 0,
     isLoading,
     error,
     mutate,
@@ -102,19 +149,65 @@ function useRewards() {
   };
 }
 
+// Memoized reward item component
+const RewardItem = memo(({ reward, index }: { reward: TransformedReward; index: number }) => (
+  <motion.div
+    initial={{ opacity: 0, x: -20 }}
+    animate={{ opacity: 1, x: 0 }}
+    transition={{ delay: index * 0.05 }} // Reduced delay
+    whileHover={{ x: 5, backgroundColor: "rgba(76, 175, 80, 0.02)" }}
+    className="flex justify-between items-center px-6 py-4"
+  >
+    <div>
+      <div className="text-base font-medium text-[#303030] flex items-center gap-2">
+        {reward.formattedType}
+        {reward.isClaimed && (
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            Claimed
+          </span>
+        )}
+      </div>
+      <div className="text-sm text-gray-500 mt-1">
+        {reward.formattedDate} • {reward.location}
+      </div>
+    </div>
+    <div className="text-lg font-semibold text-[#4CAF50] flex items-center gap-1">
+      +{reward.rewardAmount}
+      <span className="text-sm">G$</span>
+    </div>
+  </motion.div>
+));
+RewardItem.displayName = 'RewardItem';
+
+// Memoized rewards list component
+const RewardsList = memo(({ rewards }: { rewards: TransformedReward[] }) => (
+  <motion.div 
+    variants={itemVariants}
+    className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100"
+  >
+    <div className="divide-y divide-gray-100">
+      {rewards.map((reward, index) => (
+        <RewardItem key={reward.activityId} reward={reward} index={index} />
+      ))}
+    </div>
+  </motion.div>
+));
+RewardsList.displayName = 'RewardsList';
+
 const Rewards = () => {
   const router = useRouter();
   const { isAuthenticated } = useAuthContext();
   const { 
-    rewardsData, 
+    rewards,
+    totalRewards,
     isLoading, 
     error, 
     mutate,
     hasUnclaimedRewards,
     totalUnclaimedRewards
   } = useRewards();
-  const [claimingRewards, setClaimingRewards] = React.useState(false);
-  const [claimSuccess, setClaimSuccess] = React.useState(false);
+  const [claimingRewards, setClaimingRewards] = useState(false);
+  const [claimSuccess, setClaimSuccess] = useState(false);
 
   // Redirect if not authenticated
   React.useEffect(() => {
@@ -123,83 +216,40 @@ const Rewards = () => {
     }
   }, [isAuthenticated, router]);
 
-  const formatDate = useCallback((dateString: string) => {
-    try {
-      return format(new Date(dateString), 'dd MMM yyyy');
-    } catch {
-      return dateString;
-    }
-  }, []);
-
-  const formatActivityType = useCallback((type: string) => {
-    return type.split('_').map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
-  }, []);
-
+  // Optimized claim rewards handler
   const handleClaimRewards = useCallback(async () => {
-    if (!rewardsData?.rewards.length || !hasUnclaimedRewards) return;
+    if (!rewards.length || !hasUnclaimedRewards) return;
     
     setClaimingRewards(true);
     
     try {
-      // Get unclaimed rewards
-      const unclaimedRewards = rewardsData.rewards.filter(
-        reward => !reward.nftId.startsWith('nft-')
-      );
-
-      // Claim rewards in parallel with a concurrency limit
+      const unclaimedRewards = rewards.filter(reward => !reward.isClaimed);
       const batchSize = 3;
+      
       for (let i = 0; i < unclaimedRewards.length; i += batchSize) {
         const batch = unclaimedRewards.slice(i, i + batchSize);
         await Promise.all(
           batch.map(reward => mintActivityNFT(reward.activityId))
         );
         
-        // Show progress toast
         const progress = Math.min(i + batchSize, unclaimedRewards.length);
         toast.success(`Claimed ${progress} of ${unclaimedRewards.length} rewards`);
       }
       
       setClaimSuccess(true);
-      
-      // Refresh rewards data
       await mutate();
-      
-      // Reset success message after 3 seconds
       setTimeout(() => setClaimSuccess(false), 3000);
       
-    } catch (err) {
-      console.error('Error claiming rewards:', err);
+    } catch {
       toast.error('Failed to claim rewards. Please try again.');
     } finally {
       setClaimingRewards(false);
     }
-  }, [rewardsData, hasUnclaimedRewards, mutate]);
+  }, [rewards, hasUnclaimedRewards, mutate]);
 
   if (!isAuthenticated) {
     return null;
   }
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: { 
-      opacity: 1,
-      transition: { 
-        duration: 0.5,
-        staggerChildren: 0.1 
-      }
-    }
-  };
-
-  const itemVariants = {
-    hidden: { y: 20, opacity: 0 },
-    visible: { 
-      y: 0, 
-      opacity: 1,
-      transition: { duration: 0.5 }
-    }
-  };
 
   return (
     <motion.div 
@@ -257,9 +307,10 @@ const Rewards = () => {
                   src="/images/gooddollar.svg"
                   className="w-8 h-8"
                   alt="G$ token"
+                  priority // Add priority for faster loading
                 />
               </div>
-              {rewardsData?.totalRewards || 0}
+              {totalRewards}
             </motion.div>
             <div className="text-sm text-gray-500 flex items-center gap-1">
               <Trophy className="w-4 h-4 text-[#4CAF50]" />
@@ -286,46 +337,8 @@ const Rewards = () => {
         )}
 
         {/* Rewards List */}
-        {!isLoading && !error && rewardsData?.rewards && (
-          <motion.div 
-            variants={itemVariants}
-            className="bg-white rounded-2xl shadow-lg overflow-hidden border border-gray-100"
-          >
-            <div className="divide-y divide-gray-100">
-              {rewardsData.rewards.map((reward, index) => (
-                <motion.div
-                  key={reward.activityId}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ x: 5, backgroundColor: "rgba(76, 175, 80, 0.02)" }}
-                  className={`flex justify-between items-center px-6 py-4 ${
-                    index < (rewardsData.rewards.length - 1)
-                      ? "border-b border-gray-100"
-                      : ""
-                  }`}
-                >
-                  <div>
-                    <div className="text-base font-medium text-[#303030] flex items-center gap-2">
-                      {formatActivityType(reward.activityType)}
-                      {reward.nftId.startsWith('nft-') && (
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Claimed
-                        </span>
-                      )}
-                    </div>
-                    <div className="text-sm text-gray-500 mt-1">
-                      {formatDate(reward.date)} • {reward.location}
-                    </div>
-                  </div>
-                  <div className="text-lg font-semibold text-[#4CAF50] flex items-center gap-1">
-                    +{reward.rewardAmount}
-                    <span className="text-sm">G$</span>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
+        {!isLoading && !error && rewards.length > 0 && (
+          <RewardsList rewards={rewards} />
         )}
 
         {/* Fixed Bottom Button with animation */}
@@ -362,4 +375,4 @@ const Rewards = () => {
   );
 };
 
-export default Rewards;
+export default memo(Rewards);
