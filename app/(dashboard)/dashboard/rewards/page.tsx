@@ -8,7 +8,7 @@ import { clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import Image from 'next/image';
 import { getRewardsHistory, mintActivityNFT } from '@/services/api';
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/Web3Provider';
 import { useRouter } from 'next/navigation';
 import { format } from 'date-fns';
 import { motion } from 'framer-motion';

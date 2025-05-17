@@ -2,7 +2,7 @@
 import React, { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getUserNFTs } from "@/services/api";
-import { useAuthContext } from "@/providers/web3Provider";
+import { useAuthContext } from "@/providers/Web3Provider";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import Image from "next/image";
