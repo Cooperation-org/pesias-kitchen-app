@@ -1,7 +1,8 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { ConnectKitButton } from "connectkit";
+import { useAppKit } from '@reown/appkit/react';
+import { useAccount, useDisconnect } from 'wagmi';
 import { usePathname } from 'next/navigation';
 import CreateEventModal from '@/components/CreateEventModal';
 import "../globals.css";
@@ -14,6 +15,11 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
+  // Direct Reown/Wagmi hooks
+  const { open } = useAppKit();
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+
   const handleEventCreated = () => {
     // Close the modal
     setShowCreateModal(false);
@@ -21,32 +27,50 @@ export default function AdminLayout({
     window.location.reload();
   };
 
+  // Handlers
+  const handleConnect = () => {
+    console.log('Admin - Connect button clicked'); // Debug log
+    open();
+  };
+
+  const handleDisconnect = () => {
+    console.log('Admin - Disconnect button clicked'); // Debug log
+    disconnect();
+  };
+
+  console.log('Admin Layout - Current state:', { isConnected, address }); // Debug log
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header with menu and notifications */}
       <header className="p-4 flex justify-end items-center border-b border-gray-100 fixed w-full bg-white z-20 shadow-sm">
         <div className="flex items-center gap-4">
           {/* Wallet Connection Button */}
-          <ConnectKitButton.Custom>
-            {({ isConnected, isConnecting, show, address, ensName }) => {
-              return (
-                <button
-                  onClick={show}
-                  className="flex items-center text-sm font-medium"
-                >
-                  {isConnected ? (
-                    <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-800">
-                      {ensName || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
-                    </span>
-                  ) : (
-                    <span className="px-3 py-1 bg-yellow-400 text-gray-800 rounded-full">
-                      {isConnecting ? 'Connecting...' : 'Connect'}
-                    </span>
-                  )}
-                </button>
-              );
-            }}
-          </ConnectKitButton.Custom>
+          {isConnected && address ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleConnect}
+                className="flex items-center text-sm font-medium"
+              >
+                <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-800">
+                  {`${address.slice(0, 6)}...${address.slice(-4)}`}
+                </span>
+              </button>
+              <button
+                onClick={handleDisconnect}
+                className="text-sm text-gray-600 hover:text-gray-800"
+              >
+                Logout
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleConnect}
+              className="px-3 py-1 bg-yellow-400 text-gray-800 rounded-full text-sm font-medium hover:bg-yellow-500 transition-colors"
+            >
+              Connect Wallet
+            </button>
+          )}
         </div>
       </header>
 
@@ -119,7 +143,7 @@ export default function AdminLayout({
               )}
             </Link>
 
-            {/* Centered QR Code Button */}
+            {/* Centered Create Event Button */}
             <div className="flex flex-col items-center -mt-10 relative cursor-pointer" onClick={() => setShowCreateModal(true)}>
               <div className="absolute -top-5 w-24 h-24 bg-gray-100 rounded-full shadow-inner flex items-center justify-center">
                 <div className="relative">
@@ -182,7 +206,7 @@ export default function AdminLayout({
                 </div>
               </div>
               <span className="text-xs text-gray-500 mt-16" style={{ visibility: "hidden" }}>
-                Scan
+                Create
               </span>
             </div>
 

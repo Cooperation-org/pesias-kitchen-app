@@ -1,10 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { WagmiConfig, createConfig, configureChains, mainnet, sepolia } from 'wagmi';
-import { publicProvider } from 'wagmi/providers/public';
-import { ConnectKitProvider, getDefaultConfig } from "connectkit";
-import { celo, celoAlfajores } from 'wagmi/chains';
+import { useAccount, useDisconnect } from 'wagmi';
+import { useAppKit } from '@reown/appkit/react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 
 // User data type
@@ -14,21 +13,6 @@ interface UserData {
   role: string;
   [key: string]: string | number | boolean;
 }
-
-// Configure the chains you want to support
-const { chains } = configureChains(
-  [celo, celoAlfajores, mainnet, sepolia],
-  [publicProvider()]
-);
-
-// Create wagmi config
-const config = createConfig(
-  getDefaultConfig({
-    appName: "Pesia's Kitchen App",
-    chains,
-    walletConnectProjectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || "",
-  })
-);
 
 // Auth context type
 interface AuthContextType {
@@ -41,6 +25,10 @@ interface AuthContextType {
   redirectToLogin: () => void;
   redirectToDashboard: () => void;
   mutateAuth: (data?: { token: string; user: UserData } | undefined, options?: { revalidate: boolean }) => Promise<{ token: string; user: UserData } | undefined>;
+  
+  // Reown specific methods
+  openAppKit: () => void;
+  closeAppKit: () => void;
 }
 
 // Create auth context
@@ -54,6 +42,8 @@ const AuthContext = createContext<AuthContextType>({
   redirectToLogin: () => {},
   redirectToDashboard: () => {},
   mutateAuth: async () => undefined,
+  openAppKit: () => {},
+  closeAppKit: () => {},
 });
 
 // Hook to use the auth context
@@ -64,42 +54,61 @@ interface AuthProviderProps {
 }
 
 function AuthProvider({ children }: AuthProviderProps) {
+  const { isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { open, close } = useAppKit();
+  const router = useRouter();
+  
+  // Use your existing auth hook
   const auth = useAuth();
 
+  // Enhanced logout that also disconnects from Reown
+  const enhancedLogout = async () => {
+    try {
+      // First disconnect from wagmi/Reown
+      disconnect();
+      // Then run your existing logout logic
+      await auth.logout();
+      // Redirect to login page after logout
+      router.push('/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force disconnect even if auth logout fails
+      disconnect();
+      router.push('/login');
+    }
+  };
+
+  // Reown-specific methods
+  const openAppKit = () => {
+    if (!isConnected) {
+      open();
+    }
+  };
+
+  const closeAppKit = () => {
+    close();
+  };
+
+  const contextValue: AuthContextType = {
+    ...auth,
+    logout: enhancedLogout,
+    openAppKit,
+    closeAppKit,
+  };
+
   return (
-    <AuthContext.Provider value={auth}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );
 }
 
-// Custom theme type for ConnectKit
-type CustomTheme = {
-  "--ck-connectbutton-background": string;
-  "--ck-connectbutton-hover-background": string;
-  "--ck-connectbutton-active-background": string;
-  "--ck-connectbutton-color": string;
-  "--ck-connectbutton-radius": string;
-};
-
+// Enhanced provider that wraps both Reown and Auth
 export function AppProvider({ children }: { children: React.ReactNode }) {
   return (
-    <WagmiConfig config={config}>
-      <ConnectKitProvider
-        theme="auto"
-        mode="light"
-        customTheme={{
-          "--ck-connectbutton-background": "#FCD34D",
-          "--ck-connectbutton-hover-background": "#FBBF24",
-          "--ck-connectbutton-active-background": "#F59E0B",
-          "--ck-connectbutton-color": "#1F2937",
-          "--ck-connectbutton-radius": "9999px",
-        } as CustomTheme}
-      >
-        <AuthProvider>
-          {children}
-        </AuthProvider>
-      </ConnectKitProvider>
-    </WagmiConfig>
+    <AuthProvider>
+      {children}
+    </AuthProvider>
   );
 }

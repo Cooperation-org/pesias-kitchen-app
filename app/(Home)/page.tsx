@@ -1,6 +1,5 @@
 'use client';
 import React, { useEffect, useState, useRef } from 'react';
-import { ConnectKitButton } from 'connectkit';
 import { useAccount, useSignMessage } from 'wagmi';
 import { useAuthContext } from '@/providers/web3Provider';
 import Image from 'next/image';
@@ -8,7 +7,7 @@ import { getNonce, verifySignature, storeAuthData } from '@/services/authService
 
 export default function LoginPage() {
   const { isConnected, address } = useAccount();
-  const { redirectToDashboard } = useAuthContext();
+  const { redirectToDashboard, openAppKit } = useAuthContext();
   const { signMessageAsync } = useSignMessage();
   
   const [authLoading, setAuthLoading] = useState(false);
@@ -41,7 +40,7 @@ export default function LoginPage() {
       console.log("Received nonce from server:", nonce);
       
       // Step 2: Sign the message with the wallet
-      const message = `Sign this message to authenticate with Pesia&apos;s Kitchen EAT Initiative: ${nonce}`;
+      const message = `Sign this message to authenticate with Pesia's Kitchen EAT Initiative: ${nonce}`;
       
       try {
         console.log("Requesting signature for message:", message);
@@ -118,14 +117,14 @@ export default function LoginPage() {
   }, [isConnected, address, redirectToDashboard]);
 
   // Handle manual connection/authentication
-  const handleConnectClick = (show: () => void) => {
+  const handleConnectClick = () => {
     if (isConnected) {
       // Reset the auth attempt state to allow for another try
       hasAttemptedAuth.current = false;
       authenticate();
     } else {
-      // Open wallet connection modal
-      show();
+      // Open Reown AppKit modal
+      openAppKit();
     }
   };
 
@@ -191,38 +190,34 @@ export default function LoginPage() {
 
         {/* Connect Wallet button */}
         <div className='w-full max-w-md px-6'>
-          <ConnectKitButton.Custom>
-            {({ isConnected, isConnecting, show }) => {
-              // Determine the button state
-              const isLoading = isConnecting || authLoading;
-              let buttonText = 'Connect Wallet';
-              
-              if (isConnected) {
-                buttonText = isLoading ? 'Authenticating...' : 'Continue to Dashboard';
-              } else if (isConnecting) {
-                buttonText = 'Connecting...';
+          <button
+            onClick={handleConnectClick}
+            disabled={authLoading}
+            className={`flex items-center justify-center w-full bg-[#f7c334] text-[#303030] font-medium py-4 rounded-3xl shadow-md hover:bg-[#f5bb20] transition-colors ${
+              authLoading ? 'opacity-70 cursor-not-allowed' : ''
+            }`}
+          >
+            {authLoading && (
+              <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#303030]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            )}
+            <span>
+              {isConnected 
+                ? (authLoading ? 'Authenticating...' : 'Continue to Dashboard')
+                : 'Connect Wallet'
               }
-              
-              return (
-                <button
-                onClick={() => handleConnectClick(show ?? (() => {}))}
-                  disabled={isLoading}
-                  className={`flex items-center justify-center w-full bg-[#f7c334] text-[#303030] font-medium py-4 rounded-3xl shadow-md hover:bg-[#f5bb20] transition-colors ${
-                    isLoading ? 'opacity-70 cursor-not-allowed' : ''
-                  }`}
-                >
-                  {isLoading && (
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-[#303030]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                  )}
-                  <span>{buttonText}</span>
-                </button>
-              );
-            }}
-          </ConnectKitButton.Custom>
+            </span>
+          </button>
         </div>
+
+        {/* Alternative: Use Reown's web component button */}
+        {/* 
+        <div className='w-full max-w-md px-6'>
+          <appkit-button />
+        </div>
+        */}
       </div>
     </main>
   );
