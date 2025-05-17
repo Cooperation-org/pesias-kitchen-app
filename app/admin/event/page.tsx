@@ -3,7 +3,7 @@ import EventsPage from '@/components/Events'
 import React from 'react'
 import { getallActivities } from '@/services/api'
 
-const page = () => {
+const Page = () => {
 
   React.useEffect(() => {
     fetchActivities()
@@ -27,4 +27,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Page

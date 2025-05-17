@@ -4,39 +4,16 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { getEventById, updateEvent } from '@/services/api';
+import type { Event } from '@/types/api';
 import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, XMarkIcon } from '@heroicons/react/24/outline';
 
-type ActivityType = 'food_sorting' | 'food_distribution' | 'food_pickup';
+type ActivityType = 'food_sorting' | 'food_distribution' | 'other';
 
 const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: 'food_sorting', label: 'Food Sorting' },
   { value: 'food_distribution', label: 'Food Distribution' },
-  { value: 'food_pickup', label: 'Food Pickup' },
+  { value: 'other', label: 'Other' },
 ];
-
-interface ApiEventResponse {
-  data?: {
-    _id: string;
-    title: string;
-    description: string;
-    date: string;
-    location: string;
-    capacity: number;
-    activityType: ActivityType;
-    defaultQuantity: number;
-    participants: string[];
-    createdBy: string;
-    createdAt: string;
-    __v: number;
-  };
-  _id?: string;
-  title?: string;
-  description?: string;
-  date?: string;
-  location?: string;
-  capacity?: number;
-  activityType?: ActivityType;
-}
 
 interface EditEventData {
   title: string;
@@ -88,25 +65,25 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
       console.log('API Response:', response); // Debug log
       
       // Handle different API response structures
-      let eventData: any;
+      let eventData: Event;
       
       if (response && response.data) {
         // Response has nested data property
         eventData = response.data;
       } else {
         // Response data is at the root level
-        eventData = response;
+        eventData = (response as unknown as { data: Event }).data;
       }
       
       // Verify we have the required fields
-      if (!eventData || (!eventData._id && !eventData.id)) {
+      if (!eventData || !eventData._id) {
         throw new Error('Invalid event data structure');
       }
 
       console.log('Parsed event data:', eventData); // Debug log
 
       // Parse the ISO date string to separate date and time
-      const eventDate = new Date(eventData.date);
+      const eventDate = new Date(eventData.date || '');
       const dateString = eventDate.toISOString().split('T')[0];
       const timeString = eventDate.toTimeString().slice(0, 5);
 

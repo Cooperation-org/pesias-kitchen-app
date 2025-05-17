@@ -35,7 +35,6 @@ export default function EventCard({
   isCreator,
   isAdmin,
   userJoined,
-  isAuthenticated,
   onJoin,
   onGenerateQRCode,
   onViewQRCode,
