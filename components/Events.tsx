@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { toast } from 'sonner';
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/Web3Provider';
 import EditEventModal from '@/components/EditEventModal';
 import EventDetailsModal, { 
   Event, 

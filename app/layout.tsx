@@ -4,7 +4,7 @@ import './globals.css'
 import { headers } from 'next/headers'
 import ReownProvider from '@/providers/ReownProvider'
 import { SWRProvider } from '@/providers/SWRProvider'
-import { AppProvider } from '@/providers/web3Provider'
+import { AppProvider } from '@/providers/Web3Provider'
 import { Toaster } from 'sonner'
 
 const geistSans = Geist({

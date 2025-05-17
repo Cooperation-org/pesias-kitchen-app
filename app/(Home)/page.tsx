@@ -1,7 +1,7 @@
 'use client';
 import React, { useEffect, useState, useRef } from 'react';
 import { useAccount, useSignMessage } from 'wagmi';
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/Web3Provider';
 import Image from 'next/image';
 import { getNonce, verifySignature, storeAuthData } from '@/services/authServices';
 
