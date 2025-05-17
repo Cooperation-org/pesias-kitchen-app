@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { ChevronLeft, ExternalLink, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { getNFTDetails } from '@/services/api';
-import { useAuthContext } from '@/providers/Web3Provider';
+import { useAuthContext } from '@/providers/web3Provider';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { toast } from 'sonner';
