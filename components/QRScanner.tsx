@@ -1,34 +1,29 @@
 // src/components/QRScanner.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { QrReader } from 'react-qr-reader';
 
 interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void;
-  onScanError?: (error: string) => void;
   onScanComplete?: () => void;
 }
 
+type QRScanResult = {
+  getText: () => string;
+} | null | undefined;
+
 const QRScanner: React.FC<QRScannerProps> = ({ 
   onScanSuccess, 
-  onScanError,
   onScanComplete
 }) => {
   const [isScanning, setIsScanning] = useState<boolean>(true);
-  const [errorMessage, setErrorMessage] = useState<string>('');
 
-  const handleScan = (result: any) => {
+  const handleScan = (result: QRScanResult) => {
     if (result) {
       // Successfully scanned QR code
       setIsScanning(false);
-      onScanSuccess(result?.text);
+      onScanSuccess(result.getText());
       if (onScanComplete) onScanComplete();
     }
-  };
-
-  const handleError = (error: any) => {
-    console.error('QR Scan Error:', error);
-    setErrorMessage('Error scanning QR code. Please try again.');
-    if (onScanError) onScanError(error.toString());
   };
 
   return (
@@ -57,12 +52,6 @@ const QRScanner: React.FC<QRScannerProps> = ({
       ) : (
         <div className="w-full h-64 rounded-xl bg-gray-100 flex items-center justify-center mb-4">
           <p className="text-gray-500">QR Code captured!</p>
-        </div>
-      )}
-      
-      {errorMessage && (
-        <div className="text-red-600 my-4 text-center p-3 bg-red-50 rounded-lg w-full">
-          {errorMessage}
         </div>
       )}
       

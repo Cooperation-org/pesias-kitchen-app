@@ -14,7 +14,7 @@ export default function AdminLayout({
   const pathname = usePathname();
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const handleEventCreated = (event: any) => {
+  const handleEventCreated = () => {
     // Close the modal
     setShowCreateModal(false);
     // Refresh the page to show the new event
@@ -242,6 +242,7 @@ export default function AdminLayout({
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         onEventCreated={handleEventCreated}
+        eventsApiUrl="/api/events"
       />
     </div>
   );

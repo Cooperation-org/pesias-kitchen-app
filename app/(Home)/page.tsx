@@ -41,7 +41,7 @@ export default function LoginPage() {
       console.log("Received nonce from server:", nonce);
       
       // Step 2: Sign the message with the wallet
-      const message = `Sign this message to authenticate with Pesia's Kitchen EAT Initiative: ${nonce}`;
+      const message = `Sign this message to authenticate with Pesia&apos;s Kitchen EAT Initiative: ${nonce}`;
       
       try {
         console.log("Requesting signature for message:", message);
@@ -74,13 +74,15 @@ export default function LoginPage() {
         
         // Step 5: Redirect to dashboard
         redirectToDashboard();
-      } catch (signError: any) {
+      } catch (signError: unknown) {
         console.error("Error during signing:", signError);
-        setAuthError(signError.message || 'Failed to sign message. Please try again.');
+        const errorMessage = signError instanceof Error ? signError.message : 'Failed to sign message. Please try again.';
+        setAuthError(errorMessage);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Authentication error:', error);
-      setAuthError(error.message || 'Authentication failed');
+      const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
+      setAuthError(errorMessage);
     } finally {
       setAuthLoading(false);
       isProcessing.current = false;
@@ -165,7 +167,7 @@ export default function LoginPage() {
         {/* Welcome text */}
         <div className='text-center mb-8 px-6'>
           <h1 className='text-2xl font-bold text-[#303030] mb-2'>Welcome to</h1>
-          <h2 className='text-xl font-bold text-[#303030] mb-1'>Pesia's Kitchen EAT Initiative</h2>
+          <h2 className='text-xl font-bold text-[#303030] mb-1'>Pesia&apos;s Kitchen EAT Initiative</h2>
           <p className='text-sm text-[#303030]/70 max-w-xs mx-auto'>
             Rescuing food, helping communities, and making a real impact
           </p>

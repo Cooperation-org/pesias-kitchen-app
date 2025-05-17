@@ -1,4 +1,13 @@
 // types.ts
+export interface Participant {
+  _id: string;
+  walletAddress: string;
+  name: string;
+  role: 'volunteer' | 'recipient';
+  quantity?: number;
+  status: 'registered' | 'attended' | 'cancelled';
+}
+
 export interface ServerEvent {
     _id: string;
     title: string;
@@ -9,7 +18,7 @@ export interface ServerEvent {
     capacity: number;
     defaultQuantity: number;
     activityType: 'food_sorting' | 'food_distribution' | 'food_pickup';
-    participants: any[];
+    participants: Participant[];
     createdBy: { 
       _id: string; 
       walletAddress: string; 
@@ -29,7 +38,7 @@ export interface ServerEvent {
     location: string;
     capacity: number;
     activityType: 'food_sorting' | 'food_distribution' | 'food_pickup';
-    participants: any[];
+    participants: Participant[];
     createdBy: { 
       id: string; 
       walletAddress: string; 
