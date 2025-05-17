@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation";
 import "../globals.css";
-import { ConnectKitButton } from "connectkit";
+import { useAppKit } from '@reown/appkit/react';
+import { useAccount, useDisconnect } from 'wagmi';
 import { motion } from "framer-motion";
 
 interface DashboardLayoutProps {
@@ -14,6 +15,12 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
+  
+  // Direct Reown/Wagmi hooks
+  const { open } = useAppKit();
+  const { address, isConnected } = useAccount();
+  const { disconnect } = useDisconnect();
+  
   const [shouldShowBackButton, setShouldShowBackButton] = useState(false);
   const [pageTitle, setPageTitle] = useState("Dashboard");
   
@@ -38,6 +45,19 @@ export default function DashboardLayout({
       setPageTitle("Dashboard");
     }
   }, [pathname]);
+
+  // Handlers
+  const handleConnect = () => {
+    console.log('Connect button clicked'); // Debug log
+    open();
+  };
+
+  const handleDisconnect = () => {
+    console.log('Disconnect button clicked'); // Debug log
+    disconnect();
+  };
+
+  console.log('Dashboard Layout - Current state:', { isConnected, address }); // Debug log
 
   return (
     <html lang="en" className="h-full">
@@ -65,26 +85,31 @@ export default function DashboardLayout({
             {/* Right side with wallet connection */}
             <div className="flex items-center gap-4">
               {/* Wallet Connection Button */}
-              <ConnectKitButton.Custom>
-                {({ isConnected, isConnecting, show, address, ensName }) => {
-                  return (
-                    <button
-                      onClick={show}
-                      className="flex items-center text-sm font-medium"
-                    >
-                      {isConnected ? (
-                        <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-800">
-                          {ensName || `${address?.slice(0, 6)}...${address?.slice(-4)}`}
-                        </span>
-                      ) : (
-                        <span className="px-3 py-1 bg-yellow-400 text-gray-800 rounded-full">
-                          {isConnecting ? 'Connecting...' : 'Connect'}
-                        </span>
-                      )}
-                    </button>
-                  );
-                }}
-              </ConnectKitButton.Custom>
+              {isConnected && address ? (
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handleConnect}
+                    className="flex items-center text-sm font-medium"
+                  >
+                    <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-800">
+                      {`${address.slice(0, 6)}...${address.slice(-4)}`}
+                    </span>
+                  </button>
+                  <button
+                    onClick={handleDisconnect}
+                    className="text-sm text-white/80 hover:text-white"
+                  >
+                    Logout
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={handleConnect}
+                  className="px-3 py-1 bg-yellow-400 text-gray-800 rounded-full text-sm font-medium hover:bg-yellow-500 transition-colors"
+                >
+                  Connect Wallet
+                </button>
+              )}
             </div>
           </motion.header>
 
@@ -249,6 +274,11 @@ export default function DashboardLayout({
               </div>
             </div>
           </div>
+          
+          {/* Debug info */}
+          {/* <div className="fixed top-20 right-4 bg-black text-white p-2 text-xs rounded opacity-50 z-50">
+            Debug: {isConnected ? `Connected: ${address}` : 'Not connected'}
+          </div> */}
         </div>
       </body>
     </html>
