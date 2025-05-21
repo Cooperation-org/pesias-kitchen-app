@@ -69,8 +69,11 @@ export function useAuth() {
 
   // Update wallet connection status and handle disconnection
   useEffect(() => {
+    const wasConnected = document.cookie.includes('walletConnected=true');
     setWalletConnectionStatus(isConnected);
-    if (!isConnected) {
+    
+    // Only trigger logout if we were previously connected
+    if (!isConnected && wasConnected) {
       logout();
     }
   }, [isConnected]);
