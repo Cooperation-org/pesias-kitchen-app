@@ -34,25 +34,25 @@ export default function Header() {
           <nav className="hidden md:flex items-center space-x-8">
             <Link 
               href={ROUTES.HOME} 
-              className="text-gray-600 hover:text-blue-600 text-sm font-medium"
+              className="text-gray-600 hover:text-yellow-400 text-sm font-medium"
             >
               Home
             </Link>
             <Link 
               href={ROUTES.ABOUT} 
-              className="text-gray-600 hover:text-blue-600 text-sm font-medium"
+              className="text-gray-600 hover:text-yellow-400 text-sm font-medium"
             >
               About
             </Link>
             <Link 
               href={ROUTES.IMPACT} 
-              className="text-gray-600 hover:text-blue-600 text-sm font-medium"
+              className="text-gray-600 hover:text-yellow-400 text-sm font-medium"
             >
               Impact
             </Link>
             <Link 
               href={ROUTES.LOGIN} 
-              className="text-gray-600 hover:text-blue-600 text-sm font-medium"
+              className="text-gray-600 hover:text-yellow-400 text-sm font-medium"
             >
               Login
             </Link>

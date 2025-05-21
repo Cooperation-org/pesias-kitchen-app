@@ -1,10 +1,9 @@
-// @ts-nocheck
 'use client'
 
-import { wagmiAdapter, projectId, networks } from '@/config/wagmi'
+import { wagmiAdapter, projectId } from '@/config/wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
-import { mainnet, celo } from '@reown/appkit/networks'
+import { celo, celoAlfajores } from '@reown/appkit/networks'
 import React, { type ReactNode } from 'react'
 import { cookieToInitialState, WagmiProvider, type Config } from 'wagmi'
 
@@ -20,25 +19,25 @@ const metadata = {
   name: "Pesia's Kitchen EAT Initiative",
   description: "Food rescue operations with GoodDollar rewards",
   url: process.env.NEXT_PUBLIC_APP_URL || 'https://www.pesiaskitchen.org',
-  icons: ['/images/logo.png'] // Make sure to add your logo here
+  icons: ['/images/logo.png']
 }
 
-// Create the modal with Reown AppKit
-const modal = createAppKit({
+// Initialize AppKit
+createAppKit({
   adapters: [wagmiAdapter],
   projectId,
-  networks,
-  defaultNetwork: celo, // Set Celo as default since you're using GoodDollar
+  networks: [celo, celoAlfajores], // Simplified to just Celo networks for mobile
+  defaultNetwork: celo,
   metadata: metadata,
   features: {
-    analytics: true, // Optional - defaults to your Cloud configuration
-    email: false, // Disable email login if not needed
-    socials: [], // Disable social logins if not needed
-    emailShowWallets: true // Show wallets even when email is enabled
+    analytics: true,
+    email: false,
+    socials: [],
+    emailShowWallets: true
   },
-  themeMode: 'light', // or 'dark' or 'auto'
+  themeMode: 'light',
   themeVariables: {
-    '--w3m-color-mix': '#FCD34D', // Your yellow theme color
+    '--w3m-color-mix': '#FCD34D',
     '--w3m-color-mix-strength': 20,
     '--w3m-accent': '#FCD34D',
     '--w3m-border-radius-master': '12px'
