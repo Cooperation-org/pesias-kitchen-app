@@ -193,16 +193,16 @@ export default function EventImpactModal({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                           <h5 className="font-semibold mb-2">Volunteers</h5>
-                          <p className="text-sm text-gray-500">Unique: <span className="font-bold text-gray-900">{impact.breakdown.volunteers.uniqueCount}</span></p>
-                          <p className="text-sm text-gray-500">Activities: <span className="font-bold text-gray-900">{impact.breakdown.volunteers.activities}</span></p>
-                          <p className="text-sm text-gray-500">Food Processed: <span className="font-bold text-gray-900">{impact.breakdown.volunteers.foodProcessed}</span></p>
-                          <p className="text-sm text-gray-500">NFTs Minted: <span className="font-bold text-gray-900">{impact.breakdown.volunteers.nftsMinted}</span></p>
+                          <p className="text-sm text-gray-500">Unique: <span className="font-bold text-gray-900">{impact.breakdown?.volunteers?.uniqueCount ?? '-'}</span></p>
+                          <p className="text-sm text-gray-500">Activities: <span className="font-bold text-gray-900">{impact.breakdown?.volunteers?.activities ?? '-'}</span></p>
+                          <p className="text-sm text-gray-500">Food Processed: <span className="font-bold text-gray-900">{impact.breakdown?.volunteers?.foodProcessed ?? '-'}</span></p>
+                          <p className="text-sm text-gray-500">NFTs Minted: <span className="font-bold text-gray-900">{impact.breakdown?.volunteers?.nftsMinted ?? '-'}</span></p>
                         </div>
                         <div>
                           <h5 className="font-semibold mb-2">Recipients</h5>
-                          <p className="text-sm text-gray-500">Unique: <span className="font-bold text-gray-900">{impact.breakdown.recipients.uniqueCount}</span></p>
-                          <p className="text-sm text-gray-500">Activities: <span className="font-bold text-gray-900">{impact.breakdown.recipients.activities}</span></p>
-                          <p className="text-sm text-gray-500">Food Received: <span className="font-bold text-gray-900">{impact.breakdown.recipients.foodReceived}</span></p>
+                          <p className="text-sm text-gray-500">Unique: <span className="font-bold text-gray-900">{impact.breakdown?.recipients?.uniqueCount ?? '-'}</span></p>
+                          <p className="text-sm text-gray-500">Activities: <span className="font-bold text-gray-900">{impact.breakdown?.recipients?.activities ?? '-'}</span></p>
+                          <p className="text-sm text-gray-500">Food Received: <span className="font-bold text-gray-900">{impact.breakdown?.recipients?.foodReceived ?? '-'}</span></p>
                         </div>
                       </div>
                     </div>
