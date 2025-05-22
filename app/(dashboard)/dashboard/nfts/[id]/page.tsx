@@ -24,7 +24,14 @@ interface NFTDetails {
   owner: string;
 }
 
-export default function NFTDetails({ params }: { params: { id: string } }) {
+    type PageParams = {
+      id: string;
+    };
+    
+export default function NFTDetails({ 
+      params }: { 
+      params: PageParams 
+    }) {
   const router = useRouter();
   const { isAuthenticated } = useAuthContext();
   const [nft, setNft] = useState<NFTDetails | null>(null);
