@@ -14,6 +14,8 @@ import { useEvents, TimeFilter } from '@/hooks/useEvents';
 import { useRouter } from 'next/navigation';
 import { buildApiUrl } from '@/utils/swr-config';
 import QRCodeModal from '@/components/QRCodeModal';
+import EventImpactModal from '@/components/EventImpactModal';
+import { ChartBarIcon } from '@heroicons/react/24/outline';
 
 // Helper functions
 const formatDate = (dateString: string | undefined): string => {
@@ -97,6 +99,16 @@ export default function EventsPage({
   const [eventDetailsModal, setEventDetailsModal] = useState<EventDetailsModalState>({
     isOpen: false,
     event: null
+  });
+  
+  const [impactModalState, setImpactModalState] = useState<{
+    isOpen: boolean;
+    eventId: string;
+    eventTitle: string;
+  }>({
+    isOpen: false,
+    eventId: '',
+    eventTitle: ''
   });
   
   const { user, isAuthenticated } = useAuthContext();
@@ -452,8 +464,7 @@ export default function EventsPage({
               return (
                 <div 
                   key={event._id} 
-                  className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden cursor-pointer"
-                  onClick={() => openEventDetails(event)}
+                  className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
                 >
                   <div className={`h-2 w-full ${ACTIVITY_TYPE_COLORS[event.activityType || 'other'].split(' ')[0]}`}></div>
                   <div className="p-4">
@@ -518,15 +529,37 @@ export default function EventsPage({
                       </div>
                     )}
                     
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevent opening details modal
-                        openEventDetails(event);
-                      }}
-                      className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors duration-200"
-                    >
-                      View Details
-                    </button>
+                    {/* Action buttons */}
+                    <div className="mt-4 space-y-2">
+                      {/* Impact button for admins */}
+                      {isAdmin && (
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setImpactModalState({
+                              isOpen: true,
+                              eventId: event._id,
+                              eventTitle: event.title
+                            });
+                          }}
+                          className="w-full py-2 px-4 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded-md text-sm transition-colors duration-200 flex items-center justify-center gap-2"
+                        >
+                          <ChartBarIcon className="w-4 h-4" />
+                          View Impact
+                        </button>
+                      )}
+                      
+                      {/* View Details button */}
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEventDetails(event);
+                        }}
+                        className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors duration-200"
+                      >
+                        View Details
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
@@ -575,6 +608,14 @@ export default function EventsPage({
         eventTitle={qrModalState.eventTitle}
         eventQRCodes={qrModalState.eventQRCodes}
         onQRCodeGenerated={handleQRCodeGenerated}
+      />
+
+      {/* Impact Modal */}
+      <EventImpactModal
+        isOpen={impactModalState.isOpen}
+        eventId={impactModalState.eventId}
+        eventTitle={impactModalState.eventTitle}
+        onClose={() => setImpactModalState({ isOpen: false, eventId: '', eventTitle: '' })}
       />
     </div>
   );

@@ -15,21 +15,21 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
-  
+
   // Direct Reown/Wagmi hooks
   const { open } = useAppKit();
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
-  
+
   const [shouldShowBackButton, setShouldShowBackButton] = useState(false);
   const [pageTitle, setPageTitle] = useState("Dashboard");
-  
+
   // Determine if we should show back button based on current route
   useEffect(() => {
     // If the path is exactly /dashboard, don't show back button
     const isExactDashboard = pathname === "/dashboard";
     setShouldShowBackButton(!isExactDashboard);
-    
+
     // Set page title based on route
     if (pathname.includes("/activities")) {
       setPageTitle("Activities");
@@ -75,13 +75,13 @@ export default function DashboardLayout({
               {shouldShowBackButton && (
                 <Link href="/dashboard" className="text-white p-1 rounded-full hover:bg-white/10 transition-colors">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 19L8 12L15 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M15 19L8 12L15 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </Link>
               )}
               <h1 className="text-xl font-bold">{pageTitle}</h1>
             </div>
-            
+
             {/* Right side with wallet connection */}
             <div className="flex items-center gap-4">
               {/* Wallet Connection Button */}
@@ -126,16 +126,16 @@ export default function DashboardLayout({
             <div className="bg-white py-4">
               <div className="flex justify-around items-end">
                 {/* Home button */}
-                <Link 
-                  href="/dashboard" 
+                <Link
+                  href="/dashboard"
                   className="flex flex-col items-center w-16"
                 >
-                  <svg 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    xmlns="http://www.w3.org/2000/svg" 
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
                     className={`mb-2 ${pathname === "/dashboard" ? "text-yellow-400" : "text-gray-500"}`}
                   >
                     <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -147,19 +147,19 @@ export default function DashboardLayout({
                 </Link>
 
                 {/* Activities button */}
-                <Link 
-                  href="/dashboard/events" 
+                <Link
+                  href="/dashboard/events"
                   className="flex flex-col items-center w-16"
                 >
-                  <svg 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="1.5" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     className={`mb-2 ${pathname === "/dashboard/events" ? "text-yellow-400" : "text-gray-500"}`}
                   >
                     <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z" />
@@ -184,38 +184,10 @@ export default function DashboardLayout({
                       <Link href="/scan" className="relative flex items-center justify-center">
                         <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center z-10 shadow-lg">
                           {/* QR Code SVG */}
-                          <svg width="48" height="48" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <rect x="15" y="15" width="20" height="20" fill="white" />
-                            <rect x="40" y="15" width="5" height="20" fill="white" />
-                            <rect x="50" y="15" width="5" height="5" fill="white" />
-                            <rect x="60" y="15" width="20" height="20" fill="white" />
-
-                            <rect x="15" y="40" width="5" height="10" fill="white" />
-                            <rect x="25" y="40" width="5" height="5" fill="white" />
-                            <rect x="35" y="40" width="5" height="5" fill="white" />
-                            <rect x="45" y="40" width="10" height="5" fill="white" />
-                            <rect x="60" y="40" width="5" height="5" fill="white" />
-                            <rect x="70" y="40" width="5" height="5" fill="white" />
-
-                            <rect x="15" y="55" width="5" height="5" fill="white" />
-                            <rect x="25" y="55" width="5" height="5" fill="white" />
-                            <rect x="35" y="55" width="10" height="5" fill="white" />
-                            <rect x="50" y="55" width="10" height="5" fill="white" />
-                            <rect x="65" y="55" width="5" height="5" fill="white" />
-                            <rect x="75" y="55" width="5" height="5" fill="white" />
-
-                            <rect x="15" y="65" width="20" height="20" fill="white" />
-                            <rect x="40" y="65" width="10" height="5" fill="white" />
-                            <rect x="55" y="65" width="5" height="5" fill="white" />
-                            <rect x="65" y="65" width="15" height="5" fill="white" />
-
-                            <rect x="40" y="75" width="5" height="5" fill="white" />
-                            <rect x="50" y="75" width="15" height="10" fill="white" />
-                            <rect x="70" y="75" width="10" height="5" fill="white" />
-
-                            <rect x="40" y="85" width="5" height="5" fill="white" />
-                            <rect x="70" y="85" width="5" height="5" fill="white" />
+                          <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path fill-rule="evenodd" clip-rule="evenodd" d="M3 3H8V8H3V3ZM0 11V0H11V5.99976H13V0H17V6H13V10.0002H16V13.0002H14V17H9V13H13V10.9998H11V11H0ZM22 3H27V8H22V3ZM19 11V0H30V11H19ZM8 22H3V27H8V22ZM0 19V30H11V27.0002H15V30H21V27.0002H24V30H29V27H27V24.0002H18V27H15V24.0002H11V19H0ZM27 19V20.9998H30V23.9998H27V21H24V19V18V13H30V19H27ZM21 20H18V24H14V18H17V17V14V13H21V14V17V20ZM7 13H0V17H7V13Z" fill="white" />
                           </svg>
+
                         </div>
                       </Link>
                     </div>
@@ -225,19 +197,19 @@ export default function DashboardLayout({
                 </div>
 
                 {/* Rewards button */}
-                <Link 
-                  href="/dashboard/rewards" 
+                <Link
+                  href="/dashboard/rewards"
                   className="flex flex-col items-center w-16"
                 >
-                  <svg 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="1.5" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     className={`mb-2 ${pathname === "/dashboard/rewards" ? "text-yellow-400" : "text-gray-500"}`}
                   >
                     <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -249,19 +221,19 @@ export default function DashboardLayout({
                 </Link>
 
                 {/* NFTs button */}
-                <Link 
-                  href="/dashboard/nfts" 
+                <Link
+                  href="/dashboard/nfts"
                   className="flex flex-col items-center w-16"
                 >
-                  <svg 
-                    width="24" 
-                    height="24" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="1.5" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     className={`mb-2 ${pathname === "/dashboard/nfts" ? "text-yellow-400" : "text-gray-500"}`}
                   >
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
@@ -274,7 +246,7 @@ export default function DashboardLayout({
               </div>
             </div>
           </div>
-          
+
           {/* Debug info */}
           {/* <div className="fixed top-20 right-4 bg-black text-white p-2 text-xs rounded opacity-50 z-50">
             Debug: {isConnected ? `Connected: ${address}` : 'Not connected'}
