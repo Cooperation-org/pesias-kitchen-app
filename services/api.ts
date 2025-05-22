@@ -439,4 +439,11 @@ export const getEventImpact = (eventId: string): Promise<AxiosResponse<EventImpa
   return api.get(`/stats/dashboard/event/${eventId}`);
 };
 
+export const updateUserRoleByWallet = (
+  walletAddress: string,
+  role: string
+): Promise<AxiosResponse<User>> => {
+  return api.put(`/user/wallet/${walletAddress}/role`, { role });
+};
+
 export default api;

@@ -20,7 +20,7 @@ export function middleware(request: NextRequest) {
   
   // If user is already logged in and tries to access login page, redirect based on role
   if (request.nextUrl.pathname === '/' && token && isWalletConnected) {
-    if (userRole === 'admin') {
+    if (userRole === 'admin' || userRole === 'superadmin') {
       return NextResponse.redirect(new URL('/admin', request.url));
     } else {
       return NextResponse.redirect(new URL('/dashboard', request.url));
@@ -28,12 +28,13 @@ export function middleware(request: NextRequest) {
   }
   
   // If regular user tries to access admin pages, redirect to dashboard
-  if (request.nextUrl.pathname.startsWith('/admin') && userRole !== 'admin') {
+  // Allow both admin and superadmin roles to access admin paths
+  if (request.nextUrl.pathname.startsWith('/admin') && userRole !== 'admin' && userRole !== 'superadmin') {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }
   
-  // If admin tries to access regular dashboard, redirect to admin dashboard
-  if (request.nextUrl.pathname.startsWith('/dashboard') && userRole === 'admin') {
+  // If admin or superadmin tries to access regular dashboard, redirect to admin dashboard
+  if (request.nextUrl.pathname.startsWith('/dashboard') && (userRole === 'admin' || userRole === 'superadmin')) {
     return NextResponse.redirect(new URL('/admin', request.url));
   }
   
