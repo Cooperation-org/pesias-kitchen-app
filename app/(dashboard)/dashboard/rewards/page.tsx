@@ -260,12 +260,6 @@ const Rewards = () => {
     >
       <div className="w-full pb-[110px] px-5 md:p-6 lg:p-8 max-w-lg">
       
-        
-        <motion.div variants={itemVariants} className="relative flex justify-between items-center mt-3 mb-8">
-          <h1 className="text-3xl font-bold text-[#303030] absolute left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#4CAF50] to-[#43A047] bg-clip-text text-transparent">
-            Rewards
-          </h1>
-        </motion.div>
 
         {/* Loading State */}
         {isLoading && (

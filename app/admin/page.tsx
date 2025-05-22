@@ -206,17 +206,7 @@ export default function ImpactDashboard() {
           <p className="text-gray-600 mt-2">Track community impact and engagement</p>
         </header>
 
-        {/* Key Insights */}
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold text-gray-800 mb-4">Key Insights</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {keyInsights.map((insight, index) => (
-              <div key={index} className="bg-white rounded-xl shadow-md p-6">
-                <p className="text-gray-700">{insight}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+     
 
         {/* Main Content Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -313,6 +303,18 @@ export default function ImpactDashboard() {
                 </button>
               </Link>
             </div>
+          </div>
+        </div>
+
+           {/* Key Insights */}
+           <div className="mb-8">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Key Insights</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {keyInsights.map((insight, index) => (
+              <div key={index} className="bg-white rounded-xl shadow-md p-6">
+                <p className="text-gray-700">{insight}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

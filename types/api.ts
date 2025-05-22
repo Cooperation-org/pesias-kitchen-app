@@ -409,6 +409,56 @@ export interface QRCodeVerifyAndMintResponse {
     txHash?: string;
 }
 
+export interface EventImpactResponse {
+    summary: {
+      totalEvents: number;
+      totalVolunteers: number;
+      totalRecipients: number;
+      totalActivities: number;
+      totalRewards: number;
+      totalFoodRescued: number;
+      totalNFTs: number;
+      totalUniqueParticipants: number;
+    };
+    eventImpacts: Array<{
+      _id: string;
+      eventTitle: string;
+      eventDate: string;
+      eventLocation: string;
+      activityType: string;
+      totalVolunteers: number;
+      totalRecipients: number;
+      totalUniqueParticipants: number;
+      totalActivities: number;
+      totalFoodRescued: number;
+      totalNFTsMinted: number;
+      totalRewards: number;
+      participationRate: number;
+      volunteerDetails: {
+        type: string;
+        activities: number;
+        uniqueUsers: string[];
+        uniqueUserCount: number;
+        totalFood: number;
+        nftsMinted: number;
+      };
+      recipientDetails: {
+        type: string;
+        activities: number;
+        uniqueUsers: string[];
+        uniqueUserCount: number;
+        totalFood: number;
+        nftsMinted: number;
+      };
+    }>;
+    generatedAt: string;
+    fromCache: boolean;
+    calculationTime: string;
+    cachedAt: string;
+  }
+  
+  
+
 export interface FoodHeroesImpactResponse {
   foodHeroesImpact: {
     totalVolunteers: number;
