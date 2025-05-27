@@ -513,7 +513,7 @@ export default function EventsPage({
                     <div className="mb-4">
                       {userHasJoined ? (
                         <div className="text-green-700 text-sm">
-                          ✓ You've joined
+                          ✓ You&apos;ve joined
                         </div>
                       ) : isCreator ? (
                         <div className="text-blue-700 text-sm">

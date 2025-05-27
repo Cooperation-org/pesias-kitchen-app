@@ -94,8 +94,8 @@ const QRCodeViewer: React.FC<QRCodeViewerProps> = ({
                 <img 
                   src={getQRCodeImageUrl(qrCode.ipfsCid) || ''}
                   alt={`${displayType} QR Code for ${eventTitle}`}
-                  width="200"
-                  height="200"
+                  width="100"
+                  height="100"
                   className="mx-auto"
                   onLoad={onLoad}
                   onError={onError}
