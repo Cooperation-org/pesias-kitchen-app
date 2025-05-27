@@ -7,7 +7,6 @@ import EditEventModal from '@/components/EditEventModal';
 import EventDetailsModal, { 
   Event, 
   Participant,
-  ACTIVITY_TYPE_COLORS, 
   ACTIVITY_TYPE_LABELS 
 } from '@/components/EventDetailsModal';
 import { useEvents, TimeFilter } from '@/hooks/useEvents';
@@ -15,7 +14,13 @@ import { useRouter } from 'next/navigation';
 import { buildApiUrl } from '@/utils/swr-config';
 import QRCodeModal from '@/components/QRCodeModal';
 import EventImpactModal from '@/components/EventImpactModal';
-import { ChartBarIcon } from '@heroicons/react/24/outline';
+import { 
+  ChartBarIcon,
+  CalendarIcon,
+  ClockIcon,
+  MapPinIcon,
+  UsersIcon
+} from '@heroicons/react/24/outline';
 
 // Helper functions
 const formatDate = (dateString: string | undefined): string => {
@@ -382,9 +387,9 @@ export default function EventsPage({
     <div className="flex justify-center gap-2 mt-6">
       <button
         onClick={() => setTimeFilter('upcoming')}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
           timeFilter === 'upcoming'
-            ? 'bg-primary text-white'
+            ? 'bg-gray-900 text-white'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
       >
@@ -392,9 +397,9 @@ export default function EventsPage({
       </button>
       <button
         onClick={() => setTimeFilter('past')}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
           timeFilter === 'past'
-            ? 'bg-primary text-white'
+            ? 'bg-gray-900 text-white'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
       >
@@ -402,9 +407,9 @@ export default function EventsPage({
       </button>
       <button
         onClick={() => setTimeFilter('all')}
-        className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
           timeFilter === 'all'
-            ? 'bg-primary text-white'
+            ? 'bg-gray-900 text-white'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
       >
@@ -415,11 +420,11 @@ export default function EventsPage({
 
   // No events message component
   const NoEventsMessage = () => (
-    <div className="text-center py-10">
-      <h3 className="text-xl font-medium text-gray-700 mb-2">No events found</h3>
+    <div className="text-center py-12">
+      <h3 className="text-lg font-medium text-gray-700 mb-2">No events found</h3>
       <p className="text-gray-500">
         {timeFilter === 'upcoming'
-          ? "There are no upcoming events scheduled at the moment."
+          ? "There are no upcoming events scheduled."
           : timeFilter === 'past'
           ? "There are no past events to display."
           : "There are no events to display."}
@@ -430,24 +435,25 @@ export default function EventsPage({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
       </div>
     );
   }
 
   if (fetchError) {
     return (
-      <div className="text-center text-red-500 p-4">
+      <div className="text-center text-red-600 p-4">
         Error loading events: {fetchError.message}
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-7xl mx-auto">
+    <div className="min-h-screen bg-white p-6">
+      <div className="max-w-6xl mx-auto">
+        {/* Simple header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold mb-2">{title}</h1>
+          <h1 className="text-3xl font-semibold text-gray-900 mb-2">{title}</h1>
           <p className="text-gray-600 max-w-2xl mx-auto">
             {description}
           </p>
@@ -455,7 +461,7 @@ export default function EventsPage({
         </div>
 
         {filteredEvents.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredEvents.map((event) => {
               const userHasJoined = hasUserJoined(event);
               const isCreator = isEventCreator(event);
@@ -464,102 +470,83 @@ export default function EventsPage({
               return (
                 <div 
                   key={event._id} 
-                  className="bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden"
+                  className="bg-white border border-gray-200 rounded-lg p-6 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
                 >
-                  <div className={`h-2 w-full ${ACTIVITY_TYPE_COLORS[event.activityType || 'other'].split(' ')[0]}`}></div>
-                  <div className="p-4">
-                    <div className="flex justify-between items-start mb-3">
-                      <h3 className="text-lg font-medium line-clamp-1">{event.title}</h3>
-                      
-                      <span className={`px-2 py-0.5 text-xs rounded-full ${ACTIVITY_TYPE_COLORS[event.activityType || 'other']}`}>
-                        {ACTIVITY_TYPE_LABELS[event.activityType || 'other']}
-                      </span>
+                  {/* Title and activity type */}
+                  <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-lg font-medium text-gray-900 line-clamp-1 flex-1 mr-3">
+                      {event.title}
+                    </h3>
+                    <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded flex-shrink-0">
+                      {ACTIVITY_TYPE_LABELS[event.activityType || 'other']}
+                    </span>
+                  </div>
+                  
+                  {/* Event info */}
+                  <div className="space-y-2 mb-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <CalendarIcon className="w-4 h-4 text-gray-400" />
+                      <span>{formatDate(event.date)}</span>
+                      {eventIsPast && (
+                        <span className="ml-auto text-xs text-gray-500">Past</span>
+                      )}
                     </div>
-                    
-                    <div className="space-y-2 text-sm text-gray-500 mb-3">
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span>{formatDate(event.date)}</span>
-                        <span className="ml-1">at {formatTime(event.date)}</span>
-                        
-                        {/* Past event indicator */}
-                        {eventIsPast && (
-                          <span className="ml-1 px-1.5 py-0.5 bg-amber-100 text-amber-800 text-xs rounded">
-                            Past
-                          </span>
-                        )}
-                      </div>
 
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        <span className="line-clamp-1">{event.location || "Location not specified"}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-1">
-                        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        <span>Participants: {event.participants.length || 0}</span>
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <ClockIcon className="w-4 h-4 text-gray-400" />
+                      <span>{formatTime(event.date)}</span>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                      <MapPinIcon className="w-4 h-4 text-gray-400" />
+                      <span className="line-clamp-1">{event.location || "Location TBD"}</span>
                     </div>
                     
-                    {/* Status indicator */}
-                    {isAuthenticated && (
-                      <div className="mb-3">
-                        {userHasJoined ? (
-                          <div className="text-green-600 text-sm flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                            <span>You&apos;ve joined this event</span>
-                          </div>
-                        ) : isCreator ? (
-                          <div className="text-blue-600 text-sm flex items-center gap-1">
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 016 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                            </svg>
-                            <span>You created this event</span>
-                          </div>
-                        ) : null}
-                      </div>
+                    <div className="flex items-center gap-2">
+                      <UsersIcon className="w-4 h-4 text-gray-400" />
+                      <span>{event.participants.length} attending</span>
+                    </div>
+                  </div>
+                  
+                  {/* Status */}
+                  {isAuthenticated && (
+                    <div className="mb-4">
+                      {userHasJoined ? (
+                        <div className="text-green-700 text-sm">
+                          ✓ You've joined
+                        </div>
+                      ) : isCreator ? (
+                        <div className="text-blue-700 text-sm">
+                          ✓ Your event
+                        </div>
+                      ) : null}
+                    </div>
+                  )}
+                  
+                  {/* Actions */}
+                  <div className="space-y-2">
+                    {/* Impact button for admins */}
+                    {isAdmin && (
+                      <button 
+                        onClick={() => setImpactModalState({
+                          isOpen: true,
+                          eventId: event._id,
+                          eventTitle: event.title
+                        })}
+                        className="w-full py-2 px-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded text-sm transition-colors flex items-center justify-center gap-2"
+                      >
+                        <ChartBarIcon className="w-4 h-4" />
+                        View Impact
+                      </button>
                     )}
                     
-                    {/* Action buttons */}
-                    <div className="mt-4 space-y-2">
-                      {/* Impact button for admins */}
-                      {isAdmin && (
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setImpactModalState({
-                              isOpen: true,
-                              eventId: event._id,
-                              eventTitle: event.title
-                            });
-                          }}
-                          className="w-full py-2 px-4 bg-yellow-50 hover:bg-yellow-100 text-yellow-700 rounded-md text-sm transition-colors duration-200 flex items-center justify-center gap-2"
-                        >
-                          <ChartBarIcon className="w-4 h-4" />
-                          View Impact
-                        </button>
-                      )}
-                      
-                      {/* View Details button */}
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEventDetails(event);
-                        }}
-                        className="w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-800 rounded-md text-sm transition-colors duration-200"
-                      >
-                        View Details
-                      </button>
-                    </div>
+                    {/* View Details button */}
+                    <button 
+                      onClick={() => openEventDetails(event)}
+                      className="w-full py-2 px-3 bg-gray-900 hover:bg-gray-800 text-white rounded text-sm transition-colors"
+                    >
+                      View Details
+                    </button>
                   </div>
                 </div>
               );
@@ -600,7 +587,7 @@ export default function EventsPage({
         />
       )}
 
-      {/* UPDATED: QR Code Modal */}
+      {/* QR Code Modal */}
       <QRCodeModal
         isOpen={qrModalState.isOpen}
         onClose={handleCloseQRModal}
