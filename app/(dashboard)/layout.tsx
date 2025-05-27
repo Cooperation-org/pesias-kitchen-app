@@ -6,6 +6,7 @@ import "../globals.css";
 import { useAppKit } from '@reown/appkit/react';
 import { useAccount, useDisconnect } from 'wagmi';
 import { motion } from "framer-motion";
+import Image from "next/image";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -15,6 +16,7 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
 
   // Direct Reown/Wagmi hooks
   const { open } = useAppKit();
@@ -23,6 +25,59 @@ export default function DashboardLayout({
 
   const [shouldShowBackButton, setShouldShowBackButton] = useState(false);
   const [pageTitle, setPageTitle] = useState("Dashboard");
+
+  const navigationItems = [
+    {
+      href: "/dashboard",
+      label: "Home",
+      icon: (
+        <path
+          d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"
+          stroke="currentColor"
+          strokeWidth="1.5"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      )
+    },
+    {
+      href: "/dashboard/events",
+      label: "Events",
+      icon: (
+        <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V5a2 2 0 00-2-2z" />
+      )
+    },
+    {
+      href: "/dashboard/rewards",
+      label: "Rewards",
+      icon: (
+        <path d="M9 12h6M9 16h6M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      )
+    },
+    {
+      href: "/dashboard/nfts",
+      label: "NFTs",
+      icon: (
+        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+      )
+    },
+    {
+      href: "https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713",
+      label: "Donate",
+      icon: (
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1.41 16.09V20h-2.67v-1.93c-1.71-.36-3.16-1.46-3.27-3.4h1.96c.1 1.05.82 1.87 2.65 1.87 1.96 0 2.4-.98 2.4-1.59 0-.83-.44-1.61-2.67-2.14-2.48-.6-4.18-1.62-4.18-3.67 0-1.72 1.39-2.84 3.11-3.21V4h2.67v1.95c1.86.45 2.79 1.86 2.85 3.39H14.3c-.05-1.11-.64-1.87-2.22-1.87-1.5 0-2.4.68-2.4 1.64 0 .84.65 1.39 2.67 1.91s4.18 1.39 4.18 3.91c-.01 1.83-1.38 2.83-3.12 3.16z" />
+      ),
+      external: true
+    }
+  ];
+
+  const toggleHamburgerMenu = () => {
+    setShowHamburgerMenu(!showHamburgerMenu);
+  };
+
+  const closeHamburgerMenu = () => {
+    setShowHamburgerMenu(false);
+  };
 
   // Determine if we should show back button based on current route
   useEffect(() => {
@@ -63,17 +118,50 @@ export default function DashboardLayout({
     <html lang="en" className="h-full">
       <body className="h-full">
         <div className="flex flex-col min-h-screen bg-white">
-          {/* Header with back button (conditional), title, wallet connection, and notifications */}
+          {/* Header with hamburger menu, back button (conditional), title, and wallet connection */}
           <motion.header
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="flex justify-between items-center fixed w-full bg-white z-20 border-b border-gray-100 text-gray-800 p-4 shadow-sm"
           >
-            {/* Left side with back button and title */}
-            <div className="flex items-center gap-2">
+            {/* Left side with hamburger menu, logo, back button and title */}
+            <div className="flex items-center gap-4">
+              {/* Hamburger Menu Button */}
+              <button
+                onClick={toggleHamburgerMenu}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Toggle menu"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-gray-700"
+                >
+                  <path d="M3 12h18M3 6h18M3 18h18" />
+                </svg>
+              </button>
+
+              {/* Company Logo */}
+              <div className="flex items-center">
+                <Image
+                  src="/images/Pesia-logo-black.png"
+                  alt="Pesia's Kitchen Logo"
+                  width={120}
+                  height={32}
+                  className="h-8 w-auto"
+                  priority
+                />
+              </div>
+
               {shouldShowBackButton && (
-                <Link href="/dashboard" className="text-white p-1 rounded-full hover:bg-white/10 transition-colors">
+                <Link href="/dashboard" className="text-gray-800 p-1 rounded-full hover:bg-gray-100 transition-colors">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M15 19L8 12L15 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
@@ -82,36 +170,142 @@ export default function DashboardLayout({
               <h1 className="text-xl font-bold">{pageTitle}</h1>
             </div>
 
-            {/* Right side with wallet connection */}
-            <div className="flex items-center gap-4">
-              {/* Wallet Connection Button */}
-              {isConnected && address ? (
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={handleConnect}
-                    className="flex items-center text-sm font-medium"
-                  >
-                    <span className="px-3 py-1 bg-gray-100 rounded-full text-gray-800">
-                      {`${address.slice(0, 6)}...${address.slice(-4)}`}
-                    </span>
-                  </button>
-                  <button
-                    onClick={handleDisconnect}
-                    className="text-sm text-white/80 hover:text-white"
-                  >
-                    Logout
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={handleConnect}
-                  className="px-3 py-1 bg-yellow-400 text-gray-800 rounded-full text-sm font-medium hover:bg-yellow-500 transition-colors"
-                >
-                  Connect Wallet
-                </button>
-              )}
-            </div>
+            {/* Right side - empty now as we moved wallet connection to menu */}
+            <div className="w-24"></div>
           </motion.header>
+
+          {/* Hamburger Menu Overlay */}
+          {showHamburgerMenu && (
+            <div 
+              className="fixed inset-0 bg-transparent backdrop-blur-sm z-30"
+              onClick={closeHamburgerMenu}
+            >
+              {/* Menu Panel */}
+              <div 
+                className="fixed left-0 top-0 h-full w-80 bg-white shadow-lg transform transition-transform duration-300 ease-in-out"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {/* Menu Header with Wallet Connection */}
+                <div className="p-6 border-b border-gray-200">
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-xl font-semibold text-gray-800">Menu</h2>
+                    <button
+                      onClick={closeHamburgerMenu}
+                      className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                      aria-label="Close menu"
+                    >
+                      <svg
+                        width="20"
+                        height="20"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="text-gray-600"
+                      >
+                        <path d="M18 6L6 18M6 6l12 12" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Wallet Connection Section */}
+                  <div className="flex flex-col gap-2">
+                    {isConnected && address ? (
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                          <span className="text-sm font-medium text-gray-800">
+                            {`${address.slice(0, 6)}...${address.slice(-4)}`}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            handleDisconnect();
+                            closeHamburgerMenu();
+                          }}
+                          className="text-sm text-gray-600 hover:text-gray-800 px-2 py-1 rounded hover:bg-gray-100 transition-colors"
+                        >
+                          Logout
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => {
+                          handleConnect();
+                          closeHamburgerMenu();
+                        }}
+                        className="w-full px-4 py-2 bg-yellow-400 text-gray-800 rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors"
+                      >
+                        Connect Wallet
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Navigation Items */}
+                <nav className="p-4">
+                  {navigationItems.map((item) => (
+                    item.external ? (
+                      <a
+                        key={item.href}
+                        href={item.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={closeHamburgerMenu}
+                        className="flex items-center gap-4 p-4 rounded-lg mb-2 transition-colors text-gray-700 hover:bg-gray-100"
+                      >
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="flex-shrink-0"
+                        >
+                          {item.icon}
+                        </svg>
+                        <span>{item.label}</span>
+                      </a>
+                    ) : (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        onClick={closeHamburgerMenu}
+                        className={`flex items-center gap-4 p-4 rounded-lg mb-2 transition-colors ${
+                          pathname === item.href
+                            ? "bg-yellow-100 text-yellow-700 font-medium"
+                            : "text-gray-700 hover:bg-gray-100"
+                        }`}
+                      >
+                        <svg
+                          width="24"
+                          height="24"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="1.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className="flex-shrink-0"
+                        >
+                          {item.icon}
+                        </svg>
+                        <span>{item.label}</span>
+                        {pathname === item.href && (
+                          <div className="w-2 h-2 bg-yellow-400 rounded-full ml-auto"></div>
+                        )}
+                      </Link>
+                    )
+                  ))}
+                </nav>
+              </div>
+            </div>
+          )}
 
           <main className="flex-1 pb-24 mt-[4rem]">
             {children}
