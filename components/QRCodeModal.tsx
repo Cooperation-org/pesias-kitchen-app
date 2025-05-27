@@ -251,9 +251,9 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
                       }`}>
                         {option.label}
                       </span>
-                      <span className="mt-1 block text-sm text-gray-500">
+                      {/* <span className="mt-1 block text-sm text-gray-500">
                         {option.description}
-                      </span>
+                      </span> */}
                       {option.exists && (
                         <span className="mt-1 text-xs text-green-600 font-medium">
                           Available
@@ -279,7 +279,7 @@ const QRCodeModal: React.FC<QRCodeModalProps> = ({
           {qrCodeUrl ? (
             <div className="space-y-4">
               <div className="flex justify-center">
-                <div className="relative h-64 w-64 overflow-hidden border rounded-md">
+                <div className="relative h-34 w-34 overflow-hidden border rounded-md">
                   <img
                     key={`qr-image-${qrCodeType}-${qrCodeUrl.substring(0, 50)}`}
                     src={qrCodeUrl}

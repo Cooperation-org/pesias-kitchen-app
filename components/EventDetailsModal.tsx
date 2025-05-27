@@ -165,14 +165,14 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
     }
   };
 
-  const handleOpenQRModal = (e: React.MouseEvent, type: 'volunteer' | 'recipient') => {
-    e.stopPropagation();
+  const handleOpenQRModal = ( type: 'volunteer' | 'recipient') => {
+  
     setQrModalState({
       isOpen: true,
       type
     });
     setShowActionsMenu(false);
-    onClose(); // Close the details modal when opening QR modal
+    // onClose(); // Close the details modal when opening QR modal
   };
 
   const handleQRCodeGenerated = () => {
@@ -232,7 +232,7 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
                     </button>
                     
                     <button
-                      onClick={(e) => handleOpenQRModal(e, 'volunteer')}
+                      onClick={() => handleOpenQRModal('volunteer')}
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                     >
                       <QrCodeIcon className="w-4 h-4" />
