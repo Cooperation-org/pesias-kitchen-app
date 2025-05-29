@@ -125,29 +125,8 @@ export default function DashboardLayout({
             transition={{ duration: 0.5 }}
             className="flex justify-between items-center fixed w-full bg-white z-20 border-b border-gray-100 text-gray-800 p-4 shadow-sm"
           >
-            {/* Left side with hamburger menu, logo, back button and title */}
+            {/* Left side with logo, back button and title */}
             <div className="flex items-center gap-4">
-              {/* Hamburger Menu Button */}
-              <button
-                onClick={toggleHamburgerMenu}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                aria-label="Toggle menu"
-              >
-                <svg
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="text-gray-700"
-                >
-                  <path d="M3 12h18M3 6h18M3 18h18" />
-                </svg>
-              </button>
-
               {/* Company Logo */}
               <div className="flex items-center">
                 <Image
@@ -170,8 +149,28 @@ export default function DashboardLayout({
               <h1 className="text-xl font-bold">{pageTitle}</h1>
             </div>
 
-            {/* Right side - empty now as we moved wallet connection to menu */}
-            <div className="w-24"></div>
+            {/* Right side with hamburger menu */}
+            <div className="flex items-center">
+              <button
+                onClick={toggleHamburgerMenu}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Toggle menu"
+              >
+                <svg
+                  width="24"
+                  height="24"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="text-gray-700"
+                >
+                  <path d="M3 12h18M3 6h18M3 18h18" />
+                </svg>
+              </button>
+            </div>
           </motion.header>
 
           {/* Hamburger Menu Overlay */}
