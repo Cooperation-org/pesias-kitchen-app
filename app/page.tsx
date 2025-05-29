@@ -201,7 +201,7 @@ export default function LandingPage() {
               <p className={`text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed transform transition-all duration-1000 delay-300 ${
                 isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
               }`}>
-                Join Pesia's Kitchen EAT Initiative in creating sustainable impact through blockchain-verified food rescue and community support.
+                Join Pesia&apos;s Kitchen EAT Initiative in creating sustainable impact through blockchain-verified food rescue and community support.
               </p>
 
               {/* Auth Error Message */}
@@ -431,7 +431,7 @@ export default function LandingPage() {
             </div>
           </div>
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Pesia's Kitchen EAT Initiative. All rights reserved.</p>
+            <p>&copy; 2024 Pesia&apos;s Kitchen EAT Initiative. All rights reserved.</p>
           </div>
         </div>
       </footer>
