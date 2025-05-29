@@ -5,15 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { createEvent } from '@/services/api';
 import { CalendarIcon, ClockIcon, MapPinIcon, UsersIcon, TagIcon, XMarkIcon } from '@heroicons/react/24/outline';
-import { Event } from '@/hooks/useEvents';
+import { Event } from '@/types/api';
 import { mutate } from 'swr';
 
-type ActivityType = 'food_sorting' | 'food_distribution' | 'food_pickup';
+type ActivityType = 'food_sorting' | 'food_distribution' | 'other';
 
 const ACTIVITY_TYPES: { value: ActivityType; label: string }[] = [
   { value: 'food_sorting', label: 'Food Sorting' },
   { value: 'food_distribution', label: 'Food Distribution' },
-  { value: 'food_pickup', label: 'Food Pickup' },
+  { value: 'other', label: 'Other' },
 ];
 
 interface CreateEventData {
@@ -85,14 +85,22 @@ export default function CreateEventModal({
         date: combinedDateTime
       };
 
-      // Optimistically update the cache before the API call
-      // This makes the new event appear immediately in the UI
-      const optimisticEvent = {
-        _id: `temp-${Date.now()}`, // Temporary ID that will be replaced
-        ...requestData,
+      // Create the optimistic event with all required fields
+      const optimisticEvent: Event = {
+        _id: `temp-${Date.now()}`,
+        title: requestData.title,
+        description: requestData.description,
+        location: requestData.location,
+        date: requestData.date,
+        activityType: requestData.activityType,
+        capacity: requestData.capacity,
+        defaultQuantity: 1, // Default value
         participants: [],
+        createdBy: '', // Will be set by the server
         createdAt: new Date().toISOString(),
-      } as Event;
+        updatedAt: new Date().toISOString(),
+        __v: 0
+      };
 
       // Update the SWR cache optimistically
       await mutate(

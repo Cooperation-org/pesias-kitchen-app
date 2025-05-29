@@ -525,8 +525,8 @@ export default function EventsPage({
                   
                   {/* Actions */}
                   <div className="space-y-2">
-                    {/* Impact button for admins */}
-                    {isAdmin && (
+                    {/* Impact button for admins - only show for past events */}
+                    {isAdmin && eventIsPast && (
                       <button 
                         onClick={() => setImpactModalState({
                           isOpen: true,
