@@ -58,12 +58,10 @@ export default function CustodialScanPage() {
   };
 
   const handleContinueToApp = () => {
-    // Redirect to activities page
     router.push('/dashboard');
   };
 
   const handleBackToHome = () => {
-    // Redirect to PESIAs main website
     window.location.href = 'https://pesiaskitchen.org';
   };
 
