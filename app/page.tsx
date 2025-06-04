@@ -10,12 +10,11 @@ export default function LandingPage() {
   const { isConnected, address } = useAccount();
   const { redirectToDashboard, openAppKit } = useAuthContext();
   const { signMessageAsync } = useSignMessage();
-  
+
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  
+
   // Use refs to prevent infinite loops
   const hasAttemptedAuth = useRef(false);
   const isProcessing = useRef(false);
@@ -23,51 +22,43 @@ export default function LandingPage() {
   // Trigger animations on mount
   useEffect(() => {
     setIsVisible(true);
-    
-    // Handle scroll for navbar
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Handle authentication process (same as login page)
+  // Handle authentication process
   const authenticate = async () => {
     if (isProcessing.current || !address) return;
-    
+
     try {
       isProcessing.current = true;
       setAuthLoading(true);
       setAuthError(null);
-      
+
       const nonceResponse = await getNonce(address);
       if (nonceResponse.error || !nonceResponse.data) {
         throw new Error(nonceResponse.error || 'Failed to get nonce');
       }
-      
+
       const nonce = nonceResponse.data.nonce;
       const message = `Sign this message to authenticate with Pesia's Kitchen EAT Initiative: ${nonce}`;
-      
+
       try {
         const signature = await signMessageAsync({ message });
         if (!address || !signature) {
           throw new Error("Missing wallet address or signature");
         }
-        
+
         const authResponse = await verifySignature(address, signature);
         if (authResponse.error || !authResponse.data) {
           throw new Error(authResponse.error || 'Verification failed');
         }
-        
+
         storeAuthData(authResponse.data.token, authResponse.data.user);
         redirectToDashboard();
-      } catch (signError: unknown) {
+      } catch (signError) {
         const errorMessage = signError instanceof Error ? signError.message : 'Failed to sign message. Please try again.';
         setAuthError(errorMessage);
       }
-    } catch (error: unknown) {
+    } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Authentication failed';
       setAuthError(errorMessage);
     } finally {
@@ -81,10 +72,10 @@ export default function LandingPage() {
   useEffect(() => {
     const checkAndAuthenticate = async () => {
       if (
-        isConnected && 
-        address && 
-        !localStorage.getItem('token') && 
-        !hasAttemptedAuth.current && 
+        isConnected &&
+        address &&
+        !localStorage.getItem('token') &&
+        !hasAttemptedAuth.current &&
         !isProcessing.current
       ) {
         await authenticate();
@@ -110,60 +101,44 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-white relative overflow-hidden">
-      {/* Navbar */}
-      <nav className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled ? 'bg-white/95 backdrop-blur-lg shadow-lg border-b border-yellow-400/20' : 'bg-transparent'
-      }`}>
+    <div className="min-h-screen bg-white">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             {/* Logo */}
-            <div className={`transform transition-all duration-500 ${
-              isVisible ? 'translate-x-0 opacity-100' : '-translate-x-8 opacity-0'
-            }`}>
+            <div className="flex items-center">
               <Image
                 src="/images/Pesia-logo-black.png"
                 alt="Pesia's Kitchen Logo"
-                width={160}
-                height={45}
-                className="h-10 w-auto"
+                width={120}
+                height={40}
+                className="h-8 w-auto"
                 priority
               />
             </div>
-            
-            {/* Navigation Links */}
-            <div className={`hidden md:flex items-center space-x-8 transform transition-all duration-500 delay-200 ${
-              isVisible ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
-            }`}>
-              <Link href="#about" className="text-gray-800 hover:text-yellow-500 transition-colors font-medium">
-                About
-              </Link>
-              <Link href="#features" className="text-gray-800 hover:text-yellow-500 transition-colors font-medium">
-                Features
-              </Link>
-              <Link href="#impact" className="text-gray-800 hover:text-yellow-500 transition-colors font-medium">
-                Impact
-              </Link>
-            </div>
-            
-            {/* Connect Wallet Button */}
-            <div className={`transform transition-all duration-500 delay-300 ${
-              isVisible ? 'translate-x-0 opacity-100' : 'translate-x-8 opacity-0'
-            }`}>
+
+            {/* Navigation */}
+            <nav className="hidden md:flex items-center space-x-8">
+              <Link href="#home" className="text-gray-700 hover:text-[#2E8B57] font-medium">Home</Link>
+              <Link href="#program" className="text-gray-700 hover:text-[#2E8B57] font-medium">EAT School Program</Link>
+              <Link href="#community" className="text-gray-700 hover:text-[#2E8B57] font-medium">Community Programs</Link>
+              <Link href="#zichron" className="text-gray-700 hover:text-[#2E8B57] font-medium">Zichron Program</Link>
+              <Link href="#people" className="text-gray-700 hover:text-[#2E8B57] font-medium">Our People</Link>
+              <Link href="#initiatives" className="text-[#2E8B57] font-medium border-b-2 border-[#2E8B57]">EAT Initiative</Link>
+            </nav>
+
+            {/* Action Buttons */}
+            <div className="flex items-center space-x-4">
+              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
+                DONATE
+              </button>
               <button
                 onClick={handleConnectClick}
                 disabled={authLoading}
-                className={`group relative px-6 py-3 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black font-semibold rounded-full hover:from-yellow-500 hover:to-yellow-600 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105 ${
-                  authLoading ? 'opacity-70 cursor-not-allowed' : ''
-                }`}
+                className={`px-4 py-2 bg-[#2E8B57] text-white rounded-md hover:bg-[#2E8B57]/90 font-medium ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                {authLoading && (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-black inline" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
-                )}
-                {isConnected 
+                {isConnected
                   ? (authLoading ? 'Authenticating...' : 'Enter Dashboard')
                   : 'Connect Wallet'
                 }
@@ -171,321 +146,311 @@ export default function LandingPage() {
             </div>
           </div>
         </div>
-      </nav>
-
-      {/* Hero Section */}
-      <section className="relative pt-24 pb-20 px-6">
-        {/* Background decorations */}
-        <div className="absolute inset-0 overflow-hidden">
-          <div className="absolute top-20 left-10 w-72 h-72 bg-gradient-to-br from-yellow-400/20 to-yellow-500/10 rounded-full blur-3xl animate-pulse"></div>
-          <div className="absolute top-40 right-20 w-96 h-96 bg-gradient-to-bl from-yellow-300/15 to-transparent rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }}></div>
-          <div className="absolute bottom-20 left-1/4 w-64 h-64 bg-gradient-to-tr from-yellow-500/10 to-yellow-400/5 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '4s' }}></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto relative z-10">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-            {/* Left Column - Text Content */}
-            <div className="text-left">
-              {/* Main Headline */}
-              <h1 className={`text-5xl md:text-7xl font-bold text-black mb-8 transform transition-all duration-1000 ${
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-12 opacity-0'
-              }`}>
-                Rescuing Food,
-                <br />
-                <span className="bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent">
-                  Feeding Hope
-                </span>
+      </header>
+      <div className="relative bg-gradient-to-b from-[#F2D166] to-white">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col lg:flex-row items-center pt-10 pb-20 md:pt-16 md:pb-24">
+            <div className="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
+              <h1 className="text-4xl md:text-5xl font-bold text-pesia-dark-blue leading-tight mb-6 animate-fade-in">
+                Rewarding Food Security <br />
+                <span className="text-pesia-green">One Meal at a Time</span>
               </h1>
-              
-              {/* Subtitle */}
-              <p className={`text-xl md:text-2xl text-gray-600 mb-12 leading-relaxed transform transition-all duration-1000 delay-300 ${
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-              }`}>
-                Join Pesia&apos;s Kitchen EAT Initiative in creating sustainable impact through blockchain-verified food rescue and community support.
+              <p className="text-lg text-gray-700 mb-8 max-w-lg animate-fade-in" style={{ animationDelay: '0.2s' }}>
+                Join the EAT Initiative and be part of a revolutionary approach to food rescue, using blockchain rewards to fight food insecurity while building community impact.
               </p>
-
-              {/* Auth Error Message */}
-              {authError && (
-                <div className="mb-8 bg-red-50 border border-red-200 text-red-700 p-4 rounded-2xl max-w-md">
-                  <p className="text-sm font-medium">{authError}</p>
-                  <button 
-                    onClick={() => {
-                      hasAttemptedAuth.current = false; 
-                      authenticate();
-                    }}
-                    className="text-sm font-semibold text-red-700 underline mt-2 hover:text-red-800"
-                  >
-                    Try again
+              <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+                <Link href="/auth">
+                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[#2E8B57] hover:bg-[#2E8B57]/90 text-white w-full sm:w-auto">
+                    Volunteer Now
                   </button>
+                </Link>
+                <Link href="/about">
+                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background h-10 px-4 py-2 border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57] hover:text-white w-full sm:w-auto">
+                    Learn More
+                  </button>
+                </Link>
+              </div>
+              <div className="mt-8 flex items-center gap-3 animate-fade-in" style={{ animationDelay: '0.6s' }}>
+                <div className="flex -space-x-2">
+                  <div className="w-8 h-8 rounded-full bg-pesia-[rgb(143 188 143)] flex items-center justify-center text-white text-xs">JK</div>
+                  <div className="w-8 h-8 rounded-full bg-pesia-orange flex items-center justify-center text-white text-xs">ML</div>
+                  <div className="w-8 h-8 rounded-full bg-pesia-green flex items-center justify-center text-white text-xs">AB</div>
                 </div>
-              )}
-              
-              {/* CTA Buttons */}
-              <div className={`flex flex-col sm:flex-row gap-6 transform transition-all duration-1000 delay-500 ${
-                isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-              }`}>
-                <button
-                  onClick={handleConnectClick}
-                  disabled={authLoading}
-                  className={`group relative px-10 py-5 bg-gradient-to-r from-yellow-400 to-yellow-500 text-black text-lg font-bold rounded-full hover:from-yellow-500 hover:to-yellow-600 transition-all duration-300 shadow-2xl hover:shadow-yellow-500/25 transform hover:scale-105 hover:-translate-y-1 ${
-                    authLoading ? 'opacity-70 cursor-not-allowed' : ''
-                  }`}
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-yellow-300 to-yellow-400 rounded-full blur-xl opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
-                  <span className="relative flex items-center">
-                    {authLoading && (
-                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                      </svg>
-                    )}
-                    {isConnected 
-                      ? (authLoading ? 'Authenticating...' : 'Enter Dashboard')
-                      : 'Start Making Impact'
-                    }
-                    {!authLoading && (
-                      <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                      </svg>
-                    )}
-                  </span>
-                </button>
-                
-                <a
-                  href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group px-10 py-5 bg-white text-black text-lg font-bold rounded-full border-2 border-black hover:bg-black hover:text-white transition-all duration-300 shadow-2xl transform hover:scale-105 hover:-translate-y-1"
-                >
-                  <span className="flex items-center">
-                    Donate Now
-                    <svg className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </span>
-                </a>
+                <span className="text-sm text-gray-600">Join 200+ volunteers already making an impact</span>
               </div>
             </div>
-
-            {/* Right Column - 3D Illustration */}
-            <div className={`relative transform transition-all duration-1000 delay-700 ${
-              isVisible ? 'translate-x-0 opacity-100' : 'translate-x-12 opacity-0'
-            }`}>
-              <div className="relative w-full h-[600px] flex items-center justify-center">
-                {/* 3D Scene Container */}
-                <div className="relative w-96 h-96 mx-auto transform-gpu perspective-1000">
-                  {/* Main 3D Food Bowl */}
-                  <div 
-                    className="absolute inset-0 animate-float-slow"
-                    style={{
-                      transform: 'rotateY(15deg) rotateX(10deg)',
-                      transformStyle: 'preserve-3d'
-                    }}
-                  >
-                    {/* Bowl Shadow */}
-                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-80 h-20 bg-gradient-to-r from-transparent via-gray-300/20 to-transparent rounded-full blur-xl"></div>
-                    
-                    {/* Main Bowl */}
-                    <div className="relative w-80 h-80 mx-auto">
-                      <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 via-yellow-500 to-yellow-600 rounded-full shadow-2xl transform scale-90"></div>
-                      <div className="absolute inset-4 bg-gradient-to-br from-white to-gray-50 rounded-full shadow-inner"></div>
-                      
-                      {/* Food Items - 3D positioned */}
-                      <div className="absolute top-8 left-12 w-16 h-16 bg-gradient-to-br from-red-400 to-red-500 rounded-full shadow-lg animate-bounce-slow"></div>
-                      <div className="absolute top-16 right-16 w-12 h-12 bg-gradient-to-br from-green-400 to-green-500 rounded-full shadow-lg animate-bounce-slow" style={{ animationDelay: '0.5s' }}></div>
-                      <div className="absolute bottom-20 left-20 w-14 h-14 bg-gradient-to-br from-orange-400 to-orange-500 rounded-full shadow-lg animate-bounce-slow" style={{ animationDelay: '1s' }}></div>
-                      <div className="absolute bottom-16 right-12 w-10 h-10 bg-gradient-to-br from-purple-400 to-purple-500 rounded-full shadow-lg animate-bounce-slow" style={{ animationDelay: '1.5s' }}></div>
-                    </div>
-                  </div>
-
-                  {/* Floating Hearts/Icons */}
-                  <div className="absolute top-0 left-0 w-8 h-8 text-yellow-500 animate-float" style={{ animationDelay: '0s' }}>
-                    ❤️
-                  </div>
-                  <div className="absolute top-20 right-0 w-8 h-8 text-green-500 animate-float" style={{ animationDelay: '1s' }}>
-                    🌱
-                  </div>
-                  <div className="absolute bottom-0 left-0 w-8 h-8 text-blue-500 animate-float" style={{ animationDelay: '2s' }}>
-                    🤝
-                  </div>
-                  <div className="absolute bottom-20 right-20 w-8 h-8 text-purple-500 animate-float" style={{ animationDelay: '3s' }}>
-                    ✨
-                  </div>
-
-                  {/* Blockchain Network Visualization */}
-                  <div className="absolute inset-0 pointer-events-none">
-                    <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
-                    <div className="absolute top-3/4 right-1/4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" style={{ animationDelay: '1s' }}></div>
-                    <div className="absolute bottom-1/4 left-3/4 w-2 h-2 bg-yellow-400 rounded-full animate-ping" style={{ animationDelay: '2s' }}></div>
+            <div className="lg:w-1/2 relative animate-fade-in" style={{ animationDelay: '0.3s' }}>
+              <div className="rounded-xl overflow-hidden shadow-xl transform rotate-1">
+                <Image
+                  src="https://images.unsplash.com/photo-1593113598332-cd288d649433?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1170&q=80"
+                  alt="Volunteers sorting food donations"
+                  width={1170}
+                  height={800}
+                  className="w-full h-64 md:h-80 object-cover"
+                />
+              </div>
+              <div className="absolute -bottom-6 -left-6 bg-white rounded-lg p-4 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 rounded-full bg-pesia-green flex items-center justify-center text-white font-bold">G$</div>
+                  <div>
+                    <p className="text-sm font-semibold">Earn rewards</p>
+                    <p className="text-xs text-gray-600">with GoodDollar tokens</p>
                   </div>
                 </div>
-
-                {/* Ambient Light Effects */}
-                <div className="absolute inset-0 bg-gradient-to-tr from-yellow-400/10 via-transparent to-yellow-500/10 rounded-full blur-3xl animate-pulse"></div>
               </div>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* Features Section */}
-      <section id="features" className="py-20 px-6 bg-gradient-to-b from-white to-yellow-50/30">
-        <div className="max-w-7xl mx-auto">
-          <div className={`text-center mb-16 transform transition-all duration-1000 ${
-            isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-          }`}>
-            <h2 className="text-5xl font-bold text-black mb-6">Why Choose Our Platform?</h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Blockchain-verified impact tracking with transparent community engagement
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                icon: "🌱",
-                title: "Sustainable Impact",
-                description: "Every meal rescued is tracked on-chain, ensuring transparency and measurable community impact."
-              },
-              {
-                icon: "🔗",
-                title: "Blockchain Verified",
-                description: "Smart contracts ensure all donations and distributions are verifiable and tamper-proof."
-              },
-              {
-                icon: "👥",
-                title: "Community Driven",
-                description: "Connect volunteers, donors, and recipients in a seamless ecosystem of giving."
-              }
-            ].map((feature, index) => (
-              <div
-                key={index}
-                className={`group relative bg-white p-8 rounded-3xl shadow-lg hover:shadow-2xl border border-yellow-100 hover:border-yellow-300 transition-all duration-500 transform hover:scale-105 hover:-translate-y-2 ${
-                  isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-                }`}
-                style={{ transitionDelay: `${index * 200 + 700}ms` }}
-              >
-                <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/5 to-yellow-500/10 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                <div className="relative z-10">
-                  <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                    {feature.icon}
-                  </div>
-                  <h3 className="text-2xl font-bold text-black mb-4">{feature.title}</h3>
-                  <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="absolute bottom-0 left-0 w-full">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 100" fill="white" preserveAspectRatio="none">
+            <path d="M0,32L60,42.7C120,53,240,75,360,74.7C480,75,600,53,720,42.7C840,32,960,32,1080,37.3C1200,43,1320,53,1380,58.7L1440,64L1440,100L1380,100C1320,100,1200,100,1080,100C960,100,840,100,720,100C600,100,480,100,360,100C240,100,120,100,60,100L0,100Z" />
+          </svg>
         </div>
-      </section>
+      </div>
+      {/* Hero Section */}
+      
 
-      {/* Stats Section */}
-      <section className="py-20 px-6 bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-400">
+      {/* How It Works Section */}
+      <section className="py-20 px-6 bg-white">
         <div className="max-w-7xl mx-auto text-center">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            {[
-              { number: "10K+", label: "Meals Rescued" },
-              { number: "500+", label: "Families Fed" },
-              { number: "50+", label: "Partner Organizations" },
-              { number: "100%", label: "Transparency" }
-            ].map((stat, index) => (
-              <div key={index} className="text-black">
-                <div className="text-4xl md:text-5xl font-bold mb-2">{stat.number}</div>
-                <div className="text-lg font-medium opacity-80">{stat.label}</div>
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">How the EAT Initiative Works</h2>
+          <p className="text-xl text-gray-600 mb-16 max-w-3xl mx-auto">
+            We&apos;re revolutionizing food rescue by connecting volunteers and recipients through blockchain rewards
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Step 1 */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg">
+              <div className="w-16 h-16 bg-[#90EE90]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-[#2E8B57]">1</span>
               </div>
-            ))}
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Volunteer & Rescue</h3>
+              <p className="text-gray-600">
+                Join food rescue operations like sorting, distribution, or verification activities
+              </p>
+            </div>
+
+            {/* Step 2 */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg">
+              <div className="w-16 h-16 bg-[#90EE90]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-[#2E8B57]">2</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Scan & Verify</h3>
+              <p className="text-gray-600">
+                Scan QR codes to verify your participation and the delivery of food packages
+              </p>
+            </div>
+
+            {/* Step 3 */}
+            <div className="bg-white p-8 rounded-2xl shadow-lg">
+              <div className="w-16 h-16 bg-[#90EE90]/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <span className="text-2xl font-bold text-[#2E8B57]">3</span>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Earn G$ Rewards</h3>
+              <p className="text-gray-600">
+                Receive GoodDollar cryptocurrency and NFTs as rewards for your community impact
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Events Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-12">
+            <div>
+              <h2 className="text-4xl font-bold text-gray-900 mb-4">Featured Events</h2>
+              <p className="text-xl text-gray-600">
+                Join upcoming food rescue operations and earn G$ rewards
+              </p>
+            </div>
+            <button className="px-6 py-3 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
+              View All Events
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Event 1 */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <span className="px-3 py-1 bg-[#FFA500]/20 text-[#FFA500] rounded-full text-sm font-medium">Sorting</span>
+                <span className="px-3 py-1 bg-[#2E8B57]/20 text-[#2E8B57] rounded-full text-sm font-bold">G$ 15</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Food Sorting Session</h3>
+              <div className="text-gray-600 mb-4">
+                <p className="mb-1">📅 Jan 12, 2025</p>
+                <p className="mb-1">🕐 10:00 AM - 1:00 PM</p>
+                <p className="mb-1">📍 Central Kitchen, Tel Aviv</p>
+              </div>
+              <div className="text-gray-500 text-sm mb-4">21 People Joined</div>
+              <button className="w-full px-4 py-2 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
+                Join Event
+              </button>
+            </div>
+
+            {/* Event 2 */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <span className="px-3 py-1 bg-[#FFA500]/20 text-[#FFA500] rounded-full text-sm font-medium">Distribution</span>
+                <span className="px-3 py-1 bg-[#2E8B57]/20 text-[#2E8B57] rounded-full text-sm font-bold">G$ 20</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Community Food Distribution</h3>
+              <div className="text-gray-600 mb-4">
+                <p className="mb-1">📅 Jan 14, 2025</p>
+                <p className="mb-1">🕐 3:00 PM - 6:00 PM</p>
+                <p className="mb-1">📍 Neighborhood Center, Jerusalem</p>
+              </div>
+              <div className="text-gray-500 text-sm mb-4">24 People Joined</div>
+              <button className="w-full px-4 py-2 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
+                Join Event
+              </button>
+            </div>
+
+            {/* Event 3 */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow">
+              <div className="flex items-center justify-between mb-4">
+                <span className="px-3 py-1 bg-[#FFA500]/20 text-[#FFA500] rounded-full text-sm font-medium">Pickup</span>
+                <span className="px-3 py-1 bg-[#2E8B57]/20 text-[#2E8B57] rounded-full text-sm font-bold">G$ 10</span>
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Recipient Pickup</h3>
+              <div className="text-gray-600 mb-4">
+                <p className="mb-1">📅 Jan 16, 2025</p>
+                <p className="mb-1">🕐 9:00 AM - 12:00 PM</p>
+                <p className="mb-1">📍 South Hub, Haifa</p>
+              </div>
+              <div className="text-gray-500 text-sm mb-4">17 People Joined</div>
+              <button className="w-full px-4 py-2 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
+                Join Event
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Impact Section */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Impact</h2>
+          <p className="text-xl text-gray-600 mb-16">
+            Together we're creating meaningful change in our communities
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div>
+              <div className="text-4xl font-bold text-[#2E8B57] mb-2">2,500+</div>
+              <div className="text-gray-600 font-medium">Meals Delivered</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-[#2E8B57] mb-2">200+</div>
+              <div className="text-gray-600 font-medium">Active Volunteers</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-[#2E8B57] mb-2">15,000</div>
+              <div className="text-gray-600 font-medium">G$ Rewards Distributed</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-[#2E8B57] mb-2">500+</div>
+              <div className="text-gray-600 font-medium">Food Rescue NFTs</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="py-20 px-6 bg-gradient-to-r from-[#2E8B57]/90 to-[#2E8B57]">
+        <div className="max-w-4xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-white mb-6">Join the Movement</h2>
+          <p className="text-xl text-white/90 mb-8">
+            Be part of a revolutionary approach to food rescue and community impact
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={handleConnectClick}
+              disabled={authLoading}
+              className={`px-8 py-4 bg-white text-[#2E8B57] font-semibold rounded-lg hover:bg-gray-50 transition-colors ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            >
+              {isConnected
+                ? (authLoading ? 'Authenticating...' : 'Volunteer Now')
+                : 'Volunteer Now'
+              }
+            </button>
+            <button className="px-8 py-4 bg-transparent text-white font-semibold rounded-lg border-2 border-white hover:bg-white/10 transition-colors">
+              Learn More
+            </button>
           </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-black text-white py-12 px-6">
+      <footer className="bg-white py-16 px-6 border-t border-gray-200">
         <div className="max-w-7xl mx-auto">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="col-span-1 md:col-span-2">
-              <Image
-                src="/images/Pesia-logo-white.png"
-                alt="Pesia's Kitchen Logo"
-                width={160}
-                height={45}
-                className="h-10 w-auto mb-4"
-              />
-              <p className="text-gray-400 max-w-md">
-                Empowering communities through sustainable food rescue and blockchain-verified transparency.
-              </p>
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {/* Left Column */}
             <div>
-              <h4 className="font-semibold mb-4">Quick Links</h4>
-              <div className="space-y-2">
-                <Link href="#about" className="block text-gray-400 hover:text-yellow-400 transition-colors">About</Link>
-                <Link href="#features" className="block text-gray-400 hover:text-yellow-400 transition-colors">Features</Link>
-                <Link href="#impact" className="block text-gray-400 hover:text-yellow-400 transition-colors">Impact</Link>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Last mile with a smile</h3>
+              <p className="text-gray-600 mb-6">Join us to alleviate hunger and reduce food waste</p>
+
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Mailing Address</h4>
+                <p className="text-gray-600">
+                  Rehov Lochami 16<br />
+                  Jerusalem 5339912<br />
+                  Israel
+                </p>
+              </div>
+
+              <div className="mb-6">
+                <h4 className="font-semibold text-gray-900 mb-2">Email</h4>
+                <a href="mailto:pesiakitchen@gmail.com" className="text-blue-600 hover:text-blue-700">
+                  pesiakitchen@gmail.com
+                </a>
+              </div>
+
+              {/* Social Media */}
+              <div className="flex space-x-4">
+                <a href="#" className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M24 4.557c-.883.392-1.832.656-2.828.775 1.017-.609 1.798-1.574 2.165-2.724-.951.564-2.005.974-3.127 1.195-.897-.957-2.178-1.555-3.594-1.555-3.179 0-5.515 2.966-4.797 6.045-4.091-.205-7.719-2.165-10.148-5.144-1.29 2.213-.669 5.108 1.523 6.574-.806-.026-1.566-.247-2.229-.616-.054 2.281 1.581 4.415 3.949 4.89-.693.188-1.452.232-2.224.084.626 1.956 2.444 3.379 4.6 3.419-2.07 1.623-4.678 2.348-7.29 2.04 2.179 1.397 4.768 2.212 7.548 2.212 9.142 0 14.307-7.721 13.995-14.646.962-.695 1.797-1.562 2.457-2.549z" />
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M22.46 6c-.77.35-1.6.58-2.46.69.88-.53 1.56-1.37 1.88-2.38-.83.5-1.75.85-2.72 1.05C18.37 4.5 17.26 4 16 4c-2.35 0-4.27 1.92-4.27 4.29 0 .34.04.67.11.98C8.28 9.09 5.11 7.38 3 4.79c-.37.63-.58 1.37-.58 2.15 0 1.49.75 2.81 1.91 3.56-.71 0-1.37-.2-1.95-.5v.03c0 2.08 1.48 3.82 3.44 4.21a4.22 4.22 0 0 1-1.93.07 4.28 4.28 0 0 0 4 2.98 8.521 8.521 0 0 1-5.33 1.84c-.34 0-.68-.02-1.02-.06C3.44 20.29 5.7 21 8.12 21 16 21 20.33 14.46 20.33 8.79c0-.19 0-.37-.01-.56.84-.6 1.56-1.36 2.14-2.23z" />
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-gray-600">
+                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12.017 0C5.396 0 .029 5.367.029 11.987c0 5.079 3.158 9.417 7.618 11.174-.105-.949-.199-2.403.041-3.439.219-.937 1.219-5.175 1.219-5.175s-.311-.623-.311-1.544c0-1.445.839-2.524 1.883-2.524.888 0 1.317.666 1.317 1.466 0 .893-.568 2.228-.861 3.467-.245 1.038.52 1.883 1.543 1.883 1.854 0 3.279-1.954 3.279-4.774 0-2.496-1.795-4.242-4.356-4.242-2.969 0-4.71 2.226-4.71 4.528 0 .897.344 1.858.775 2.378.085.103.097.194.072.299-.079.33-.254 1.037-.289 1.183-.047.188-.153.228-.353.138-1.279-.594-2.077-2.459-2.077-3.959 0-3.284 2.386-6.302 6.885-6.302 3.615 0 6.427 2.576 6.427 6.019 0 3.592-2.267 6.485-5.416 6.485-1.058 0-2.055-.549-2.394-1.272 0 0-.523 1.992-.65 2.479-.235.9-.87 2.032-1.295 2.722.976.301 2.006.461 3.07.461 6.624 0 11.99-5.367 11.99-11.987C24.007 5.367 18.641.001 12.017.001z" />
+                  </svg>
+                </a>
               </div>
             </div>
-            <div>
-              <h4 className="font-semibold mb-4">Contact</h4>
-              <div className="space-y-2 text-gray-400">
-                <p>hello@pesiaskitchen.org</p>
-                <p>+1 (555) 123-4567</p>
+
+            {/* Right Column */}
+            <div className="flex justify-end items-start">
+              <div className="text-center">
+                <div className="mb-4">
+                  <Image
+                    src="/images/Pesia-logo-black.png"
+                    alt="EAT Initiative Logo"
+                    width={120}
+                    height={80}
+                    className="h-20 w-auto mx-auto"
+                  />
+                </div>
+                <div className="bg-black text-white p-4 rounded-lg">
+                  <div className="text-sm mb-2">VERIFY PARTICIPANT STATUS</div>
+                  <div className="text-2xl font-bold tracking-wider">
+                    6020855506
+                  </div>
+                  <div className="text-xs mt-2">BRING THEM HOME</div>
+                </div>
               </div>
             </div>
-          </div>
-          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2024 Pesia&apos;s Kitchen EAT Initiative. All rights reserved.</p>
           </div>
         </div>
       </footer>
-
-      {/* Custom 3D Animations */}
-      <style jsx>{`
-        .perspective-1000 {
-          perspective: 1000px;
-        }
-        
-        @keyframes float {
-          0%, 100% { 
-            transform: translateY(0px) rotate(0deg); 
-          }
-          50% { 
-            transform: translateY(-15px) rotate(2deg); 
-          }
-        }
-        
-        @keyframes float-slow {
-          0%, 100% { 
-            transform: translateY(0px) rotateY(15deg) rotateX(10deg); 
-          }
-          50% { 
-            transform: translateY(-20px) rotateY(18deg) rotateX(12deg); 
-          }
-        }
-        
-        @keyframes bounce-slow {
-          0%, 100% { 
-            transform: translateY(0px) scale(1); 
-          }
-          50% { 
-            transform: translateY(-8px) scale(1.05); 
-          }
-        }
-        
-        .animate-float {
-          animation: float 3s ease-in-out infinite;
-        }
-        
-        .animate-float-slow {
-          animation: float-slow 6s ease-in-out infinite;
-        }
-        
-        .animate-bounce-slow {
-          animation: bounce-slow 4s ease-in-out infinite;
-        }
-        
-        .transform-gpu {
-          transform-style: preserve-3d;
-          backface-visibility: hidden;
-        }
-      `}</style>
     </div>
   );
 }

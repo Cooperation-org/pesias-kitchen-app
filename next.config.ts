@@ -1,6 +1,6 @@
-import type { NextConfig } from "next";
+import { NextConfig } from 'next'
 
-const nextConfig: NextConfig = {
+const config: NextConfig = {
   images: {
     remotePatterns: [
       {
@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
     ],
+    domains: ['images.unsplash.com'],
   },
 
   typescript: {
@@ -26,4 +27,5 @@ const nextConfig: NextConfig = {
     ignoreDuringBuilds: true,
   }
 };
-export default nextConfig;
+
+export default config;
