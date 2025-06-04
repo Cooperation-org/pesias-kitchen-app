@@ -15,7 +15,9 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      
     ],
+    domains: ['images.unsplash.com'],
   },
 
   typescript: {
