@@ -13,16 +13,11 @@ export default function LandingPage() {
 
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   // Use refs to prevent infinite loops
   const hasAttemptedAuth = useRef(false);
   const isProcessing = useRef(false);
-
-  // Trigger animations on mount
-  useEffect(() => {
-    setIsVisible(true);
-  }, []);
 
   // Handle authentication process
   const authenticate = async () => {
@@ -118,7 +113,37 @@ export default function LandingPage() {
               />
             </div>
 
-            {/* Navigation */}
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="md:hidden p-2 rounded-md hover:bg-gray-100"
+              aria-label="Toggle menu"
+            >
+              <svg
+                className="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {isMenuOpen ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
+                )}
+              </svg>
+            </button>
+
+            {/* Navigation - Desktop */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link href="#home" className="text-gray-700 hover:text-[#2E8B57] font-medium">Home</Link>
               <Link href="#program" className="text-gray-700 hover:text-[#2E8B57] font-medium">EAT School Program</Link>
@@ -128,8 +153,8 @@ export default function LandingPage() {
               <Link href="#initiatives" className="text-[#2E8B57] font-medium border-b-2 border-[#2E8B57]">EAT Initiative</Link>
             </nav>
 
-            {/* Action Buttons */}
-            <div className="flex items-center space-x-4">
+            {/* Action Buttons - Desktop */}
+            <div className="hidden md:flex items-center space-x-4">
               <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
                 DONATE
               </button>
@@ -143,6 +168,65 @@ export default function LandingPage() {
                   : 'Connect Wallet'
                 }
               </button>
+              {authError && (
+                <p className="text-red-500 text-sm mt-2">{authError}</p>
+              )}
+            </div>
+
+            {/* Mobile Menu */}
+            <div className={`md:hidden fixed inset-0 bg-white z-50 transform transition-transform duration-200 ease-in-out ${isMenuOpen ? 'translate-y-0' : '-translate-y-full'}`}>
+              <div className="pt-16 px-4">
+                <div className="flex justify-end mb-4">
+                  <button
+                    onClick={() => setIsMenuOpen(false)}
+                    className="p-2 rounded-md hover:bg-gray-100"
+                    aria-label="Close menu"
+                  >
+                    <svg
+                      className="w-6 h-6"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </button>
+                </div>
+                <nav className="flex flex-col space-y-4">
+                  <Link href="#home" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Home</Link>
+                  <Link href="#program" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">EAT School Program</Link>
+                  <Link href="#community" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Community Programs</Link>
+                  <Link href="#zichron" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Zichron Program</Link>
+                  <Link href="#people" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Our People</Link>
+                  <Link href="#initiatives" onClick={() => setIsMenuOpen(false)} className="text-[#2E8B57] font-medium border-b-2 border-[#2E8B57] py-2">EAT Initiative</Link>
+                  <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
+                    <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
+                      DONATE
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        handleConnectClick();
+                      }}
+                      disabled={authLoading}
+                      className={`w-full px-4 py-2 bg-[#2E8B57] text-white rounded-md hover:bg-[#2E8B57]/90 font-medium ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                    >
+                      {isConnected
+                        ? (authLoading ? 'Authenticating...' : 'Enter Dashboard')
+                        : 'Connect Wallet'
+                      }
+                    </button>
+                    {authError && (
+                      <p className="text-red-500 text-sm mt-2">{authError}</p>
+                    )}
+                  </div>
+                </nav>
+              </div>
             </div>
           </div>
         </div>
@@ -333,7 +417,7 @@ export default function LandingPage() {
         <div className="max-w-7xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-gray-900 mb-4">Our Impact</h2>
           <p className="text-xl text-gray-600 mb-16">
-            Together we're creating meaningful change in our communities
+            Together we&apos;re creating meaningful change in our communities
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
