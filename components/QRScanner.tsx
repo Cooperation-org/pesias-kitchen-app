@@ -1,28 +1,46 @@
 // src/components/QRScanner.tsx
 import React, { useState } from 'react';
-import { QrReader } from 'react-qr-reader';
+import { Scanner } from '@yudiel/react-qr-scanner';
 
 interface QRScannerProps {
   onScanSuccess: (decodedText: string) => void;
   onScanComplete?: () => void;
 }
 
-type QRScanResult = {
-  getText: () => string;
-} | null | undefined;
+interface ScannerStyles {
+  container: React.CSSProperties;
+  video: React.CSSProperties;
+}
 
 const QRScanner: React.FC<QRScannerProps> = ({ 
   onScanSuccess, 
   onScanComplete
-}) => {
+}: QRScannerProps) => {
   const [isScanning, setIsScanning] = useState<boolean>(true);
 
-  const handleScan = (result: QRScanResult) => {
+  const handleScan = (result: string | null): void => {
     if (result) {
       // Successfully scanned QR code
       setIsScanning(false);
-      onScanSuccess(result.getText());
+      onScanSuccess(result);
       if (onScanComplete) onScanComplete();
+    }
+  };
+
+  const handleError = (error: Error): void => {
+    console.error(error);
+  };
+
+  const scannerStyles: ScannerStyles = {
+    container: {
+      width: '100%',
+      height: '250px',
+      borderRadius: '0.75rem',
+      overflow: 'hidden',
+    },
+    video: {
+      width: '100%',
+      height: '100%',
     }
   };
 
@@ -31,18 +49,11 @@ const QRScanner: React.FC<QRScannerProps> = ({
       {isScanning ? (
         <div className="w-full relative">
           <div className="rounded-xl overflow-hidden">
-            <QrReader
+            <Scanner
+              onScan={handleScan}
+              onError={handleError}
               constraints={{ facingMode: 'environment' }}
-              onResult={handleScan}
-              scanDelay={500}
-              videoStyle={{ width: '100%', height: '100%' }}
-              videoContainerStyle={{ 
-                width: '100%', 
-                height: '250px',
-                borderRadius: '0.75rem',
-                overflow: 'hidden',
-              }}
-              videoId="qr-reader-video"
+              styles={scannerStyles}
             />
           </div>
           <div className="absolute top-0 left-0 w-full h-full flex items-center justify-center pointer-events-none">
