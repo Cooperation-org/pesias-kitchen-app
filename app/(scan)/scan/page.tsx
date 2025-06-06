@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useRouter } from "next/navigation"
-import { QrReader, OnResultFunction } from "react-qr-reader"
+import { Scanner } from "@yudiel/react-qr-scanner"
 import Link from "next/link"
 import { verifyQRCode, recordActivity } from "@/services/api"
 import { toast } from 'sonner'
@@ -189,17 +189,15 @@ export default function ScanPage() {
     processScan
   } = useScanProcessing()
 
-  const handleScan: OnResultFunction = useCallback(async (result) => {
+  const handleScan = useCallback(async (result: string | null) => {
     if (!result || isProcessing || !isScanning) return
+    if (result === lastScannedCode.current) return
 
-    const qrCodeText = result.getText()
-    if (qrCodeText === lastScannedCode.current) return
-
-    lastScannedCode.current = qrCodeText
+    lastScannedCode.current = result
     setIsScanning(false)
 
     try {
-      await processScan(qrCodeText)
+      await processScan(result)
     } catch (err) {
       const error = err as Error
       setErrorMessage(error.message || "Failed to process QR code")
@@ -227,17 +225,25 @@ export default function ScanPage() {
 
             <div className="relative aspect-square w-full max-w-md mx-auto rounded-lg overflow-hidden bg-gray-800 shadow-xl">
               {isScanning && !isProcessing && (
-                <QrReader
-                  constraints={{ facingMode: "environment" }}
-                  onResult={handleScan}
-                  scanDelay={500}
-                  videoStyle={{ width: "100%", height: "100%", objectFit: "cover" }}
-                  videoContainerStyle={{
-                    width: "100%",
-                    height: "100%",
-                    position: "relative",
+                <Scanner
+                  onScan={handleScan}
+                  onError={(error) => {
+                    console.error(error);
+                    setErrorMessage("Failed to access camera. Please check permissions.");
                   }}
-                  videoId="qr-video"
+                  constraints={{ facingMode: "environment" }}
+                  styles={{
+                    container: {
+                      width: "100%",
+                      height: "100%",
+                      position: "relative",
+                    },
+                    video: {
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }
+                  }}
                 />
               )}
 
