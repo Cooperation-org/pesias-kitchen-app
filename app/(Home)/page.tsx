@@ -103,14 +103,16 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
-              <Image
-                src="/images/Pesia-logo-black.png"
-                alt="Pesia's Kitchen Logo"
-                width={120}
-                height={40}
-                className="h-8 w-auto"
-                priority
-              />
+              <Link href="https://www.pesiaskitchen.org">
+                <Image
+                  src="/images/Pesia-logo-black.png"
+                  alt="Pesia's Kitchen Logo"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto"
+                  priority
+                />
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -145,19 +147,21 @@ export default function LandingPage() {
 
             {/* Navigation - Desktop */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#home" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Home</Link>
-              <Link href="#program" className="text-gray-700 hover:text-[#F4cf6A] font-medium">EAT School Program</Link>
-              <Link href="#community" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Community Programs</Link>
-              <Link href="#zichron" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Zichron Program</Link>
-              <Link href="#people" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Our People</Link>
+              <Link href="https://www.pesiaskitchen.org" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Home</Link>
+              <Link href="https://www.pesiaskitchen.org/eatschoolprogram" className="text-gray-700 hover:text-[#F4cf6A] font-medium">EAT School Program</Link>
+              <Link href="https://www.pesiaskitchen.org/communityhubs" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Community Programs</Link>
+              <Link href="https://www.pesiaskitchen.org/zichrongroup" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Zichron Program</Link>
+              <Link href="https://www.pesiaskitchen.org/ourpeople" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Our People</Link>
               <Link href="#initiatives" className="text-[#F4cf6A] font-medium border-b-2 border-[#F4cf6A]">EAT Initiative</Link>
             </nav>
 
             {/* Action Buttons - Desktop */}
-            <div className="hidden md:flex items-center space-x-4">
-              <button className="px-4 py-1 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 font-medium">
-                DONATE
-              </button>
+            <div className="hidden md:flex items-center space-x-4 cursor-pointer">
+              <Link href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713">
+                <button className="px-4 py-1 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 font-medium">
+                  DONATE
+                </button>
+              </Link>
               <button
                 onClick={handleConnectClick}
                 disabled={authLoading}
@@ -198,16 +202,18 @@ export default function LandingPage() {
                   </button>
                 </div>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="#home" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Home</Link>
-                  <Link href="#program" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">EAT School Program</Link>
-                  <Link href="#community" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Community Programs</Link>
-                  <Link href="#zichron" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Zichron Program</Link>
-                  <Link href="#people" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Our People</Link>
+                  <Link href="https://www.pesiaskitchen.org" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Home</Link>
+                  <Link href="https://www.pesiaskitchen.org/eatschoolprogram" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">EAT School Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/communityhubs" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Community Programs</Link>
+                  <Link href="https://www.pesiaskitchen.org/zichrongroup" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Zichron Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/ourpeople" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Our People</Link>
                   <Link href="#initiatives" onClick={() => setIsMenuOpen(false)} className="text-[#2E8B57] font-medium border-b-2 border-[#2E8B57] py-2">EAT Initiative</Link>
                   <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
-                    <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
-                      DONATE
-                    </button>
+                    <Link href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713">
+                      <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
+                        DONATE
+                      </button>
+                    </Link>
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
