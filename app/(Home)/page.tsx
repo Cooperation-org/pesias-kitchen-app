@@ -103,14 +103,16 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
-              <Image
-                src="/images/Pesia-logo-black.png"
-                alt="Pesia's Kitchen Logo"
-                width={120}
-                height={40}
-                className="h-8 w-auto"
-                priority
-              />
+              <Link href="https://www.pesiaskitchen.org">
+                <Image
+                  src="/images/Pesia-logo-black.png"
+                  alt="Pesia's Kitchen Logo"
+                  width={120}
+                  height={40}
+                  className="h-8 w-auto"
+                  priority
+                />
+              </Link>
             </div>
 
             {/* Mobile Menu Button */}
@@ -145,27 +147,29 @@ export default function LandingPage() {
 
             {/* Navigation - Desktop */}
             <nav className="hidden md:flex items-center space-x-8">
-              <Link href="#home" className="text-gray-700 hover:text-[#2E8B57] font-medium">Home</Link>
-              <Link href="#program" className="text-gray-700 hover:text-[#2E8B57] font-medium">EAT School Program</Link>
-              <Link href="#community" className="text-gray-700 hover:text-[#2E8B57] font-medium">Community Programs</Link>
-              <Link href="#zichron" className="text-gray-700 hover:text-[#2E8B57] font-medium">Zichron Program</Link>
-              <Link href="#people" className="text-gray-700 hover:text-[#2E8B57] font-medium">Our People</Link>
-              <Link href="#initiatives" className="text-[#2E8B57] font-medium border-b-2 border-[#2E8B57]">EAT Initiative</Link>
+              <Link href="https://www.pesiaskitchen.org" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Home</Link>
+              <Link href="https://www.pesiaskitchen.org/eatschoolprogram" className="text-gray-700 hover:text-[#F4cf6A] font-medium">EAT School Program</Link>
+              <Link href="https://www.pesiaskitchen.org/communityhubs" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Community Programs</Link>
+              <Link href="https://www.pesiaskitchen.org/zichrongroup" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Zichron Program</Link>
+              <Link href="https://www.pesiaskitchen.org/ourpeople" className="text-gray-700 hover:text-[#F4cf6A] font-medium">Our People</Link>
+              <Link href="#initiatives" className="text-[#F4cf6A] font-medium border-b-2 border-[#F4cf6A]">EAT Initiative</Link>
             </nav>
 
             {/* Action Buttons - Desktop */}
-            <div className="hidden md:flex items-center space-x-4">
-              <button className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
-                DONATE
-              </button>
+            <div className="hidden md:flex items-center space-x-4 cursor-pointer">
+              <Link href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713">
+                <button className="px-4 py-1 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 font-medium">
+                  DONATE
+                </button>
+              </Link>
               <button
                 onClick={handleConnectClick}
                 disabled={authLoading}
-                className={`px-4 py-2 bg-[#2E8B57] text-white rounded-md hover:bg-[#2E8B57]/90 font-medium ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+                className={`px-4 py-1 bg-[#F4cf6A] text-white  hover:bg-[#F4cf6A]/90  cursor-pointer font-medium rounded-full ${authLoading ? 'opacity-70 cursor-not-allowed ' : ''}`}
               >
                 {isConnected
                   ? (authLoading ? 'Authenticating...' : 'Enter Dashboard')
-                  : 'Connect Wallet'
+                  : 'Sign in'
                 }
               </button>
               {authError && (
@@ -198,16 +202,18 @@ export default function LandingPage() {
                   </button>
                 </div>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="#home" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Home</Link>
-                  <Link href="#program" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">EAT School Program</Link>
-                  <Link href="#community" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Community Programs</Link>
-                  <Link href="#zichron" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Zichron Program</Link>
-                  <Link href="#people" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Our People</Link>
+                  <Link href="https://www.pesiaskitchen.org" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Home</Link>
+                  <Link href="https://www.pesiaskitchen.org/eatschoolprogram" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">EAT School Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/communityhubs" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Community Programs</Link>
+                  <Link href="https://www.pesiaskitchen.org/zichrongroup" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Zichron Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/ourpeople" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[#2E8B57] font-medium py-2">Our People</Link>
                   <Link href="#initiatives" onClick={() => setIsMenuOpen(false)} className="text-[#2E8B57] font-medium border-b-2 border-[#2E8B57] py-2">EAT Initiative</Link>
                   <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
-                    <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
-                      DONATE
-                    </button>
+                    <Link href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713">
+                      <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
+                        DONATE
+                      </button>
+                    </Link>
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
@@ -237,7 +243,7 @@ export default function LandingPage() {
             <div className="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
               <h1 className="text-4xl md:text-5xl font-bold text-pesia-dark-blue leading-tight mb-6 animate-fade-in">
                 Rewarding Food Security <br />
-                <span className="text-pesia-green">One Meal at a Time</span>
+                <span className="text-[#2E8B57]">One Meal at a Time</span>
               </h1>
               <p className="text-lg text-gray-700 mb-8 max-w-lg animate-fade-in" style={{ animationDelay: '0.2s' }}>
                 Join the EAT Initiative and be part of a revolutionary approach to food rescue, using blockchain rewards to fight food insecurity while building community impact.
@@ -256,9 +262,9 @@ export default function LandingPage() {
               </div>
               <div className="mt-8 flex items-center gap-3 animate-fade-in" style={{ animationDelay: '0.6s' }}>
                 <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-pesia-[rgb(143 188 143)] flex items-center justify-center text-white text-xs">JK</div>
-                  <div className="w-8 h-8 rounded-full bg-pesia-orange flex items-center justify-center text-white text-xs">ML</div>
-                  <div className="w-8 h-8 rounded-full bg-pesia-green flex items-center justify-center text-white text-xs">AB</div>
+                  <div className="w-8 h-8 rounded-full bg-[#8fbc8f] flex items-center justify-center text-white text-xs">JK</div>
+                  <div className="w-8 h-8 rounded-full bg-[#ff8c42] flex items-center justify-center text-white text-xs">ML</div>
+                  <div className="w-8 h-8 rounded-full bg-[#2E8B57] flex items-center justify-center text-white text-xs">AB</div>
                 </div>
                 <span className="text-sm text-gray-600">Join 200+ volunteers already making an impact</span>
               </div>
@@ -275,7 +281,7 @@ export default function LandingPage() {
               </div>
               <div className="absolute -bottom-6 -left-6 bg-white rounded-lg p-4 shadow-lg">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-pesia-green flex items-center justify-center text-white font-bold">G$</div>
+                  <div className="w-10 h-10 rounded-full bg-[#2E8B57] flex items-center justify-center text-white font-bold">G$</div>
                   <div>
                     <p className="text-sm font-semibold">Earn rewards</p>
                     <p className="text-xs text-gray-600">with GoodDollar tokens</p>
@@ -292,7 +298,7 @@ export default function LandingPage() {
         </div>
       </div>
       {/* Hero Section */}
-      
+
 
       {/* How It Works Section */}
       <section className="py-20 px-6 bg-white">
@@ -367,10 +373,12 @@ export default function LandingPage() {
                 <p className="mb-1">🕐 10:00 AM - 1:00 PM</p>
                 <p className="mb-1">📍 Central Kitchen, Tel Aviv</p>
               </div>
-              <div className="text-gray-500 text-sm mb-4">21 People Joined</div>
-              <button className="w-full px-4 py-2 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
-                Join Event
-              </button>
+              <div className="flex items-center justify-between mt-[2rem]">
+                <div className="text-gray-500 text-sm mb-4">21 People Joined</div>
+                <button className="px-4 py-2 w-[fit-content] bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
+                  Join Event
+                </button>
+              </div>
             </div>
 
             {/* Event 2 */}
@@ -385,10 +393,12 @@ export default function LandingPage() {
                 <p className="mb-1">🕐 3:00 PM - 6:00 PM</p>
                 <p className="mb-1">📍 Neighborhood Center, Jerusalem</p>
               </div>
-              <div className="text-gray-500 text-sm mb-4">24 People Joined</div>
-              <button className="w-full px-4 py-2 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
-                Join Event
-              </button>
+              <div className="flex items-center justify-between mt-[2rem]">
+                <div className="text-gray-500 text-sm mb-4">24 People Joined</div>
+                <button className="px-4 py-2 w-[fit-content] bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
+                  Join Event
+                </button>
+              </div>
             </div>
 
             {/* Event 3 */}
@@ -403,10 +413,12 @@ export default function LandingPage() {
                 <p className="mb-1">🕐 9:00 AM - 12:00 PM</p>
                 <p className="mb-1">📍 South Hub, Haifa</p>
               </div>
-              <div className="text-gray-500 text-sm mb-4">17 People Joined</div>
-              <button className="w-full px-4 py-2 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
-                Join Event
-              </button>
+              <div className="flex items-center justify-between mt-[2rem]">
+                <div className="text-gray-500 text-sm mb-4">11 People Joined</div>
+                <button className="px-4 py-2 w-[fit-content] bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
+                  Join Event
+                </button>
+              </div>
             </div>
           </div>
         </div>
