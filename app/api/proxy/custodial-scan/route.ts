@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
       "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app";
     
     // CORRECT ENDPOINT: /api/custodial/scan-qr (not /api/custodial-scan)
-    const url = `${BASE_API_URL}/api/custodial/scan-qr`;
+    const url = `${BASE_API_URL}/custodial/scan-qr`;
     
     console.log('=== PROXY DEBUG INFO ===');
     console.log('Target URL:', url);
