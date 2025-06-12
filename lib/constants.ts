@@ -13,7 +13,7 @@ export const ROUTES = {
   REWARDS: "/dashboard/rewards",
   SCAN: "/dashboard/scan",
   PROFILE: "/dashboard/profile",
-  CUSTODIAL_SCAN: "/custodial-scan",
+  CUSTODIAL_SCAN: "/custodial/scan-qr",
 }
 
 // Event types
