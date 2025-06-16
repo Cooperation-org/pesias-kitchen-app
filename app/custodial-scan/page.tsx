@@ -245,7 +245,7 @@ export default function CustodialScanPage() {
       
       // Auto-redirect to activities after 3 seconds
       setTimeout(() => {
-        router.push('/activities');
+        router.push('/dashboard');
       }, 3000);
     }
   };
@@ -285,7 +285,7 @@ export default function CustodialScanPage() {
   };
 
   const handleContinueToApp = () => {
-    router.push('/activities');
+    router.push('/dashboard');
   };
 
   const handleBackToHome = () => {
