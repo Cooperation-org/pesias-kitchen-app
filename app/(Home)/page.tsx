@@ -247,48 +247,12 @@ export default function LandingPage() {
                   </button>
                 </div>
                 <nav className="flex flex-col space-y-4">
-                  <Link
-                    href="https://www.pesiaskitchen.org"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-[#2E8B57] font-medium py-2"
-                  >
-                    Home
-                  </Link>
-                  <Link
-                    href="https://www.pesiaskitchen.org/eatschoolprogram"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-[#2E8B57] font-medium py-2"
-                  >
-                    EAT School Program
-                  </Link>
-                  <Link
-                    href="https://www.pesiaskitchen.org/communityhubs"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-[#2E8B57] font-medium py-2"
-                  >
-                    Community Programs
-                  </Link>
-                  <Link
-                    href="https://www.pesiaskitchen.org/zichrongroup"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-[#2E8B57] font-medium py-2"
-                  >
-                    Zichron Program
-                  </Link>
-                  <Link
-                    href="https://www.pesiaskitchen.org/ourpeople"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-[#2E8B57] font-medium py-2"
-                  >
-                    Our People
-                  </Link>
-                  <Link
-                    href="#initiatives"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="text-[#2E8B57] font-medium border-b-2 border-[#2E8B57] py-2"
-                  >
-                    EAT Initiative
-                  </Link>
+                  <Link href="https://www.pesiaskitchen.org" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Home</Link>
+                  <Link href="https://www.pesiaskitchen.org/eatschoolprogram" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">EAT School Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/communityhubs" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Community Programs</Link>
+                  <Link href="https://www.pesiaskitchen.org/zichrongroup" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Zichron Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/ourpeople" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Our People</Link>
+                  <Link href="#initiatives" onClick={() => setIsMenuOpen(false)} className="text-[black] font-medium border-b-2 border-[black] py-2">EAT Initiative</Link>
                   <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
                     <Link href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713">
                       <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
@@ -301,9 +265,7 @@ export default function LandingPage() {
                         handleConnectClick();
                       }}
                       disabled={authLoading}
-                      className={`w-full px-4 py-2 bg-[#2E8B57] text-white rounded-md hover:bg-[#2E8B57]/90 font-medium ${
-                        authLoading ? "opacity-70 cursor-not-allowed" : ""
-                      }`}
+                      className={`w-full px-4 py-2 bg-[black] text-white rounded-md hover:bg-[black]/90 font-medium ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
                     >
                       {isConnected
                         ? authLoading
@@ -327,7 +289,7 @@ export default function LandingPage() {
             <div className="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
               <h1 className="text-4xl md:text-5xl font-bold text-pesia-dark-blue leading-tight mb-6 animate-fade-in">
                 Rewarding Food Security <br />
-                <span className="text-[#2E8B57]">One Meal at a Time</span>
+                <span className="text-[black]">One Meal at a Time</span>
               </h1>
               <p
                 className="text-lg text-gray-700 mb-8 max-w-lg animate-fade-in"
@@ -337,17 +299,22 @@ export default function LandingPage() {
                 to food rescue, using blockchain rewards to fight food
                 insecurity while building community impact.
               </p>
-              <div
-                className="flex flex-col sm:flex-row gap-4 animate-fade-in"
-                style={{ animationDelay: "0.4s" }}
-              >
-                <Link href="/auth">
-                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[#2E8B57] hover:bg-[#2E8B57]/90 text-white w-full sm:w-auto">
-                    Volunteer Now
-                  </button>
-                </Link>
-                <Link href="/about">
-                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background h-10 px-4 py-2 border-[#2E8B57] text-[#2E8B57] hover:bg-[#2E8B57] hover:text-white w-full sm:w-auto">
+              <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
+
+                <button
+                  onClick={handleConnectClick}
+                  disabled={authLoading}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[black] hover:bg-[black]/90 text-white w-full sm:w-auto">
+
+
+                  {isConnected
+                    ? (authLoading ? 'Authenticating...' : 'Enter Dashboard')
+                    : ' Volunteer Now'
+                  }
+                </button>
+
+                <Link href="https://www.pesiaskitchen.org/eatschoolprogram">
+                  <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background h-10 px-4 py-2 border-[black] text-[black] hover:bg-[black] hover:text-white w-full sm:w-auto">
                     Learn More
                   </button>
                 </Link>
@@ -357,15 +324,9 @@ export default function LandingPage() {
                 style={{ animationDelay: "0.6s" }}
               >
                 <div className="flex -space-x-2">
-                  <div className="w-8 h-8 rounded-full bg-[#8fbc8f] flex items-center justify-center text-white text-xs">
-                    JK
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-[#ff8c42] flex items-center justify-center text-white text-xs">
-                    ML
-                  </div>
-                  <div className="w-8 h-8 rounded-full bg-[#2E8B57] flex items-center justify-center text-white text-xs">
-                    AB
-                  </div>
+                  <div className="w-8 h-8 rounded-full bg-[#8fbc8f] flex items-center justify-center text-white text-xs">JK</div>
+                  <div className="w-8 h-8 rounded-full bg-[#ff8c42] flex items-center justify-center text-white text-xs">ML</div>
+                  <div className="w-8 h-8 rounded-full bg-[black] flex items-center justify-center text-white text-xs">AB</div>
                 </div>
                 <span className="text-sm text-gray-600">
                   Join 200+ volunteers already making an impact
@@ -387,9 +348,7 @@ export default function LandingPage() {
               </div>
               <div className="absolute -bottom-6 -left-6 bg-white rounded-lg p-4 shadow-lg">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 rounded-full bg-[#2E8B57] flex items-center justify-center text-white font-bold">
-                    G$
-                  </div>
+                  <div className="w-10 h-10 rounded-full bg-[black] flex items-center justify-center text-white font-bold">G$</div>
                   <div>
                     <p className="text-sm font-semibold">Earn rewards</p>
                     <p className="text-xs text-gray-600">
@@ -428,7 +387,7 @@ export default function LandingPage() {
             {/* Step 1 */}
             <div className="bg-white p-8 rounded-2xl shadow-lg">
               <div className="w-16 h-16 bg-[#90EE90]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-[#2E8B57]">1</span>
+                <span className="text-2xl font-bold text-[black]">1</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 Volunteer & Rescue
@@ -442,7 +401,7 @@ export default function LandingPage() {
             {/* Step 2 */}
             <div className="bg-white p-8 rounded-2xl shadow-lg">
               <div className="w-16 h-16 bg-[#90EE90]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-[#2E8B57]">2</span>
+                <span className="text-2xl font-bold text-[black]">2</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 Scan & Verify
@@ -456,7 +415,7 @@ export default function LandingPage() {
             {/* Step 3 */}
             <div className="bg-white p-8 rounded-2xl shadow-lg">
               <div className="w-16 h-16 bg-[#90EE90]/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                <span className="text-2xl font-bold text-[#2E8B57]">3</span>
+                <span className="text-2xl font-bold text-[black]">3</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
                 Earn G$ Rewards
@@ -481,8 +440,14 @@ export default function LandingPage() {
                 Join upcoming food rescue operations and earn G$ rewards
               </p>
             </div>
-            <button className="px-6 py-3 bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
-              View All Events
+            <button
+              onClick={handleConnectClick}
+              disabled={authLoading}
+              className="px-6 py-3 bg-[black] cursor-pointer text-white font-semibold rounded-lg hover:bg-[black]/90">
+              {isConnected
+                ? (authLoading ? 'Authenticating...' : ' View All Events')
+                : ' View All Events'
+              }
             </button>
           </div>
 
@@ -490,12 +455,8 @@ export default function LandingPage() {
             {/* Event 1 */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between mb-4">
-                <span className="px-3 py-1 bg-[#FFA500]/20 text-[#FFA500] rounded-full text-sm font-medium">
-                  Sorting
-                </span>
-                <span className="px-3 py-1 bg-[#2E8B57]/20 text-[#2E8B57] rounded-full text-sm font-bold">
-                  G$ 15
-                </span>
+                <span className="px-3 py-1 bg-[#F4cf6A] text-[black] rounded-full text-sm font-medium">Sorting</span>
+                <span className="px-3 py-1 bg-[#F4cf6A] text-[black] rounded-full text-sm font-bold">G$ 15</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Food Sorting Session
@@ -506,11 +467,15 @@ export default function LandingPage() {
                 <p className="mb-1">📍 Central Kitchen, Tel Aviv</p>
               </div>
               <div className="flex items-center justify-between mt-[2rem]">
-                <div className="text-gray-500 text-sm mb-4">
-                  21 People Joined
-                </div>
-                <button className="px-4 py-2 w-[fit-content] bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
-                  Join Event
+                <div className="text-gray-500 text-sm mb-4">21 People Joined</div>
+                <button 
+                onClick={handleConnectClick}
+                disabled={authLoading}
+                className="px-4 py-2 w-[fit-content] bg-[#F4cf6A] text-white font-semibold rounded-lg hover:bg-[black]/90">
+                  {isConnected
+                    ? (authLoading ? 'Authenticating...' : 'Join Event')
+                    : 'Join Event'
+                  }
                 </button>
               </div>
             </div>
@@ -518,12 +483,8 @@ export default function LandingPage() {
             {/* Event 2 */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between mb-4">
-                <span className="px-3 py-1 bg-[#FFA500]/20 text-[#FFA500] rounded-full text-sm font-medium">
-                  Distribution
-                </span>
-                <span className="px-3 py-1 bg-[#2E8B57]/20 text-[#2E8B57] rounded-full text-sm font-bold">
-                  G$ 20
-                </span>
+                <span className="px-3 py-1 bg-[#F4cf6A] text-[black] rounded-full text-sm font-medium">Distribution</span>
+                <span className="px-3 py-1 bg-[#F4cf6A] text-[black] rounded-full text-sm font-bold">G$ 20</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Community Food Distribution
@@ -534,11 +495,15 @@ export default function LandingPage() {
                 <p className="mb-1">📍 Neighborhood Center, Jerusalem</p>
               </div>
               <div className="flex items-center justify-between mt-[2rem]">
-                <div className="text-gray-500 text-sm mb-4">
-                  24 People Joined
-                </div>
-                <button className="px-4 py-2 w-[fit-content] bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
-                  Join Event
+                <div className="text-gray-500 text-sm mb-4">24 People Joined</div>
+                <button 
+                onClick={handleConnectClick}
+                disabled={authLoading}
+                className="px-4 py-2 w-[fit-content] bg-[#F4cf6A] text-white font-semibold rounded-lg hover:bg-[black]/90">
+                  {isConnected
+                    ? (authLoading ? 'Authenticating...' : 'Join Event')
+                    : 'Join Event'
+                  }
                 </button>
               </div>
             </div>
@@ -546,12 +511,8 @@ export default function LandingPage() {
             {/* Event 3 */}
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg transition-shadow">
               <div className="flex items-center justify-between mb-4">
-                <span className="px-3 py-1 bg-[#FFA500]/20 text-[#FFA500] rounded-full text-sm font-medium">
-                  Pickup
-                </span>
-                <span className="px-3 py-1 bg-[#2E8B57]/20 text-[#2E8B57] rounded-full text-sm font-bold">
-                  G$ 10
-                </span>
+                <span className="px-3 py-1 bg-[#F4cf6A] text-[black] rounded-full text-sm font-medium">Pickup</span>
+                <span className="px-3 py-1 bg-[#F4cf6A] text-[black] rounded-full text-sm font-bold">G$ 10</span>
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
                 Recipient Pickup
@@ -562,11 +523,15 @@ export default function LandingPage() {
                 <p className="mb-1">📍 South Hub, Haifa</p>
               </div>
               <div className="flex items-center justify-between mt-[2rem]">
-                <div className="text-gray-500 text-sm mb-4">
-                  11 People Joined
-                </div>
-                <button className="px-4 py-2 w-[fit-content] bg-[#2E8B57] text-white font-semibold rounded-lg hover:bg-[#2E8B57]/90">
-                  Join Event
+                <div className="text-gray-500 text-sm mb-4">11 People Joined</div>
+                <button 
+                onClick={handleConnectClick}
+                disabled={authLoading}
+                className="px-4 py-2 w-[fit-content] bg-[#F4cf6A] text-white font-semibold rounded-lg hover:bg-[black]/90">
+                  {isConnected
+                    ? (authLoading ? 'Authenticating...' : 'Join Event')
+                    : 'Join Event'
+                  }
                 </button>
               </div>
             </div>
@@ -583,47 +548,36 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div>
-              <div className="text-4xl font-bold text-[#2E8B57] mb-2">
-                2,500+
-              </div>
+              <div className="text-4xl font-bold text-[black] mb-2">2,500+</div>
               <div className="text-gray-600 font-medium">Meals Delivered</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-[#2E8B57] mb-2">200+</div>
+              <div className="text-4xl font-bold text-[black] mb-2">200+</div>
               <div className="text-gray-600 font-medium">Active Volunteers</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-[#2E8B57] mb-2">
-                15,000
-              </div>
-              <div className="text-gray-600 font-medium">
-                G$ Rewards Distributed
-              </div>
+              <div className="text-4xl font-bold text-[black] mb-2">15,000</div>
+              <div className="text-gray-600 font-medium">G$ Rewards Distributed</div>
             </div>
             <div>
-              <div className="text-4xl font-bold text-[#2E8B57] mb-2">500+</div>
+              <div className="text-4xl font-bold text-[black] mb-2">500+</div>
               <div className="text-gray-600 font-medium">Food Rescue NFTs</div>
             </div>
           </div>
         </div>
       </section>
       {/* CTA Section */}
-      <section className="py-20 px-6 bg-gradient-to-r from-[#2E8B57]/90 to-[#2E8B57]">
+      <section className="py-7 px-6 bg-[#F4cf6A] max-w-4xl mx-auto rounded-lg">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold text-white mb-6">
-            Join the Movement
-          </h2>
-          <p className="text-xl text-white/90 mb-8">
-            Be part of a revolutionary approach to food rescue and community
-            impact
+          <h2 className="text-4xl font-bold text-black mb-6">Join the Movement</h2>
+          <p className="text-xl text-black mb-8">
+            Be part of a revolutionary approach to food rescue and community impact
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
               onClick={handleConnectClick}
               disabled={authLoading}
-              className={`px-8 py-4 bg-white text-[#2E8B57] font-semibold rounded-lg hover:bg-gray-50 transition-colors ${
-                authLoading ? "opacity-70 cursor-not-allowed" : ""
-              }`}
+              className={`px-8 py-4 bg-[black] text-white font-semibold rounded-lg cursor-pointer transition-colors ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isConnected
                 ? authLoading
@@ -631,9 +585,11 @@ export default function LandingPage() {
                   : "Volunteer Now"
                 : "Volunteer Now"}
             </button>
-            <button className="px-8 py-4 bg-transparent text-white font-semibold rounded-lg border-2 border-white hover:bg-white/10 transition-colors">
-              Learn More
-            </button>
+            <Link href="https://www.pesiaskitchen.org/eatschoolprogram">
+              <button className="px-8 py-4 bg-transparent text-black font-semibold rounded-lg border-2 border-[black] hover:bg-white/10 transition-colors">
+                Learn More
+              </button>
+            </Link>
           </div>
         </div>
       </section>
