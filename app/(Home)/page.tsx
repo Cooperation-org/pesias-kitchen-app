@@ -3,6 +3,8 @@ import React, { useEffect, useState, useRef } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { useAuthContext } from "@/providers/web3Provider";
 import Image from "next/image";
+import { FaInstagram, FaFacebook, FaYoutube } from "react-icons/fa";
+
 import Link from "next/link";
 import {
   getNonce,
@@ -595,61 +597,80 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="relative bg-white py-16 px-6 border-t border-gray-200">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12">
-          {/* Left Column */}
-          <div>
-            <h3
-              className="mb-6 text-black"
-              style={{
-                fontWeight: "400",
-                fontSize: "35px",
-                fontFamily: "sans-serif",
-              }}
-            >
+      <footer className="bg-white px-6 py-12 border-t border-gray-200">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center">
+          {/* Left side: Text */}
+          <div className="mb-10 md:mb-0 md:w-1/2 flex flex-col items-center text-center">
+            {/* Heading line */}
+            <h2 className="text-gray-600 text-2xl mb-6">
               Last mile with a smile
-            </h3>
+            </h2>
 
-            <p className="text-gray-600 mb-6">
+            {/* Paragraph */}
+            <p className="text-gray-600 text-base mb-4">
               Join us to alleviate hunger and reduce food waste
             </p>
 
-            <div className="mb-6">
-              <h4 className="font-semibold text-gray-900 mb-2">
-                Mailing Address
-              </h4>
-              <p className="text-gray-600 leading-relaxed">
-                Rehov Lochami 16
+            {/* Mailing Address */}
+            <div className="mb-4">
+              <h4 className="text-sm text-gray-600 mb-1">Mailing Address</h4>
+              <p className="text-gray-700 text-sm leading-5">
+                Rehov Lachish 14
                 <br />
-                Jerusalem 5339912
+                Givaatim 5359912
                 <br />
                 Israel
               </p>
             </div>
 
-            <div className="mb-6">
-              <h4 className="font-semibold text-gray-900 mb-2">Email</h4>
+            {/* Email */}
+            <div className="mb-4">
+              <h4 className="text-sm text-black font-normal mb-1">Email</h4>
               <a
-                href="mailto:pesiakitchen@gmail.com"
-                className="text-blue-600 hover:text-blue-700"
+                href="mailto:pesioskitchen@gmail.com"
+                className="text-sm text-gray-700 underline"
               >
-                pesiakitchen@gmail.com
+                pesioskitchen@gmail.com
               </a>
+            </div>
+
+            {/* Button */}
+            <div className="w-full flex justify-center mb-4">
+              <button className="bg-yellow-400 text-black px-6 py-2 rounded-full hover:bg-yellow-300 transition">
+                I want to help!
+              </button>
+            </div>
+
+            {/* Social Icons */}
+            <div className="flex items-center justify-center gap-4 mt-4 text-xl text-black">
+              <FaInstagram />
+              <FaFacebook className="text-black" />
+              <FaYoutube style={{ backgroundColor: "transparent" }} />
             </div>
           </div>
 
-          {/* Right Column */}
-          <div className="flex justify-end items-start">
-            <div className="text-center">
-              <div className="mb-4">
-                <Image
-                  src="/images/image.jpg"
-                  alt="Pesia Logo"
-                  width={120}
-                  height={80}
-                  className="mx-auto h-20 w-auto"
-                />
-              </div>
+          {/* Right side: Images */}
+          <div className="md:w-1/2 flex flex-col items-end gap-4">
+            <div className="w-64 h-auto relative">
+              <Image
+                src="/images/image.jpg"
+                alt="Pesia's Logo"
+                layout="responsive"
+                width={400}
+                height={200}
+                className="rounded-md"
+              />
+            </div>
+
+            <div className="w-64 h-auto relative">
+              <Image
+                src="/hostage-counter.jpg"
+                alt="Hostage Counter"
+                layout="responsive"
+                width={400}
+                height={200}
+                className="rounded-md"
+              />
             </div>
           </div>
         </div>
