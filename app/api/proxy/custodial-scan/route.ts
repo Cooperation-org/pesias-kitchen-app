@@ -4,22 +4,55 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
-const url = `${API_URL }`;
-    const response = await fetch(url  , {
+    const BASE_API_URL = process.env.NEXT_PUBLIC_API_URL
+    const url = `${BASE_API_URL}/custodial/scan-qr`;
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify(body),
     });
+        
+    const responseText = await response.text();
     
-    const data = await response.json();
+    let data;
+    try {
+      data = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error('Failed to parse JSON response:', parseError);
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: 'Invalid JSON response from external API',
+          details: responseText.substring(0, 200)
+        },
+        { status: 502 }
+      );
+    }
+    
+    if (!response.ok) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          message: data?.message || `External API error: ${response.status} ${response.statusText}`,
+          details: data
+        },
+        { status: response.status }
+      );
+    }
+    
     return NextResponse.json(data);
+    
   } catch (error) {
-    console.error('Proxy error:', error);
     return NextResponse.json(
-      { success: false, message: 'Proxy error' },
+      { 
+        success: false, 
+        message: `Proxy error: ${error.message}`,
+        type: error.constructor.name
+      },
       { status: 500 }
     );
   }
