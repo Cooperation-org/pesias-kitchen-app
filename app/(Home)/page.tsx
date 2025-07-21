@@ -111,7 +111,7 @@ export default function LandingPage() {
           <div className="flex items-center justify-between">
             {/* Logo */}
             <div className="flex items-center">
-              <Link href="https://www.pesiaskitchen.org">
+              <Link href="https://www.pesiaskitchen.org" target="_blank" rel="noopener noreferrer">
                 <Image
                   src="/images/Pesia-logo-black.png"
                   alt="Pesia's Kitchen Logo"
@@ -156,31 +156,31 @@ export default function LandingPage() {
             {/* Navigation - Desktop */}
             <nav className="hidden md:flex items-center space-x-8">
               <Link
-                href="https://www.pesiaskitchen.org"
+                href="https://www.pesiaskitchen.org" target="_blank" rel="noopener noreferrer"
                 className="text-gray-700 hover:text-[#F4cf6A] font-medium"
               >
                 Home
               </Link>
               <Link
-                href="https://www.pesiaskitchen.org/eatschoolprogram"
+                href="https://www.pesiaskitchen.org/eatschoolprogram" target="_blank" rel="noopener noreferrer"
                 className="text-gray-700 hover:text-[#F4cf6A] font-medium"
               >
                 EAT School Program
               </Link>
               <Link
-                href="https://www.pesiaskitchen.org/communityhubs"
+                href="https://www.pesiaskitchen.org/communityhubs" target="_blank" rel="noopener noreferrer"
                 className="text-gray-700 hover:text-[#F4cf6A] font-medium"
               >
                 Community Programs
               </Link>
               <Link
-                href="https://www.pesiaskitchen.org/zichrongroup"
+                href="https://www.pesiaskitchen.org/zichrongroup" target="_blank" rel="noopener noreferrer"
                 className="text-gray-700 hover:text-[#F4cf6A] font-medium"
               >
                 Zichron Program
               </Link>
               <Link
-                href="https://www.pesiaskitchen.org/ourpeople"
+                href="https://www.pesiaskitchen.org/ourpeople" target="_blank" rel="noopener noreferrer"
                 className="text-gray-700 hover:text-[#F4cf6A] font-medium"
               >
                 Our People
@@ -195,7 +195,7 @@ export default function LandingPage() {
 
             {/* Action Buttons - Desktop */}
             <div className="hidden md:flex items-center space-x-4 cursor-pointer">
-              <Link href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713">
+              <Link href="https://goodcollective.xyz/collective/0xe4f65e8644c0f3a1c7ef0ba0f1428a82cdc0e7bc" target="_blank" rel="noopener noreferrer">
                 <button className="px-4 py-1 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 font-medium">
                   DONATE
                 </button>
@@ -247,14 +247,14 @@ export default function LandingPage() {
                   </button>
                 </div>
                 <nav className="flex flex-col space-y-4">
-                  <Link href="https://www.pesiaskitchen.org" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Home</Link>
-                  <Link href="https://www.pesiaskitchen.org/eatschoolprogram" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">EAT School Program</Link>
-                  <Link href="https://www.pesiaskitchen.org/communityhubs" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Community Programs</Link>
-                  <Link href="https://www.pesiaskitchen.org/zichrongroup" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Zichron Program</Link>
-                  <Link href="https://www.pesiaskitchen.org/ourpeople" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Our People</Link>
+                  <Link href="https://www.pesiaskitchen.org" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Home</Link>
+                  <Link href="https://www.pesiaskitchen.org/eatschoolprogram" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">EAT School Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/communityhubs" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Community Programs</Link>
+                  <Link href="https://www.pesiaskitchen.org/zichrongroup" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Zichron Program</Link>
+                  <Link href="https://www.pesiaskitchen.org/ourpeople" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Our People</Link>
                   <Link href="#initiatives" onClick={() => setIsMenuOpen(false)} className="text-[black] font-medium border-b-2 border-[black] py-2">EAT Initiative</Link>
                   <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
-                    <Link href="https://dev-goodcollective.vercel.app/collective/0xbd64264abe852413d30dbf8a3765d7b6ddb04713">
+                    <Link href="https://goodcollective.xyz/collective/0xe4f65e8644c0f3a1c7ef0ba0f1428a82cdc0e7bc" target="_blank" rel="noopener noreferrer">
                       <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
                         DONATE
                       </button>
@@ -288,7 +288,7 @@ export default function LandingPage() {
           <div className="flex flex-col lg:flex-row items-center pt-10 pb-20 md:pt-16 md:pb-24">
             <div className="lg:w-1/2 lg:pr-12 mb-8 lg:mb-0">
               <h1 className="text-4xl md:text-5xl font-bold text-pesia-dark-blue leading-tight mb-6 animate-fade-in">
-                Rewarding Food Security <br />
+                Rewarding Food Rescue <br />
                 <span className="text-[black]">One Meal at a Time</span>
               </h1>
               <p
@@ -296,8 +296,7 @@ export default function LandingPage() {
                 style={{ animationDelay: "0.2s" }}
               >
                 Join the EAT Initiative and be part of a revolutionary approach
-                to food rescue, using blockchain rewards to fight food
-                insecurity while building community impact.
+                to food rescue, leveraging blockchain rewards to reduce food insecurity and empower communities through action.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
 
@@ -313,7 +312,7 @@ export default function LandingPage() {
                   }
                 </button>
 
-                <Link href="https://www.pesiaskitchen.org/eatschoolprogram">
+                <Link href="https://www.pesiaskitchen.org/eatschoolprogram" target="_blank" rel="noopener noreferrer">
                   <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background h-10 px-4 py-2 border-[black] text-[black] hover:bg-[black] hover:text-white w-full sm:w-auto">
                     Learn More
                   </button>
@@ -379,8 +378,7 @@ export default function LandingPage() {
             How the EAT Initiative Works
           </h2>
           <p className="text-xl text-gray-600 mb-16 max-w-3xl mx-auto">
-            We&apos;re revolutionizing food rescue by connecting volunteers and
-            recipients through blockchain rewards
+            We&apos;re transforming food rescue activities by connecting community Impact with blockchain-powered rewards.
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -390,11 +388,10 @@ export default function LandingPage() {
                 <span className="text-2xl font-bold text-[black]">1</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Volunteer & Rescue
+                Volunteer for Impact
               </h3>
               <p className="text-gray-600">
-                Join food rescue operations like sorting, distribution, or
-                verification activities
+                Join our community in sorting, packaging, and distributing rescued meals to those in need.
               </p>
             </div>
 
@@ -404,11 +401,10 @@ export default function LandingPage() {
                 <span className="text-2xl font-bold text-[black]">2</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Scan & Verify
+                Log Your Actions
               </h3>
               <p className="text-gray-600">
-                Scan QR codes to verify your participation and the delivery of
-                food packages
+                Scan QR codes to log your contribution and verify food rescue activities and community service.
               </p>
             </div>
 
@@ -418,11 +414,10 @@ export default function LandingPage() {
                 <span className="text-2xl font-bold text-[black]">3</span>
               </div>
               <h3 className="text-2xl font-bold text-gray-900 mb-4">
-                Earn G$ Rewards
+                Get Rewarded for Your Efforts
               </h3>
               <p className="text-gray-600">
-                Receive GoodDollar cryptocurrency and NFTs as rewards for your
-                community impact
+                Receive GoodDollar rewards and Impact NFTs that express our gratitude for your meaningful contribution.
               </p>
             </div>
           </div>
@@ -567,11 +562,11 @@ export default function LandingPage() {
         </div>
       </section>
       {/* CTA Section */}
-      <section className="py-7 px-6 bg-[#F4cf6A] max-w-4xl mx-auto rounded-lg">
+      <section className="py-7 px-6 bg-[#F4cf6A] max-w-4xl mx-auto rounded-lg my-16">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl font-bold text-black mb-6">Join the Movement</h2>
           <p className="text-xl text-black mb-8">
-            Be part of a revolutionary approach to food rescue and community impact
+            Be part of a revolutionary approach to food rescue and community impact. Join us today and make every meal count.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button
@@ -585,7 +580,7 @@ export default function LandingPage() {
                   : "Volunteer Now"
                 : "Volunteer Now"}
             </button>
-            <Link href="https://www.pesiaskitchen.org/eatschoolprogram">
+            <Link href="https://www.pesiaskitchen.org/eatschoolprogram" target="_blank" rel="noopener noreferrer">
               <button className="px-8 py-4 bg-transparent text-black font-semibold rounded-lg border-2 border-[black] hover:bg-white/10 transition-colors">
                 Learn More
               </button>
@@ -607,11 +602,15 @@ export default function LandingPage() {
                 fontFamily: "sans-serif",
               }}
             >
-              Last mile with a smile
+              The last mile — with a smile 😊
             </h3>
 
             <p className="text-gray-600 mb-6">
-              Join us to alleviate hunger and reduce food waste
+              Be part of a revolutionary approach to food rescue and community impact
+            </p>
+            
+            <p className="text-gray-700 font-medium mb-6">
+              EAT - Education • Action • Together
             </p>
 
             <div className="mb-6">
@@ -619,9 +618,11 @@ export default function LandingPage() {
                 Mailing Address
               </h4>
               <p className="text-gray-600 leading-relaxed">
-                Rehov Lochami 16
+                Pesia&apos;s kitchen
                 <br />
-                Jerusalem 5339912
+                Lachish 14
+                <br />
+                Givatayim 5339912
                 <br />
                 Israel
               </p>
@@ -631,6 +632,8 @@ export default function LandingPage() {
               <h4 className="font-semibold text-gray-900 mb-2">Email</h4>
               <a
                 href="mailto:pesiakitchen@gmail.com"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-700"
               >
                 pesiakitchen@gmail.com
@@ -639,15 +642,45 @@ export default function LandingPage() {
           </div>
 
           {/* Right Column */}
-          <div className="flex justify-end items-start">
+          <div className="flex flex-col items-start">
+            <div className="mb-8">
+              <h4 className="font-semibold text-gray-900 mb-4">Powered by Blockchain</h4>
+              <div className="space-y-3">
+                <div>
+                  <Link href="https://www.gooddollar.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                    <Image
+                      src="/images/gooddollar.svg"
+                      alt="GoodDollar Logo"
+                      width={20}
+                      height={20}
+                      className="w-5 h-5 bg-sky-300 rounded-full"
+                    />
+                    <span className="font-medium">GoodDollar (G$)</span>
+                  </Link>
+                  <p className="text-gray-600 text-sm ml-6">Earn cryptocurrency rewards for your volunteer contributions</p>
+                </div>
+                <div>
+                  <Link href="https://goodcollective.xyz/collective/0xe4f65e8644c0f3a1c7ef0ba0f1428a82cdc0e7bc" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-700 flex items-center gap-2">
+                    🌐 <span className="font-medium">GoodCollective</span>
+                  </Link>
+                  <p className="text-gray-600 text-sm ml-6">Transparent platform that tracks real community impact</p>
+                </div>
+                <div>
+                  <span className="flex items-center gap-2 text-gray-800">
+                    🏆 <span className="font-medium">Impact NFTs</span>
+                  </span>
+                  <p className="text-gray-600 text-sm ml-6">Collect unique digital certificates of your community service</p>
+                </div>
+              </div>
+            </div>
             <div className="text-center">
               <div className="mb-4">
                 <Image
                   src="/images/image.jpg"
                   alt="Pesia Logo"
-                  width={120}
-                  height={80}
-                  className="mx-auto h-20 w-auto"
+                  width={160}
+                  height={120}
+                  className="mx-auto h-28 w-auto"
                 />
               </div>
             </div>
