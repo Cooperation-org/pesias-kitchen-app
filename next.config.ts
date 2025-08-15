@@ -15,7 +15,12 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
-      
+      {
+        protocol: 'https',
+        hostname: 'gateway.pinata.cloud',
+        port: '',
+        pathname: '/**',
+      },
     ],
     domains: ['images.unsplash.com'],
   },
