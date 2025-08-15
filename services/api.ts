@@ -119,7 +119,7 @@ export const generateQRCode = (
  * Verify a QR code
  */
 export const verifyQRCode = (
-  qrData: string
+  qrData: any
 ): Promise<AxiosResponse<QRCodeVerifyResponse>> => {
   return api.post("/qr/verify", { qrData });
 };

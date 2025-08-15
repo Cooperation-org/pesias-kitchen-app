@@ -115,9 +115,7 @@ export default function DashboardLayout({
   console.log('Dashboard Layout - Current state:', { isConnected, address }); // Debug log
 
   return (
-    <html lang="en" className="h-full">
-      <body className="h-full">
-        <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-white">
           {/* Header with hamburger menu, back button (conditional), title, and wallet connection */}
           <motion.header
             initial={{ opacity: 0, y: -20 }}
@@ -378,7 +376,7 @@ export default function DashboardLayout({
                         <div className="w-20 h-20 bg-yellow-400 rounded-full flex items-center justify-center z-10 shadow-lg">
                           {/* QR Code SVG */}
                           <svg width="30" height="30" viewBox="0 0 30 30" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M3 3H8V8H3V3ZM0 11V0H11V5.99976H13V0H17V6H13V10.0002H16V13.0002H14V17H9V13H13V10.9998H11V11H0ZM22 3H27V8H22V3ZM19 11V0H30V11H19ZM8 22H3V27H8V22ZM0 19V30H11V27.0002H15V30H21V27.0002H24V30H29V27H27V24.0002H18V27H15V24.0002H11V19H0ZM27 19V20.9998H30V23.9998H27V21H24V19V18V13H30V19H27ZM21 20H18V24H14V18H17V17V14V13H21V14V17V20ZM7 13H0V17H7V13Z" fill="white" />
+                            <path fillRule="evenodd" clipRule="evenodd" d="M3 3H8V8H3V3ZM0 11V0H11V5.99976H13V0H17V6H13V10.0002H16V13.0002H14V17H9V13H13V10.9998H11V11H0ZM22 3H27V8H22V3ZM19 11V0H30V11H19ZM8 22H3V27H8V22ZM0 19V30H11V27.0002H15V30H21V27.0002H24V30H29V27H27V24.0002H18V27H15V24.0002H11V19H0ZM27 19V20.9998H30V23.9998H27V21H24V19V18V13H30V19H27ZM21 20H18V24H14V18H17V17V14V13H21V14V17V20ZM7 13H0V17H7V13Z" fill="white" />
                           </svg>
 
                         </div>
@@ -444,8 +442,6 @@ export default function DashboardLayout({
           {/* <div className="fixed top-20 right-4 bg-black text-white p-2 text-xs rounded opacity-50 z-50">
             Debug: {isConnected ? `Connected: ${address}` : 'Not connected'}
           </div> */}
-        </div>
-      </body>
-    </html>
+    </div>
   );
 }
