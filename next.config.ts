@@ -26,11 +26,21 @@ const nextConfig: NextConfig = {
   },
 
   typescript: {
-    ignoreBuildErrors: true,
+    ignoreBuildErrors: false,
   },
   
   eslint: {
-    ignoreDuringBuilds: true,
+    ignoreDuringBuilds: false,
+  },
+
+  webpack: (config: any) => {
+    // Ignore React Native dependencies that MetaMask SDK tries to import
+    config.resolve.fallback = {
+      ...config.resolve.fallback,
+      '@react-native-async-storage/async-storage': false,
+    };
+    
+    return config;
   }
 };
 export default nextConfig;
