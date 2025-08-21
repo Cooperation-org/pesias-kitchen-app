@@ -12,13 +12,7 @@
   "icons": [
     {
       "src": "/images/Pesia-logo-black.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/images/Pesia-logo-black.png",
-      "sizes": "512x512",
+      "sizes": "152x118",
       "type": "image/png",
       "purpose": "any maskable"
     }
@@ -45,7 +39,7 @@
       "icons": [
         {
           "src": "/images/Pesia-logo-black.png",
-          "sizes": "96x96"
+          "sizes": "152x118"
         }
       ]
     }

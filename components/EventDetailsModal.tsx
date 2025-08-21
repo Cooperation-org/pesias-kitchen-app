@@ -204,8 +204,8 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             <XMarkIcon className="w-5 h-5 text-gray-500" />
           </button>
           
-          {/* Actions menu for admin/creator - Fixed 3-dots */}
-          {(isCreator || isAdmin) && (
+          {/* Actions menu for admin/creator - Temporarily always show */}
+          {true && (
             <div className="absolute top-4 right-4">
               <button
                 onClick={(e) => {
