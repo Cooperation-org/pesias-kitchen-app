@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useDynamicContext } from '@dynamic-labs/sdk-react-core';
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
+// import { injected } from 'wagmi/connectors';
 
 interface WalletChoiceProps {
   onWalletConnected: (walletAddress: string, isAnonymous: boolean) => void;

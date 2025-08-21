@@ -7,12 +7,13 @@ import WalletChoice from '@/components/WalletChoice';
 
 export default function QuickJoinPage() {
   const [loading, setLoading] = useState(false);
-  const [qrData, setQrData] = useState<any>(null);
+  const [qrData, setQrData] = useState<unknown>(null);
   const [success, setSuccess] = useState(false);
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<unknown>(null);
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { user, isAuthenticated } = useDynamicContext();
 
   useEffect(() => {
@@ -21,7 +22,7 @@ export default function QuickJoinPage() {
       try {
         const decoded = JSON.parse(decodeURIComponent(data));
         setQrData(decoded);
-      } catch (error) {
+      } catch {
         console.error('Invalid QR data');
       }
     }
@@ -112,7 +113,7 @@ export default function QuickJoinPage() {
             🎉 Amazing!
           </h1>
           <p className="text-center text-gray-600 mb-2 text-lg">
-            You're all set and ready to go!
+            You&apos;re all set and ready to go!
           </p>
           <p className="text-center text-gray-600 mb-8">
             Thank you for fighting food waste and helping our community!
@@ -159,7 +160,7 @@ export default function QuickJoinPage() {
               onClick={handleBackToHome}
               className="w-full bg-white text-gray-700 border-2 border-gray-300 p-4 rounded-xl font-semibold hover:bg-gray-50 transition-colors"
             >
-              Back to Pesia's Kitchen 🏠
+              Back to Pesia&apos;s Kitchen 🏠
             </button>
           </div>
 
@@ -200,7 +201,7 @@ export default function QuickJoinPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-black">Pesia's Kitchen</h1>
+          <h1 className="text-3xl font-bold text-black">Pesia&apos;s Kitchen</h1>
           <p className="text-gray-600 mt-2">Fighting Food Waste Together</p>
         </div>
 
