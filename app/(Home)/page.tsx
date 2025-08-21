@@ -1,7 +1,8 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
 import { useAccount, useSignMessage } from "wagmi";
-import { useAuthContext } from "@/providers/web3Provider";
+import { useAuth } from "@/hooks/useAuth";
+import { useAppKit } from '@reown/appkit/react';
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -12,7 +13,8 @@ import {
 
 export default function LandingPage() {
   const { isConnected, address } = useAccount();
-  const { redirectToDashboard, openAppKit } = useAuthContext();
+  const auth = useAuth();
+  const { open: openAppKit } = useAppKit();
   const { signMessageAsync } = useSignMessage();
 
   const [authLoading, setAuthLoading] = useState(false);
@@ -52,7 +54,7 @@ export default function LandingPage() {
         }
 
         storeAuthData(authResponse.data.token, authResponse.data.user);
-        redirectToDashboard();
+        auth.redirectToDashboard();
       } catch (signError) {
         const errorMessage =
           signError instanceof Error
@@ -83,7 +85,7 @@ export default function LandingPage() {
       ) {
         await authenticate();
       } else if (isConnected && localStorage.getItem("token")) {
-        redirectToDashboard();
+        auth.redirectToDashboard();
       }
     };
 
@@ -91,7 +93,7 @@ export default function LandingPage() {
     return () => {
       hasAttemptedAuth.current = false;
     };
-  }, [isConnected, address, redirectToDashboard]);
+  }, [isConnected, address, auth.redirectToDashboard]);
 
   // Handle connect wallet click
   const handleConnectClick = () => {
@@ -572,13 +574,13 @@ export default function LandingPage() {
             <button
               onClick={handleConnectClick}
               disabled={authLoading}
-              className={`px-8 py-4 bg-[black] text-white font-semibold rounded-lg cursor-pointer transition-colors ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+              className={`px-8 py-4 bg-black text-white font-bold rounded-xl cursor-pointer transition-colors ${authLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             >
               {isConnected
                 ? authLoading
-                  ? "Authenticating..."
-                  : "Volunteer Now"
-                : "Volunteer Now"}
+                  ? "Getting ready..."
+                  : "Start Now"
+                : "Start Now"}
             </button>
             <Link href="https://www.pesiaskitchen.org/eatschoolprogram" target="_blank" rel="noopener noreferrer">
               <button className="px-8 py-4 bg-transparent text-black font-semibold rounded-lg border-2 border-[black] hover:bg-white/10 transition-colors">

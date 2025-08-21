@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import { headers } from 'next/headers'
-import ReownProvider from '@/providers/ReownProvider'
 import { SWRProvider } from '@/providers/SWRProvider'
-import { AppProvider } from '@/providers/web3Provider'
+import ReownProvider from '@/providers/ReownProvider'
+import DynamicProvider from '@/providers/DynamicProvider'
 import { Toaster } from 'sonner'
+import { headers } from 'next/headers'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -18,21 +18,21 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Pesia's Kitchen EAT Initiative",
-  description: 'Food rescue operations with GoodDollar rewards',
-  keywords: ['Food rescue', 'GoodDollar', 'EAT Initiative', 'Volunteer', 'G$'],
+  title: "Pesia's Kitchen - Fighting Food Waste Together",
+  description: 'Join our community in fighting food waste. Volunteer, earn rewards, and make a real impact in your community.',
+  keywords: ['Food rescue', 'Volunteer', 'Community impact', 'Sustainability', 'Food waste'],
   authors: [{ name: "Pesia's Kitchen" }],
   openGraph: {
-    title: "Pesia's Kitchen EAT Initiative",
-    description: 'Food rescue operations with GoodDollar rewards',
+    title: "Pesia's Kitchen - Fighting Food Waste Together",
+    description: 'Join our community in fighting food waste. Volunteer, earn rewards, and make a real impact.',
     url: 'https://www.pesiaskitchen.org',
-    siteName: "Pesia's Kitchen EAT Initiative",
+    siteName: "Pesia's Kitchen",
     images: [
       {
-        url: '/og-image.jpg',
+        url: '/images/pesias-kitchen-header.jpg',
         width: 1200,
         height: 630,
-        alt: "Pesia's Kitchen EAT Initiative",
+        alt: "Pesia's Kitchen - Community volunteers",
       },
     ],
     locale: 'en_US',
@@ -40,10 +40,20 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "Pesia's Kitchen EAT Initiative",
-    description: 'Food rescue operations with GoodDollar rewards',
-    images: ['/twitter-image.jpg'],
+    title: "Pesia's Kitchen - Fighting Food Waste",
+    description: 'Join our community volunteers in fighting food waste and earning rewards.',
+    images: ['/images/pesias-kitchen-header.jpg'],
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: "Pesia's Kitchen",
+  },
+  formatDetection: {
+    telephone: false,
+  },
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
 }
 
 export default async function RootLayout({
@@ -51,9 +61,8 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode
 }>) {
-  const headersObj = await headers()
-  const cookies = headersObj.get('cookie')
-
+  const cookies = (await headers()).get('cookie')
+  
   return (
     <html lang="en" className="h-full">
       <body
@@ -61,9 +70,9 @@ export default async function RootLayout({
       >
         <SWRProvider>
           <ReownProvider cookies={cookies}>
-            <AppProvider>
+            <DynamicProvider>
               {children}
-            </AppProvider>
+            </DynamicProvider>
           </ReownProvider>
         </SWRProvider>
         <Toaster position="top-right" richColors />
