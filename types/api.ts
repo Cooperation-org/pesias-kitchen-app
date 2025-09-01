@@ -104,6 +104,7 @@ export interface NonceResponse {
 export interface VerifySignatureRequest {
     walletAddress: string;
     signature: string;
+    message?: string;
 }
 
 /**

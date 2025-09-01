@@ -38,7 +38,7 @@ export default function LandingPage() {
       }
 
       const nonce = nonceResponse.data.nonce;
-      const message = `Sign this message to authenticate with Pesia's Kitchen EAT Initiative: ${nonce}`;
+      const message = `Welcome to Pesia's Kitchen! Please confirm your identity: ${nonce}`;
 
       try {
         const signature = await signMessageAsync({ message });
@@ -46,7 +46,7 @@ export default function LandingPage() {
           throw new Error("Missing wallet address or signature");
         }
 
-        const authResponse = await verifySignature(address, signature);
+        const authResponse = await verifySignature(address, signature, message);
         if (authResponse.error || !authResponse.data) {
           throw new Error(authResponse.error || "Verification failed");
         }
