@@ -33,6 +33,9 @@ export async function POST(request: NextRequest) {
 
     const data = await response.json();
     
+    // Log for debugging
+    console.log('Backend API response:', response.status, data);
+    
     // Return the backend response with appropriate status
     return NextResponse.json(data, { 
       status: response.status 

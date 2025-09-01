@@ -62,6 +62,9 @@ export default function DynamicWalletProvider({ qrData }: DynamicWalletProviderP
         // Wallet connection settings
         initialAuthenticationMode: 'connect-only',
         
+        // Only show embedded wallet in auth flow
+        multiWallet: false,
+        
         // Event handlers
         eventsCallbacks: {
           onAuthSuccess: (args) => {
