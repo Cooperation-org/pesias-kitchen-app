@@ -5,6 +5,12 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/**',
+      },
+      {
+        protocol: 'http',
         hostname: 'pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app',
         port: '',
         pathname: '/**',
@@ -23,6 +29,8 @@ const nextConfig: NextConfig = {
       },
     ],
     domains: ['images.unsplash.com'],
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
 
   typescript: {
