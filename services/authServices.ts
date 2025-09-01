@@ -36,9 +36,15 @@ export const getNonce = async (walletAddress: string) => {
  * Verify wallet signature to authenticate
  * @param walletAddress Ethereum wallet address
  * @param signature Signed message signature
+ * @param message Optional message that was signed (for backend verification)
  */
-export const verifySignature = async (walletAddress: string, signature: string) => {
-  console.log("Verifying signature:", { walletAddress, signature: signature.substring(0, 20) + "..." });
+export const verifySignature = async (walletAddress: string, signature: string, message?: string) => {
+  console.log("Verifying signature:", { 
+    walletAddress, 
+    signature: signature.substring(0, 20) + "...",
+    hasMessage: !!message,
+    messagePreview: message ? message.substring(0, 50) + "..." : "none"
+  });
   
   // Check if both parameters are present
   if (!walletAddress || !signature) {
@@ -53,11 +59,17 @@ export const verifySignature = async (walletAddress: string, signature: string) 
     };
   }
   
-  // Make the API call with proper parameters
-  return apiPost<AuthResponse>('/auth/verify', { 
+  // Make the API call with proper parameters, including optional message
+  const requestBody: any = { 
     walletAddress, 
     signature 
-  });
+  };
+  
+  if (message) {
+    requestBody.message = message;
+  }
+  
+  return apiPost<AuthResponse>('/auth/verify', requestBody);
 };
 
 /**
