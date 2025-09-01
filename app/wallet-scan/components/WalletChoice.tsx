@@ -45,7 +45,7 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
   }, [primaryWallet, user, isExternalConnected, externalAddress]);
 
   // Handle anonymous wallet creation
-  const handleAnonymousWallet = async () => {
+  const handleQuickStart = async () => {
     setIsConnecting(true);
     try {
       setShowAuthFlow(true);
@@ -108,7 +108,7 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
 
       {/* Anonymous Wallet Option */}
       <button
-        onClick={handleAnonymousWallet}
+        onClick={handleQuickStart}
         disabled={isConnecting}
         className={`w-full p-4 rounded-xl border-2 text-left transition-all ${
           isConnecting 
@@ -123,9 +123,9 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
             </svg>
           </div>
           <div className="flex-1">
-            <h4 className="font-semibold text-gray-900 mb-1">🔒 Anonymous Wallet</h4>
+            <h4 className="font-semibold text-gray-900 mb-1">📱 Quick Start</h4>
             <p className="text-sm text-gray-600 mb-2">
-              Quick & private - no sign-up required
+              Start participating instantly
             </p>
             <div className="text-xs text-gray-500 space-y-1">
               <div className="flex items-center">
