@@ -27,7 +27,7 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   
   // Dynamic SDK hooks
-  const { primaryWallet, user, handleConnectWallet } = useDynamicContext();
+  const { primaryWallet, user, setShowAuthFlow } = useDynamicContext();
   
   // Wagmi hooks for external wallets (existing implementation)
   const { address: externalAddress, isConnected: isExternalConnected } = useAccount();
@@ -48,8 +48,8 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
   const handleQuickStart = async () => {
     setIsConnecting(true);
     try {
-      // Connect to embedded wallet directly instead of showing auth flow
-      await handleConnectWallet('embedded');
+      // Show auth flow - should only show embedded wallet now due to config
+      setShowAuthFlow(true);
       
       // The useEffect above will catch the successful connection
     } catch (error) {
