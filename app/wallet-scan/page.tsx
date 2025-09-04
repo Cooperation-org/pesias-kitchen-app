@@ -29,18 +29,28 @@ export default function WalletScanPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Extract QR data from URL parameter
+  // Extract QR data from URL parameter (supports both 'qr' and 'data' parameters)
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const qrParam = urlParams.get('qr');
+    const dataParam = urlParams.get('data');
     
+    // Try 'qr' parameter first (base64 encoded), then 'data' parameter (URL encoded JSON)
     if (qrParam) {
       try {
         const decoded = JSON.parse(atob(qrParam));
         setQrData(decoded);
       } catch (err) {
-        console.error('Error parsing QR data:', err);
-        setError('Invalid QR code data');
+        console.error('Error parsing base64 QR data:', err);
+        setError('Invalid QR code data format');
+      }
+    } else if (dataParam) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(dataParam));
+        setQrData(decoded);
+      } catch (err) {
+        console.error('Error parsing URL-encoded data:', err);
+        setError('Invalid QR code data format');
       }
     } else {
       setError('No QR code data found in URL');
