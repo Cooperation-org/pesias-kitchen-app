@@ -33,12 +33,15 @@ export default function DynamicWalletProvider({ qrData }: DynamicWalletProviderP
         appName: "Pesia's Kitchen",
         appLogoUrl: "/images/Pesia-logo-black.png",
         
-        // Configure for anonymous wallets
+        // Configure embedded wallets with email and passkey support
         newToWeb3WalletChainMap: {
           '1': ['embedded'], // Ethereum mainnet - use embedded wallet
           '137': ['embedded'], // Polygon - use embedded wallet  
           '42220': ['embedded'], // Celo - use embedded wallet
         },
+        
+        // Enable email and passkey authentication
+        authenticationMethods: ['email', 'passkey', 'embedded_wallet'],
         
         // UI customization
         cssOverrides: `
@@ -68,12 +71,16 @@ export default function DynamicWalletProvider({ qrData }: DynamicWalletProviderP
         // Event handlers
         eventsCallbacks: {
           onAuthSuccess: (args) => {
-            console.log('Auth success:', args);
+            console.log('Dynamic auth success:', args);
           },
           onLogout: (args) => {
-            console.log('Logout:', args);
+            console.log('Dynamic logout:', args);
           },
-        }
+        },
+        
+        // Enable passkey features for biometric auth
+        emailWalletsEnabled: true,
+        passkeyEnabled: true,
       }}
     >
       <WalletChoice qrData={qrData} />

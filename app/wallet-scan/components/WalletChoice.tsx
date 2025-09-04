@@ -33,16 +33,56 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
   const { address: externalAddress, isConnected: isExternalConnected } = useAccount();
   const { connect, connectors } = useConnect();
 
-  // Check for existing Dynamic wallet on component mount
+  // Check for existing Dynamic wallet and authenticate to backend
   useEffect(() => {
+    const authenticateDynamicUser = async () => {
+      if (primaryWallet && user && !walletAddress) {
+        try {
+          // Authenticate with our backend using the new endpoint
+          const response = await fetch('/api/proxy/dynamic-auth', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              walletAddress: primaryWallet.address,
+              authMethod: user.authMethod || 'embedded_wallet',
+              userId: user.userId,
+              email: user.email,
+              phone: user.phoneNumber,
+              passkeyId: user.verifiedCredentials?.[0]?.id,
+              socialProvider: user.socialAccountInformation?.[0]?.type
+            })
+          });
+
+          const authResult = await response.json();
+          
+          if (authResult.success) {
+            // Store auth token if provided
+            if (authResult.token) {
+              localStorage.setItem('token', authResult.token);
+              localStorage.setItem('user', JSON.stringify(authResult.user));
+            }
+            
+            setWalletAddress(primaryWallet.address);
+            setSelectedWalletType('dynamic');
+            console.log('Dynamic user authenticated successfully');
+          } else {
+            console.error('Dynamic authentication failed:', authResult.message);
+          }
+        } catch (error) {
+          console.error('Error authenticating Dynamic user:', error);
+        }
+      }
+    };
+
     if (primaryWallet && user) {
-      setWalletAddress(primaryWallet.address);
-      setSelectedWalletType('dynamic');
+      authenticateDynamicUser();
     } else if (isExternalConnected && externalAddress) {
       setWalletAddress(externalAddress);
       setSelectedWalletType('external');
     }
-  }, [primaryWallet, user, isExternalConnected, externalAddress]);
+  }, [primaryWallet, user, isExternalConnected, externalAddress, walletAddress]);
 
   // Handle anonymous wallet creation
   const handleQuickStart = async () => {
@@ -123,28 +163,28 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
             </svg>
           </div>
           <div className="flex-1">
-            <h4 className="font-semibold text-gray-900 mb-1">📱 Quick Start</h4>
+            <h4 className="font-semibold text-gray-900 mb-1">📱 Email + Biometric</h4>
             <p className="text-sm text-gray-600 mb-2">
-              Start participating instantly
+              Sign in with email, secure with Face ID/Touch ID
             </p>
             <div className="text-xs text-gray-500 space-y-1">
               <div className="flex items-center">
                 <svg className="w-3 h-3 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Face ID/Touch ID security
+                Email login with passkey
               </div>
               <div className="flex items-center">
                 <svg className="w-3 h-3 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                No personal data required
+                Face ID/Touch ID/PIN security  
               </div>
               <div className="flex items-center">
                 <svg className="w-3 h-3 text-green-500 mr-1" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                Instant wallet creation
+                Auto-login after first setup
               </div>
             </div>
           </div>
@@ -212,7 +252,7 @@ export default function WalletChoice({ qrData }: WalletChoiceProps) {
           <div className="text-sm">
             <p className="text-gray-700 font-medium mb-1">First time here?</p>
             <p className="text-gray-600">
-              Choose "Anonymous Wallet" for quick access. Your rewards will be secured with your device's Face ID, Touch ID, or PIN.
+              Choose "Email + Biometric" to sign in with your email and secure your account with Face ID, Touch ID, or PIN. Future logins will be instant!
             </p>
           </div>
         </div>
