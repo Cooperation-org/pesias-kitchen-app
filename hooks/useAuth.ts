@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { getUser, getToken, clearAuthData, setWalletConnectionStatus } from '@/services/authServices';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 // Fetcher function for SWR
 const authFetcher = async () => {
@@ -27,9 +27,9 @@ export function useAuth() {
     authFetcher,
     {
       revalidateOnFocus: false, // Don't revalidate on window focus
-      revalidateOnReconnect: true, // Revalidate when reconnecting
+      revalidateOnReconnect: false, // Avoid reconnect-triggered loops
       dedupingInterval: 5000, // Dedupe requests within 5 seconds
-      errorRetryCount: 3, // Retry failed requests 3 times
+      errorRetryCount: 0, // Do not auto-retry to avoid multiple redirects
       onError: (err) => {
         if (err.message === 'Not authenticated') {
           clearAuthData();
@@ -40,23 +40,23 @@ export function useAuth() {
   );
 
   // Memoized navigation functions
-  const redirectToLogin = () => {
+  const redirectToLogin = useCallback(() => {
     try {
       router.replace('/');
     } catch (error) {
       console.error('Navigation error:', error);
       window.location.href = '/';
     }
-  };
+  }, [router]);
 
-  const redirectToDashboard = () => {
+  const redirectToDashboard = useCallback(() => {
     try {
       router.replace('/dashboard');
     } catch (error) {
       console.error('Navigation error:', error);
       window.location.href = '/dashboard';
     }
-  };
+  }, [router]);
 
   // Optimized logout function that clears SWR cache
   const logout = async () => {
