@@ -232,9 +232,9 @@ export default function AnonymousScanPage() {
               <span className="font-semibold">Pesia's Kitchen - EAT Initiative</span>
             </div>
 
-            <Link href="/" className="inline-block">
+            <Link href="https://pesias-kitchen-app-brown.vercel.app" target="_blank" rel="noopener noreferrer" className="inline-block">
               <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-black/90">
-                Back to Home
+                Learn More
               </button>
             </Link>
           </motion.div>
