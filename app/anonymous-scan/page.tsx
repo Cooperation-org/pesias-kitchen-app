@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { CheckCircleIcon, ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { generatePseudonymousId, getPseudonymousId } from '@/utils/pseudonymous';
@@ -222,12 +223,20 @@ export default function AnonymousScanPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0 }}
-            className="flex items-center justify-center space-x-2 text-[#F4cf6A]"
+            className="flex flex-col items-center justify-center gap-4 text-[#F4cf6A]"
           >
-            <div className="w-8 h-8">
-              <img src="/images/Pesia-logo-black.png" alt="Pesia's Kitchen" className="w-full h-full object-contain" />
+            <div className="flex items-center justify-center gap-2">
+              <div className="w-8 h-8">
+                <img src="/images/Pesia-logo-black.png" alt="Pesia's Kitchen" className="w-full h-full object-contain" />
+              </div>
+              <span className="font-semibold">Pesia's Kitchen - EAT Initiative</span>
             </div>
-            <span className="font-semibold">Pesia's Kitchen - EAT Initiative</span>
+
+            <Link href="/" className="inline-block">
+              <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-black/90">
+                Back to Home
+              </button>
+            </Link>
           </motion.div>
           
           {/* Hidden canvas for fingerprinting */}
