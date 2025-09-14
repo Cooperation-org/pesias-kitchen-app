@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { CheckCircleIcon, ExclamationTriangleIcon, ArrowPathIcon } from '@heroicons/react/24/outline';
 import { generatePseudonymousId, getPseudonymousId } from '@/utils/pseudonymous';
@@ -223,21 +222,25 @@ export default function AnonymousScanPage() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.0 }}
-            className="flex flex-col items-center justify-center gap-4 text-[#F4cf6A]"
+            className="flex items-center justify-center space-x-2 text-[#F4cf6A] mb-6"
           >
-            <div className="flex items-center justify-center gap-2">
-              <div className="w-8 h-8">
-                <img src="/images/Pesia-logo-black.png" alt="Pesia's Kitchen" className="w-full h-full object-contain" />
-              </div>
-              <span className="font-semibold">Pesia's Kitchen - EAT Initiative</span>
+            <div className="w-8 h-8">
+              <img src="/images/Pesia-logo-black.png" alt="Pesia's Kitchen" className="w-full h-full object-contain" />
             </div>
-
-            <Link href="https://pesias-kitchen-app-brown.vercel.app" target="_blank" rel="noopener noreferrer" className="inline-block">
-              <button className="px-4 py-2 bg-black text-white rounded-md hover:bg-black/90">
-                Learn More
-              </button>
-            </Link>
+            <span className="font-semibold">Pesia's Kitchen - EAT Initiative</span>
           </motion.div>
+
+          <motion.a
+            href="https://pesias-kitchen-app-brown.vercel.app"
+            target="_blank"
+            rel="noopener noreferrer"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 1.2 }}
+            className="inline-block bg-[#F4cf6A] text-black px-6 py-3 rounded-lg font-semibold hover:bg-[#F4cf6A]/90 transition-colors"
+          >
+            Learn More
+          </motion.a>
           
           {/* Hidden canvas for fingerprinting */}
           <canvas
