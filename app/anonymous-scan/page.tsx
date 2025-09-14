@@ -193,7 +193,7 @@ export default function AnonymousScanPage() {
             transition={{ delay: 0.6 }}
             className="text-xl text-[#F4cf6A] font-semibold mb-6"
           >
-            You helped make an impact today.
+            You helped make an impact today! 🌟
           </motion.p>
 
           {scanResult.event && (
