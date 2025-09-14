@@ -18,7 +18,7 @@ export default function AnonymousScanLayout({
       {/* Simple footer */}
       <div className="fixed bottom-0 left-0 right-0 p-4">
         <div className="text-center text-xs text-gray-500">
-          <p>© 2024 Pesia's Kitchen EAT Initiative</p>
+          <p>© 2025 Pesia's Kitchen EAT Initiative</p>
           <p className="mt-1">Privacy-first community impact tracking</p>
         </div>
       </div>
