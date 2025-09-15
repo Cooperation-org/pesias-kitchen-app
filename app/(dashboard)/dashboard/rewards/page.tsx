@@ -98,7 +98,15 @@ const transformReward = (reward: APIReward) => ({
   formattedType: reward.activityType.split('_')
     .map((word: string) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' '),
-  isClaimed: reward.nftId.startsWith('nft-')
+  // Robust claimed detection across multiple possible fields
+  isClaimed:
+    (reward as any).gDollarClaimed === true ||
+    (reward as any).gdClaimed === true ||
+    (reward as any).status === 'claimed' ||
+    typeof (reward as any).gDollarTxHash === 'string' ||
+    typeof (reward as any).rewardTxHash === 'string' ||
+    typeof (reward as any).txHash === 'string' ||
+    (typeof (reward as any).nftId === 'string' && (reward as any).nftId.length > 0)
 });
 
 type TransformedReward = ReturnType<typeof transformReward>;
@@ -130,11 +138,14 @@ function useRewards() {
   }, [data?.rewards]);
 
   // Memoize computed values with safe access
-  const { hasUnclaimedRewards, totalUnclaimedRewards } = useMemo(() => {
-    const rewards = data?.rewards || [];
+  const { hasUnclaimedRewards, totalUnclaimedRewards, totalUnclaimedAmount } = useMemo(() => {
+    const rewards = (data?.rewards || []).map(transformReward);
+    const unclaimed = rewards.filter((reward: any) => reward.isClaimed !== true);
+    const amount = unclaimed.reduce((sum: number, r: any) => sum + (Number((r as any).rewardAmount) || 0), 0);
     return {
-      hasUnclaimedRewards: rewards.some(reward => !reward.nftId.startsWith('nft-')),
-      totalUnclaimedRewards: rewards.filter(reward => !reward.nftId.startsWith('nft-')).length
+      hasUnclaimedRewards: amount > 0,
+      totalUnclaimedRewards: unclaimed.length,
+      totalUnclaimedAmount: amount
     };
   }, [data?.rewards]);
 
@@ -145,7 +156,8 @@ function useRewards() {
     error,
     mutate,
     hasUnclaimedRewards,
-    totalUnclaimedRewards
+    totalUnclaimedRewards,
+    totalUnclaimedAmount
   };
 }
 
@@ -204,7 +216,8 @@ const Rewards = () => {
     error, 
     mutate,
     hasUnclaimedRewards,
-    totalUnclaimedRewards
+    totalUnclaimedRewards,
+    totalUnclaimedAmount
   } = useRewards();
   const [claimingRewards, setClaimingRewards] = useState(false);
   const [claimSuccess, setClaimSuccess] = useState(false);
@@ -237,7 +250,19 @@ const Rewards = () => {
       }
       
       setClaimSuccess(true);
-      await mutate();
+      // Optimistically update cache to prevent flicker back to claimable state
+      await mutate(prev => {
+        if (!prev) return prev as any;
+        const claimedIds = new Set(unclaimedRewards.map(r => r.activityId));
+        return {
+          ...(prev as any),
+          rewards: (prev as any).rewards?.map((r: any) =>
+            claimedIds.has(r.activityId)
+              ? { ...r, gdClaimed: true, isClaimed: true, rewardTxHash: r.rewardTxHash || 'claimed' }
+              : r
+          ) || [],
+        } as any;
+      }, { revalidate: true });
       setTimeout(() => setClaimSuccess(false), 3000);
       
     } catch {
@@ -250,6 +275,8 @@ const Rewards = () => {
   if (!isAuthenticated) {
     return null;
   }
+
+  const isDisabled = !hasUnclaimedRewards || claimingRewards || (totalUnclaimedAmount ?? 0) <= 0;
 
   return (
     <motion.div 
@@ -310,11 +337,7 @@ const Rewards = () => {
               <Trophy className="w-4 h-4 text-[#4CAF50]" />
               G$ earned
             </div>
-            {hasUnclaimedRewards && (
-              <div className="mt-2 text-sm text-[#4CAF50] font-medium">
-                {totalUnclaimedRewards} rewards ready to claim
-              </div>
-            )}
+            {/* Removed the 'ready to claim' banner to avoid confusion */}
           </motion.div>
         )}
 
@@ -342,9 +365,16 @@ const Rewards = () => {
         >
           <Button
             onClick={handleClaimRewards}
-            disabled={!hasUnclaimedRewards || claimingRewards}
+            disabled={isDisabled}
+            aria-disabled={isDisabled}
             size="lg"
-            className="w-[280px] rounded-lg shadow-lg"
+            variant={isDisabled ? 'outline' : 'default'}
+            className={cn(
+              "w-[280px] rounded-lg",
+              isDisabled
+                ? "shadow-md bg-gray-100 text-gray-400 border border-gray-200 hover:bg-gray-100 hover:scale-100"
+                : "shadow-lg"
+            )}
           >
             {claimingRewards ? (
               <motion.div
@@ -360,8 +390,8 @@ const Rewards = () => {
             {claimingRewards 
               ? 'CLAIMING...' 
               : hasUnclaimedRewards 
-                ? `CLAIM ${totalUnclaimedRewards} REWARDS`
-                : 'ALL REWARDS CLAIMED'}
+                ? `CLAIM ${totalUnclaimedAmount} G$`
+                : 'ALL G$ CLAIMED'}
           </Button>
         </motion.div>
       </div>
