@@ -195,7 +195,7 @@ export default function UserNFTGallery() {
 
   return (
     <motion.div 
-      className="bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen"
+      className="bg-gradient-to-br from-[#F2D166]/8 to-white dark:from-neutral-900 dark:to-neutral-950 min-h-screen"
       variants={containerVariants}
       initial="hidden"
       animate="visible"
@@ -203,7 +203,7 @@ export default function UserNFTGallery() {
       <div className="px-4 sm:px-6 py-6 max-w-7xl mx-auto">
         {/* Header */}
         <motion.div variants={itemVariants} className="mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">
+          <h1 className="text-2xl font-semibold text-gray-800 dark:text-gray-100">
             My Collection
           </h1>
         </motion.div>
