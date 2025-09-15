@@ -1,7 +1,6 @@
 "use client"
 
 import { motion } from 'framer-motion'
-import { useEffect } from 'react'
 import { Activity } from '@/types/api'
 
 interface EventModalProps {
@@ -48,33 +47,7 @@ export function EventModal({ activity, onClose }: EventModalProps) {
   const isNFTMinted = (activity as any)?.nftMinted === true || typeof (activity as any)?.nftId === 'string';
   const disableClaim = rewardClaimed || isNoRewards || isNFTMinted;
 
-  // Debug logs to inspect reward values coming from backend and computed client-side
-  useEffect(() => {
-    try {
-      // Only log in development to avoid noisy production logs
-      if (process.env.NODE_ENV !== 'production') {
-        // Use a collapsed group for readability
-        // eslint-disable-next-line no-console
-        console.groupCollapsed('[EventModal] Reward Debug');
-        // eslint-disable-next-line no-console
-        console.log('activity._id:', (activity as any)?._id);
-        // eslint-disable-next-line no-console
-        console.log('activity.rewardAmount (raw):', (activity as any)?.rewardAmount);
-        // eslint-disable-next-line no-console
-        console.log('activity.event:', activity.event);
-        // eslint-disable-next-line no-console
-        console.log('activityType:', activityType);
-        // eslint-disable-next-line no-console
-        console.log('normalizedActivityType:', normalizedActivityType);
-        // eslint-disable-next-line no-console
-        console.log('computedRewardAmount:', computedRewardAmount);
-        // eslint-disable-next-line no-console
-        console.log('flags → rewardClaimed:', rewardClaimed, 'isNoRewards:', isNoRewards, 'isNFTMinted:', isNFTMinted, 'disableClaim:', disableClaim);
-        // eslint-disable-next-line no-console
-        console.groupEnd();
-      }
-    } catch {}
-  }, [activity, activityType, normalizedActivityType, computedRewardAmount, rewardClaimed, isNoRewards, isNFTMinted, disableClaim]);
+  
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
