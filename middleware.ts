@@ -13,8 +13,9 @@ export function middleware(request: NextRequest) {
   const userRole = request.cookies.get('userRole')?.value;
   
   // Check if user is trying to access protected routes without being logged in
+  // Rely solely on token to avoid flaky redirects due to walletConnected cookie timing
   if ((request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/admin')) 
-      && (!token || !isWalletConnected)) {
+      && !token) {
     return NextResponse.redirect(new URL('/', request.url));
   }
   

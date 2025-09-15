@@ -51,7 +51,7 @@ export function StatsCard({ stats }: StatsCardProps) {
           >
             {stats.goodDollarsEarned}
           </motion.div>
-          <div className="text-sm text-gray-500">G$ earned</div>
+          <div className="text-sm text-gray-500">G$ claimed</div>
         </motion.div>
         
         <motion.div 
