@@ -173,7 +173,7 @@ export function RecentActivities({
                   </div>
                   <div className="flex flex-col items-end">
                     <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
-                      {activity.amount} G$
+                      G$
                     </div>
                     {activity.hasNFT && (
                       <span className="text-xs text-green-600 mt-1 flex items-center">
@@ -234,7 +234,7 @@ export function RecentActivities({
                   <span className="ml-2 text-sm">{selectedActivity.date} • {selectedActivity.time}</span>
                 </div>
                 <div className="px-3 py-1 bg-[#F4cf6A]/20 text-[#F4cf6A] rounded-full text-sm font-medium">
-                  {selectedActivity.amount} G$
+                  G$
                 </div>
               </div>
               
