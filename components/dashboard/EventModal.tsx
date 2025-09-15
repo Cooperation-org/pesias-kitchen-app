@@ -1,6 +1,7 @@
 "use client"
 
 import { motion } from 'framer-motion'
+import { useEffect } from 'react'
 import { Activity } from '@/types/api'
 
 interface EventModalProps {
@@ -21,9 +22,59 @@ export function EventModal({ activity, onClose }: EventModalProps) {
   };
 
   const activityType = getEventProperty('activityType');
+  const normalizedActivityType = (activityType || '').toLowerCase().replace(/\s+/g, '_');
   const title = getEventProperty('title');
   const location = getEventProperty('location');
   const date = getEventProperty('date');
+  // GoodDollar-claimed detection (same approach as Rewards page)
+  const rewardClaimed =
+    (activity as any)?.gDollarClaimed === true ||
+    (activity as any)?.gdClaimed === true ||
+    (activity as any)?.isClaimed === true ||
+    typeof (activity as any)?.gDollarTxHash === 'string' ||
+    typeof (activity as any)?.rewardTxHash === 'string' ||
+    typeof (activity as any)?.txHash === 'string';
+  const rewardAmount = Number((activity as any)?.rewardAmount) || 0;
+  // Compute real reward amount with fallback by activity type
+  const computedRewardAmount = (() => {
+    if (Number.isFinite(rewardAmount) && rewardAmount > 0) return rewardAmount;
+    if (normalizedActivityType === 'food_sorting') return 5;
+    if (normalizedActivityType === 'food_distribution') return 2;
+    return 1;
+  })();
+
+  const isNoRewards = !rewardClaimed && computedRewardAmount <= 0;
+  // Single action does both: mint NFT + claim G$; treat minted as claimed for disabling
+  const isNFTMinted = (activity as any)?.nftMinted === true || typeof (activity as any)?.nftId === 'string';
+  const disableClaim = rewardClaimed || isNoRewards || isNFTMinted;
+
+  // Debug logs to inspect reward values coming from backend and computed client-side
+  useEffect(() => {
+    try {
+      // Only log in development to avoid noisy production logs
+      if (process.env.NODE_ENV !== 'production') {
+        // Use a collapsed group for readability
+        // eslint-disable-next-line no-console
+        console.groupCollapsed('[EventModal] Reward Debug');
+        // eslint-disable-next-line no-console
+        console.log('activity._id:', (activity as any)?._id);
+        // eslint-disable-next-line no-console
+        console.log('activity.rewardAmount (raw):', (activity as any)?.rewardAmount);
+        // eslint-disable-next-line no-console
+        console.log('activity.event:', activity.event);
+        // eslint-disable-next-line no-console
+        console.log('activityType:', activityType);
+        // eslint-disable-next-line no-console
+        console.log('normalizedActivityType:', normalizedActivityType);
+        // eslint-disable-next-line no-console
+        console.log('computedRewardAmount:', computedRewardAmount);
+        // eslint-disable-next-line no-console
+        console.log('flags → rewardClaimed:', rewardClaimed, 'isNoRewards:', isNoRewards, 'isNFTMinted:', isNFTMinted, 'disableClaim:', disableClaim);
+        // eslint-disable-next-line no-console
+        console.groupEnd();
+      }
+    } catch {}
+  }, [activity, activityType, normalizedActivityType, computedRewardAmount, rewardClaimed, isNoRewards, isNFTMinted, disableClaim]);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/60 z-50 p-4">
@@ -62,7 +113,7 @@ export function EventModal({ activity, onClose }: EventModalProps) {
               <span className="ml-2 text-sm">{date}</span>
             </div>
             <div className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-              {activity.rewardAmount || 0} G$
+              {computedRewardAmount} G$
             </div>
           </div>
           
@@ -85,6 +136,10 @@ export function EventModal({ activity, onClose }: EventModalProps) {
                 <span className="text-gray-500">Quantity</span>
                 <span className="font-medium">{activity.quantity}</span>
               </div>
+              <div className="flex justify-between mb-2">
+                <span className="text-gray-500">{(rewardClaimed || isNFTMinted) ? 'Claimed' : 'G$ to claim'}</span>
+                <span className="font-medium">{computedRewardAmount} G$</span>
+              </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">NFT Status</span>
                 {activity.nftMinted ? (
@@ -96,11 +151,32 @@ export function EventModal({ activity, onClose }: EventModalProps) {
             </div>
             
             <div className="flex space-x-3">
-              {!activity.nftMinted && (
-                <button className="flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium">
-                  Mint NFT
-                </button>
-              )}
+              <button
+                type="button"
+                disabled={disableClaim}
+                aria-disabled={disableClaim}
+                tabIndex={disableClaim ? -1 : 0}
+                className={`flex-1 py-3 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                  rewardClaimed
+                    ? 'bg-green-100 text-green-700 border border-green-200 cursor-default'
+                    : isNoRewards
+                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed pointer-events-none'
+                      : 'bg-[#F4cf6A] text-black hover:bg-[#F4cf6A]/90'
+                }`}
+              >
+                {rewardClaimed || isNFTMinted ? (
+                  <>
+                    <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20 6L9 17L4 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    Claimed
+                  </>
+                ) : isNoRewards ? (
+                  <>No Rewards</>
+                ) : (
+                  <>Claim Rewards</>
+                )}
+              </button>
               <button 
                 onClick={onClose}
                 className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium"
