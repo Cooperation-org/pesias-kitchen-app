@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Activity } from '@/types/api';
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 interface RecentActivitiesProps {
   activities: Activity[];
@@ -92,27 +92,7 @@ export function RecentActivities({
     setShowEventModal(true);
   }, []);
 
-  // Debug logs when modal opens to inspect backend vs computed amount
-  useEffect(() => {
-    if (!showEventModal || !selectedActivity) return;
-    if (process.env.NODE_ENV === 'production') return;
-    try {
-      // eslint-disable-next-line no-console
-      console.groupCollapsed('[RecentActivities] Reward Debug');
-      // eslint-disable-next-line no-console
-      console.log('activityId:', selectedActivity._id);
-      // Find original activity to log raw reward
-      const original = activities.find(a => (a as any)._id === selectedActivity._id);
-      // eslint-disable-next-line no-console
-      console.log('raw activity.rewardAmount:', (original as any)?.rewardAmount);
-      // eslint-disable-next-line no-console
-      console.log('event.activityType:', typeof original?.event === 'object' ? (original?.event as any)?.activityType : original?.event);
-      // eslint-disable-next-line no-console
-      console.log('displayed amount (computed):', selectedActivity.amount);
-      // eslint-disable-next-line no-console
-      console.groupEnd();
-    } catch {}
-  }, [showEventModal, selectedActivity, activities]);
+  
 
   const closeEventModal = useCallback(() => {
     setShowEventModal(false);
