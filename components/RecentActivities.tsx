@@ -56,8 +56,7 @@ export function RecentActivities({
     const rawRewardAmount = Number((activity as any)?.rewardAmount) || 0;
     const computedAmount = (() => {
       if (Number.isFinite(rawRewardAmount) && rawRewardAmount > 0) return rawRewardAmount;
-      if (normalizedActivityType === 'food_sorting') return 5;
-      if (normalizedActivityType === 'food_distribution') return 2;
+      // Default to 1 if no actual reward amount (should not happen with new backend)
       return 1;
     })();
     
@@ -173,7 +172,7 @@ export function RecentActivities({
                   </div>
                   <div className="flex flex-col items-end">
                     <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
-                      G$
+                      {activity.rewardClaimed || activity.hasNFT ? `${activity.amount} G$` : 'G$'}
                     </div>
                     {activity.hasNFT && (
                       <span className="text-xs text-green-600 mt-1 flex items-center">
@@ -234,7 +233,7 @@ export function RecentActivities({
                   <span className="ml-2 text-sm">{selectedActivity.date} • {selectedActivity.time}</span>
                 </div>
                 <div className="px-3 py-1 bg-[#F4cf6A]/20 text-[#F4cf6A] rounded-full text-sm font-medium">
-                  G$
+                  {selectedActivity.rewardClaimed || selectedActivity.hasNFT ? `${selectedActivity.amount} G$` : 'G$'}
                 </div>
               </div>
               

@@ -66,13 +66,13 @@ function useDashboardData() {
 
   const handleMintNFT = useCallback(async (activityId: string) => {
     try {
-      toast.loading('Minting NFT...', { id: 'mint-nft' });
+      toast.loading('Claiming G$ and minting NFT...', { id: 'mint-nft' });
       await mintActivityNFT(activityId);
       await mutate(); // Single mutate call to refresh all data
-      toast.success('NFT minted successfully!', { id: 'mint-nft' });
+      toast.success('G$ claimed and NFT minted successfully!', { id: 'mint-nft' });
     } catch (error) {
       console.error('Error minting NFT:', error);
-      toast.error('Failed to mint NFT. Please try again.', { id: 'mint-nft' });
+      toast.error('Failed to claim G$ and mint NFT. Please try again.', { id: 'mint-nft' });
     }
   }, [mutate]);
 

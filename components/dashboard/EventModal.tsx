@@ -6,11 +6,12 @@ import { Activity } from '@/types/api'
 interface EventModalProps {
   activity: Activity
   onClose: () => void
+  onClaimRewards?: (activity: Activity) => void
 }
 
 type DisplayableEventProperty = 'title' | 'location' | 'date' | 'activityType';
 
-export function EventModal({ activity, onClose }: EventModalProps) {
+export function EventModal({ activity, onClose, onClaimRewards }: EventModalProps) {
   // Helper function to get event properties safely
   const getEventProperty = (property: DisplayableEventProperty): string | null => {
     if (typeof activity.event === 'string') {
@@ -34,11 +35,10 @@ export function EventModal({ activity, onClose }: EventModalProps) {
     typeof (activity as any)?.rewardTxHash === 'string' ||
     typeof (activity as any)?.txHash === 'string';
   const rewardAmount = Number((activity as any)?.rewardAmount) || 0;
-  // Compute real reward amount with fallback by activity type
+  // Compute real reward amount - use actual amount from activity
   const computedRewardAmount = (() => {
     if (Number.isFinite(rewardAmount) && rewardAmount > 0) return rewardAmount;
-    if (normalizedActivityType === 'food_sorting') return 5;
-    if (normalizedActivityType === 'food_distribution') return 2;
+    // Default to 1 if no actual reward amount (should not happen with new backend)
     return 1;
   })();
 
@@ -86,7 +86,7 @@ export function EventModal({ activity, onClose }: EventModalProps) {
               <span className="ml-2 text-sm">{date}</span>
             </div>
             <div className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-              {computedRewardAmount} G$
+              {(rewardClaimed || isNFTMinted) ? `${computedRewardAmount} G$` : 'G$'}
             </div>
           </div>
           
@@ -111,7 +111,7 @@ export function EventModal({ activity, onClose }: EventModalProps) {
               </div>
               <div className="flex justify-between mb-2">
                 <span className="text-gray-500">{(rewardClaimed || isNFTMinted) ? 'Claimed' : 'G$ to claim'}</span>
-                <span className="font-medium">{computedRewardAmount} G$</span>
+                <span className="font-medium">{(rewardClaimed || isNFTMinted) ? `${computedRewardAmount} G$` : 'G$'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">NFT Status</span>
@@ -126,6 +126,7 @@ export function EventModal({ activity, onClose }: EventModalProps) {
             <div className="flex space-x-3">
               <button
                 type="button"
+                onClick={() => onClaimRewards?.(activity)}
                 disabled={disableClaim}
                 aria-disabled={disableClaim}
                 tabIndex={disableClaim ? -1 : 0}
