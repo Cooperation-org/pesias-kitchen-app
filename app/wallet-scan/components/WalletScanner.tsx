@@ -143,9 +143,9 @@ export default function WalletScanner({ qrData, walletAddress, walletType, onRes
             )}
             
             <div className="flex justify-between border-t border-gray-200 pt-3">
-              <span className="text-gray-600">Reward Earned:</span>
+              <span className="text-gray-600">Reward Available:</span>
               <span className="font-bold text-[#F4cf6A] text-lg">
-                +{result.activity?.rewardAmount || qrData.rewardAmount || 0} G$
+                +{result.activity?.rewardAmount || qrData.rewardAmount || 1} G$
               </span>
             </div>
           </div>
