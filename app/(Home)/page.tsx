@@ -9,6 +9,7 @@ import {
   verifySignature,
   storeAuthData,
 } from "@/services/authServices";
+import DonationModal from "@/components/DonationModal";
 
 export default function LandingPage() {
   const { isConnected, address } = useAccount();
@@ -18,6 +19,7 @@ export default function LandingPage() {
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isDonationModalOpen, setIsDonationModalOpen] = useState(false);
 
   // Use refs to prevent infinite loops
   const hasAttemptedAuth = useRef(false);
@@ -194,11 +196,11 @@ export default function LandingPage() {
 
             {/* Action Buttons - Desktop */}
             <div className="hidden md:flex items-center space-x-4 cursor-pointer">
-              <Link href="https://goodcollective.xyz/collective/0xe4f65e8644c0f3a1c7ef0ba0f1428a82cdc0e7bc" target="_blank" rel="noopener noreferrer">
-                <button className="px-4 py-1 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 font-medium">
-                  DONATE
-                </button>
-              </Link>
+              <button
+                onClick={() => setIsDonationModalOpen(true)}
+                className="px-4 py-1 border border-gray-300 text-gray-700 rounded-full hover:bg-gray-50 font-medium">
+                DONATE
+              </button>
               <button
                 onClick={handleConnectClick}
                 disabled={authLoading}
@@ -253,11 +255,14 @@ export default function LandingPage() {
                   <Link href="https://www.pesiaskitchen.org/ourpeople" target="_blank" rel="noopener noreferrer" onClick={() => setIsMenuOpen(false)} className="text-gray-700 hover:text-[black] font-medium py-2">Our People</Link>
                   <Link href="#initiatives" onClick={() => setIsMenuOpen(false)} className="text-[black] font-medium border-b-2 border-[black] py-2">EAT Initiative</Link>
                   <div className="flex flex-col space-y-2 pt-2 border-t border-gray-200">
-                    <Link href="https://goodcollective.xyz/collective/0xe4f65e8644c0f3a1c7ef0ba0f1428a82cdc0e7bc" target="_blank" rel="noopener noreferrer">
-                      <button className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
-                        DONATE
-                      </button>
-                    </Link>
+                    <button
+                      onClick={() => {
+                        setIsMenuOpen(false);
+                        setIsDonationModalOpen(true);
+                      }}
+                      className="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 font-medium">
+                      DONATE
+                    </button>
                     <button
                       onClick={() => {
                         setIsMenuOpen(false);
@@ -686,6 +691,12 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      {/* Donation Modal */}
+      <DonationModal
+        isOpen={isDonationModalOpen}
+        onClose={() => setIsDonationModalOpen(false)}
+      />
     </div>
   );
 }
