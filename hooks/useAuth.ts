@@ -3,7 +3,7 @@ import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
 import { getUser, getToken, clearAuthData, setWalletConnectionStatus } from '@/services/authServices';
 import { toast } from 'sonner';
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 
 // Fetcher function for SWR
 const authFetcher = async () => {
@@ -40,32 +40,32 @@ export function useAuth() {
   );
 
   // Memoized navigation functions
-  const redirectToLogin = () => {
+  const redirectToLogin = useCallback(() => {
     try {
       router.replace('/');
     } catch (error) {
       console.error('Navigation error:', error);
       window.location.href = '/';
     }
-  };
+  }, [router]);
 
-  const redirectToDashboard = () => {
+  const redirectToDashboard = useCallback(() => {
     try {
       router.replace('/dashboard');
     } catch (error) {
       console.error('Navigation error:', error);
       window.location.href = '/dashboard';
     }
-  };
+  }, [router]);
 
   // Optimized logout function that clears SWR cache
-  const logout = async () => {
+  const logout = useCallback(async () => {
     clearAuthData();
     await mutateAuth(undefined, { revalidate: false });
     await mutate('/api/auth', undefined, { revalidate: false });
     redirectToLogin();
     toast.success('Logged out successfully');
-  };
+  }, [mutateAuth, redirectToLogin]);
 
   // Update wallet connection status and handle disconnection
   useEffect(() => {
@@ -94,7 +94,7 @@ export function useAuth() {
         }
       }
     }
-  }, [address, isConnected]);
+  }, [address, isConnected, logout]);
 
   return {
     // Auth state

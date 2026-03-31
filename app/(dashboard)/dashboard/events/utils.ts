@@ -2,30 +2,58 @@
 import { ProcessedEvent, ServerEvent } from "./types";
 
 // Helper function to convert server event format to our component format
-export const processServerEvents = (serverEvents: ServerEvent[]): ProcessedEvent[] => {
-    return serverEvents.map(event => {
-      // Convert the API data structure to our internal format
-      return {
-        id: event._id,
-        title: event.title,
-        description: event.description,
-        date: event.date,
-        time: event.time || '',
-        location: event.location,
-        capacity: event.capacity,
-        activityType: event.activityType,
-        participants: event.participants || [],
-        createdBy: {
-          id: event.createdBy._id,
-          walletAddress: event.createdBy.walletAddress,
-          name: event.createdBy.name
-        },
-        createdAt: event.createdAt,
-        hasQrCode: event.hasQrCode,
-        qrCodeType: event.qrCodeType
-      };
-    });
+// export const processServerEvents = (serverEvents: ServerEvent[]): ProcessedEvent[] => {
+//     return serverEvents.map(event => {
+//       // Convert the API data structure to our internal format
+//       return {
+//         id: event._id,
+//         title: event.title,
+//         description: event.description,
+//         date: event.date,
+//         time: event.time || '',
+//         location: event.location,
+//         capacity: event.capacity,
+//         activityType: event.activityType,
+//         participants: event.participants || [],
+//         createdBy: {
+//           id: event.createdBy._id,
+//           walletAddress: event.createdBy.walletAddress,
+//           name: event.createdBy.name
+//         },
+//         createdAt: event.createdAt,
+//         hasQrCode: event.hasQrCode,
+//         qrCodeType: event.qrCodeType
+//       };
+//     });
+//   };
+export const mapServerEventToProcessedEvent = (e: ServerEvent): ProcessedEvent => {
+  const dateObj = new Date(e.date);
+  const timeString = dateObj.toTimeString().slice(0, 5); // "HH:MM"
+
+  const volunteerQr = e.qrCodes?.volunteer ?? null;
+  const recipientQr = e.qrCodes?.recipient ?? null;
+
+  return {
+    id: e._id,
+    title: e.title,
+    description: e.description,
+    location: e.location,
+    date: e.date,
+    time: timeString,
+    activityType: e.activityType,
+    capacity: e.capacity,
+    defaultQuantity: e.defaultQuantity,
+    participants: e.participants,
+    createdBy: {
+      id: e.createdBy._id,
+      walletAddress: e.createdBy.walletAddress,
+      name: e.createdBy.name,
+    },
+    createdAt: e.createdAt,
+    hasQrCode: Boolean(volunteerQr || recipientQr),
+    qrCodeType: volunteerQr ? 'volunteer' : recipientQr ? 'recipient' : undefined,
   };
+};
 
 // Date and time formatting utilities
 export const formatDate = (dateString: string) => {

@@ -319,6 +319,7 @@ export default function LandingPage() {
                     Learn More
                   </button>
                 </Link>
+
               </div>
               <div
                 className="mt-8 flex items-center gap-3 animate-fade-in"
