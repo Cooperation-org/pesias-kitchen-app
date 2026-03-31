@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, type Variants } from 'framer-motion';
 import { 
   CalendarIcon, 
   ClockIcon, 
@@ -48,7 +48,7 @@ export default function EventCard({
   const isPast = isEventPast(event);
   const canEdit = isCreator || isAdmin;
   
-  const cardVariants = {
+  const cardVariants: Variants = {
     hidden: { y: 20, opacity: 0 },
     show: { 
       y: 0, 
@@ -70,7 +70,7 @@ export default function EventCard({
     }
   };
 
-  const buttonVariants = {
+  const buttonVariants: Variants = {
     idle: { scale: 1 },
     hover: { 
       scale: 1.05,

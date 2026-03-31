@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '@/providers/web3Provider';
 import EditEventModal from '@/components/EditEventModal';
@@ -19,7 +19,10 @@ import {
   CalendarIcon,
   ClockIcon,
   MapPinIcon,
-  UsersIcon
+  UsersIcon,
+  EllipsisVerticalIcon,
+  QrCodeIcon,
+  PencilSquareIcon
 } from '@heroicons/react/24/outline';
 
 // Helper functions
@@ -115,6 +118,8 @@ export default function EventsPage({
     eventId: '',
     eventTitle: ''
   });
+
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   
   const { user, isAuthenticated } = useAuthContext();
   const router = useRouter();
@@ -122,8 +127,20 @@ export default function EventsPage({
   // Use the useEvents hook for data fetching
   const { events, isLoading, error: fetchError, mutate } = useEvents(timeFilter);
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = () => {
+      setActiveDropdown(null);
+    };
+
+    if (activeDropdown) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [activeDropdown]);
+
   // Function to check if user is admin
-  const isAdmin = user?.role === 'admin';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superadmin';
 
   // Filter events based on search query and time filter
   const filteredEvents = events.filter(event => {
@@ -477,9 +494,57 @@ export default function EventsPage({
                     <h3 className="text-lg font-medium text-gray-900 line-clamp-1 flex-1 mr-3">
                       {event.title}
                     </h3>
-                    <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded flex-shrink-0">
-                      {ACTIVITY_TYPE_LABELS[event.activityType || 'other']}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded flex-shrink-0">
+                        {ACTIVITY_TYPE_LABELS[event.activityType || 'other']}
+                      </span>
+                      
+                      {/* 3-dot menu for admin/creator */}
+                      {(isCreator || isAdmin) && !eventIsPast && (
+                        <div className="relative">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setActiveDropdown(activeDropdown === event._id ? null : event._id);
+                            }}
+                            className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                          >
+                            <EllipsisVerticalIcon className="w-4 h-4 text-gray-500" />
+                          </button>
+                          
+                          {/* Dropdown menu */}
+                          {activeDropdown === event._id && (
+                            <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border py-1 min-w-40 z-20">
+                              {isCreator && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditEvent(event._id);
+                                    setActiveDropdown(null);
+                                  }}
+                                  className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                                >
+                                  <PencilSquareIcon className="w-4 h-4" />
+                                  Edit
+                                </button>
+                              )}
+                              
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleGenerateQRCode(event._id, event.title, event.qrCodes);
+                                  setActiveDropdown(null);
+                                }}
+                                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                              >
+                                <QrCodeIcon className="w-4 h-4" />
+                                QR Codes
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   
                   {/* Event info */}

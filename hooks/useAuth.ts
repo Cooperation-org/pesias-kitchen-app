@@ -59,13 +59,13 @@ export function useAuth() {
   }, [router]);
 
   // Optimized logout function that clears SWR cache
-  const logout = async () => {
+  const logout = useCallback(async () => {
     clearAuthData();
     await mutateAuth(undefined, { revalidate: false });
     await mutate('/api/auth', undefined, { revalidate: false });
     redirectToLogin();
     toast.success('Logged out successfully');
-  };
+  }, [mutateAuth, redirectToLogin]);
 
   // Update wallet connection status and handle disconnection
   useEffect(() => {
@@ -94,7 +94,7 @@ export function useAuth() {
         }
       }
     }
-  }, [address, isConnected]);
+  }, [address, isConnected, logout]);
 
   return {
     // Auth state
