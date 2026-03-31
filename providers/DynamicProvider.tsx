@@ -16,14 +16,14 @@ export default function DynamicProvider({
         environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID || 'test-env-id',
         walletConnectors: [EthereumWalletConnectors],
         // Optimized for production mobile experience
-        emailSignInEnabled: false,
-        socialProvidersFilter: () => false,
+        // emailSignInEnabled: false,
+        socialProvidersFilter: () => [],
         enableVisitTrackingOnConnectOnly: true,
         // Enhanced biometric/passkey settings for production
-        embeddedWalletSettings: {
-          createOnSignIn: 'all-users',
-          noPromptOnSignature: false,
-        },
+        // embeddedWalletSettings: {
+        //   createOnSignIn: 'all-users',
+        //   noPromptOnSignature: false,
+        // },
         // Mobile-first UI optimizations
         initialAuthenticationMode: 'connect-only',
         debugError: false,
