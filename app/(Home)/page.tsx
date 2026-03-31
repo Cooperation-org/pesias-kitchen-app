@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAppKit } from '@reown/appkit/react';
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
 import {
   getNonce,
   verifySignature,
@@ -12,6 +13,7 @@ import {
 } from "@/services/authServices";
 
 export default function LandingPage() {
+  const router = useRouter();
   const { isConnected, address } = useAccount();
   const auth = useAuth();
   const { open: openAppKit } = useAppKit();
@@ -104,6 +106,11 @@ export default function LandingPage() {
       openAppKit();
     }
   };
+
+  // Handle start learning click
+  const handleStartLearningClick = () => {
+    router.push('/learning')
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -319,6 +326,14 @@ export default function LandingPage() {
                     Learn More
                   </button>
                 </Link>
+                
+                <button
+                  onClick={handleStartLearningClick}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[black] hover:bg-[black]/90 text-white w-full sm:w-auto"
+                >
+                  Start Learning
+                </button>
+
               </div>
               <div
                 className="mt-8 flex items-center gap-3 animate-fade-in"
