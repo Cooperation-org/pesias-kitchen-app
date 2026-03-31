@@ -1,11 +1,7 @@
 'use client';
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-
-interface QuizSectionProps {
-  onPass: () => void;
-  onFail: () => void;
-}
+import { useRouter } from "next/navigation";
 
 const questions = [
   {
@@ -60,11 +56,20 @@ const questions = [
   },
 ];
 
-const QuizPage = ({ onPass, onFail }: QuizSectionProps) => {
+const QuizPage = () => {
+  const router = useRouter();
   const [currentQ, setCurrentQ] = useState(0);
   const [answers, setAnswers] = useState<number[]>([]);
   const [selected, setSelected] = useState<number | null>(null);
   const [showResult, setShowResult] = useState(false);
+
+  const handlePass = () => {
+    router.push("/learning/impact");
+  };
+
+  const handleFail = () => {
+    router.push("/learning"); // back to learning module
+  };
 
   const handleSelect = (idx: number) => {
     if (selected !== null) return;
@@ -82,7 +87,7 @@ const QuizPage = ({ onPass, onFail }: QuizSectionProps) => {
         const score = newAnswers.filter((a, i) => a === questions[i].correct).length;
         // Need 80% = 4/5
         if (score >= 4) {
-          setTimeout(() => onPass(), 2000);
+          setTimeout(() => handlePass(), 2000);
         }
       }
     }, 800);
@@ -114,7 +119,7 @@ const QuizPage = ({ onPass, onFail }: QuizSectionProps) => {
           </p>
           {!passed && (
             <button
-              onClick={onFail}
+              onClick={handleFail}
               className="gradient-warm rounded-full px-8 py-3 text-primary-foreground font-display font-bold shadow-rainbow"
             >
               Try Again

@@ -1,10 +1,51 @@
 'use client';
 import { motion } from "framer-motion";
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useAccount } from 'wagmi';
 import EducationCard from "@/components/learning/EducationCard";
+import { eventServices } from '@/services/eventServices';
+import type { ProcessedEvent, Participant } from '@/app/(dashboard)/dashboard/events/types';
+import { mapServerEventToProcessedEvent } from "@/app/(dashboard)/dashboard/events/utils";
 
 const LearningPage = () => {
   const router = useRouter()
+  const { eventId } = useParams<{ eventId: string }>();
+  const { address, isConnected } = useAccount();
+  const [event, setEvent] = useState<ProcessedEvent | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function load() {
+      if (!eventId) return;
+
+      const response = await eventServices.getEventById(eventId);
+      const processed: ProcessedEvent = mapServerEventToProcessedEvent(response);
+      setEvent(processed);
+      setLoading(false);
+    }
+    load();
+  }, [eventId]);
+
+  if (!isConnected || !address) {
+    // require wallet / auth
+    router.replace('/dashboard/events'); // or login
+    return null;
+  }
+
+  if (loading || !event) return /* spinner */;
+
+  const participant = event.participants.find(
+    (p: Participant) =>
+      p.walletAddress.toLowerCase() === address.toLowerCase() &&
+      p.role === 'volunteer' &&
+      p.status !== 'cancelled'
+  );
+
+  if (!participant) {
+    // Not eligible for this event's learning
+    return <div>You must be a registered or attended volunteer for this event.</div>;
+  }
 
   // Handle start learning click
   const handleQuizClick = () => {

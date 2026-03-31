@@ -1,4 +1,6 @@
+'use client';
 import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   CalendarIcon, 
   ClockIcon, 
@@ -94,10 +96,16 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
   userHasJoined,
   isCreator
 }) => {
+  const router = useRouter();
   // State for collapsible sections
   const [showDetails, setShowDetails] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   
+  const handleStartLearning = () => {
+    if (!event?._id) return;
+    router.push(`/dashboard/events/${event._id}/learning`);
+  };
+
   // State for QR code modal
   const [qrModalState, setQrModalState] = useState<{
     isOpen: boolean;
@@ -365,6 +373,16 @@ const EventDetailsModal: React.FC<EventDetailsModalProps> = ({
             >
               <ArrowLeftOnRectangleIcon className="w-4 h-4" />
               Leave Event
+            </button>
+          )}
+
+          {/* Start Learning button */}
+          {isAuthenticated && userHasJoined && !isPastEvent && (
+            <button
+              onClick={handleStartLearning}
+              className="w-full py-2.5 bg-black hover:bg-black/90 text-white rounded-lg transition-colors mb-3"
+            >
+              Start Learning
             </button>
           )}
           
