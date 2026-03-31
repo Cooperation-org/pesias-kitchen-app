@@ -90,16 +90,9 @@ export default function LandingPage() {
     };
 
     checkAndAuthenticate();
-<<<<<<< HEAD
     // Do not reset hasAttemptedAuth on cleanup to avoid repeat prompts
     return () => {};
-  }, [isConnected, address, redirectToDashboard]);
-=======
-    return () => {
-      hasAttemptedAuth.current = false;
-    };
   }, [isConnected, address, auth.redirectToDashboard]);
->>>>>>> main
 
   // Handle connect wallet click
   const handleConnectClick = () => {
