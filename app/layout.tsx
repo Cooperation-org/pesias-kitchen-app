@@ -3,7 +3,6 @@ import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { SWRProvider } from '@/providers/SWRProvider'
 import ReownProvider from '@/providers/ReownProvider'
-import DynamicProvider from '@/providers/DynamicProvider'
 import { Toaster } from 'sonner'
 import { headers } from 'next/headers'
 
@@ -70,9 +69,7 @@ export default async function RootLayout({
       >
         <SWRProvider>
           <ReownProvider cookies={cookies}>
-            <DynamicProvider>
               {children}
-            </DynamicProvider>
           </ReownProvider>
         </SWRProvider>
         <Toaster position="top-right" richColors />
