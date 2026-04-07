@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 
 export const metadata: Metadata = {
   title: "Pesia's Kitchen - Fighting Food Waste Together",
@@ -36,7 +36,12 @@ export const metadata: Metadata = {
   formatDetection: {
     telephone: false,
   },
-  viewport: 'width=device-width, initial-scale=1, maximum-scale=1',
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 }
 
 export default async function InternalLayout({
