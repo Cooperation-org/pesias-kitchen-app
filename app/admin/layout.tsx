@@ -3,8 +3,9 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useAppKit } from '@reown/appkit/react';
 import { useAccount, useDisconnect } from 'wagmi';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from "@/hooks/useAuth";
+import { useLearningEvent } from '@/hooks/useLearningEvent';
 import CreateEventModal from '@/components/CreateEventModal';
 import Image from "next/image";
 import "../globals.css";
@@ -16,6 +17,7 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
   const { user } = useAuth();
@@ -27,6 +29,8 @@ export default function AdminLayout({
   const { disconnect } = useDisconnect();
 
   const userRole = user?.role || null;
+
+  const { learningEventId, isLoading } = useLearningEvent();
 
   // Fetch user role when wallet is connected
 
@@ -130,7 +134,17 @@ export default function AdminLayout({
         </div>
 
         {/* Right side with hamburger menu */}
-        <div className="flex items-center">
+        <div className="flex items-center gap-3">
+          {!isLoading && learningEventId && (
+            <button
+              onClick={() =>
+                router.push(`/dashboard/events/${learningEventId}/learning`)
+              }
+              className="hidden sm:inline-flex items-center px-3 py-2 rounded-full bg-yellow-400 text-gray-900 text-sm font-medium shadow hover:bg-yellow-500 transition-colors"
+            >
+              Start Learning
+            </button>
+          )}
           <button
             onClick={toggleHamburgerMenu}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"

@@ -1,6 +1,6 @@
 'use client'
 
-import { wagmiAdapter, projectId } from '@/config/wagmi'
+import { wagmiAdapter, config, projectId } from '@/config/wagmi'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { createAppKit } from '@reown/appkit/react'
 import { celo, celoAlfajores } from '@reown/appkit/networks'
@@ -50,10 +50,10 @@ interface ReownProviderProps {
 }
 
 function ReownProvider({ children, cookies }: ReownProviderProps) {
-  const initialState = cookieToInitialState(wagmiAdapter.wagmiConfig as Config, cookies)
+  const initialState = cookieToInitialState(config as Config, cookies)
 
   return (
-    <WagmiProvider config={wagmiAdapter.wagmiConfig as Config} initialState={initialState}>
+    <WagmiProvider config={config as Config} initialState={initialState}>
       <QueryClientProvider client={queryClient}>
         {children}
       </QueryClientProvider>

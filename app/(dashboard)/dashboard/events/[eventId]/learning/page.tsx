@@ -7,11 +7,13 @@ import EducationCard from "@/components/learning/EducationCard";
 import { eventServices } from '@/services/eventServices';
 import type { ProcessedEvent, Participant } from '@/app/(dashboard)/dashboard/events/types';
 import { mapServerEventToProcessedEvent } from "@/app/(dashboard)/dashboard/events/utils";
+import { useAuthContext } from '@/providers/web3Provider';
 
 const LearningPage = () => {
   const router = useRouter()
   const { eventId } = useParams<{ eventId: string }>();
   const { address, isConnected } = useAccount();
+  const { user } = useAuthContext();
   const [event, setEvent] = useState<ProcessedEvent | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -37,9 +39,9 @@ const LearningPage = () => {
 
   const participant = event.participants.find(
     (p: Participant) =>
-      p.walletAddress.toLowerCase() === address.toLowerCase() &&
-      p.role === 'volunteer' &&
-      p.status !== 'cancelled'
+      p._id === user?.id
+      // p.role === 'volunteer' &&
+      // p.status !== 'cancelled'
   );
 
   if (!participant) {
@@ -47,9 +49,8 @@ const LearningPage = () => {
     return <div>You must be a registered or attended volunteer for this event.</div>;
   }
 
-  // Handle start learning click
   const handleQuizClick = () => {
-    router.push('/learning/quiz')
+    router.push('learning/quiz')
   }
   return (
     <section className="px-5 py-10 max-w-lg mx-auto space-y-6">
@@ -106,7 +107,7 @@ const LearningPage = () => {
       >
         <button
           onClick={handleQuizClick}
-          className="gradient-nature rounded-full px-8 py-3.5 text-secondary-foreground font-display font-bold text-base shadow-elevated"
+          className="gradient-nature rounded-full px-8 py-3.5 bg-gray-900 hover:bg-gray-800 text-white font-display font-bold text-base shadow-elevated"
         >
           I'm Ready for the Quiz ✏️
         </button>

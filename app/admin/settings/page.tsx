@@ -6,7 +6,8 @@ import { getAllUsers, updateUserRoleByWallet } from '@/services/api';
 import { User } from '@/types/api';
 
 const ROLES = [
-  { value: 'recipient', label: 'User', description: 'Basic user access' },
+  { value: 'volunteer', label: 'Volunteer', description: 'Basic user access and learning' },
+  { value: 'recipient', label: 'Recipient', description: 'Basic user access' },
   { value: 'admin', label: 'Admin', description: 'Administrative access' },
   { value: 'superadmin', label: 'Super Admin', description: 'Full system access' }
 ];
@@ -77,7 +78,7 @@ export default function SettingsPage() {
     return matchesSearch && matchesRole;
   });
 
-  const getRoleColor = (role: string) => {
+  const getRoleColor = (role?: string) => {
     switch (role) {
       case 'superadmin':
         return 'bg-red-100 text-red-800 border-red-200';
@@ -225,7 +226,7 @@ export default function SettingsPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredUsers.map((user) => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                  <tr key={user._id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <div className="text-sm font-medium text-gray-900">

@@ -97,7 +97,7 @@ export const eventServices = {
         throw new Error('No authentication token found. Please log in.');
       }
       
-      const response = await axios.get(`${API_URL}/api/event/${eventId}`, {
+      const response = await axios.get(`${API_URL}/event/${eventId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
