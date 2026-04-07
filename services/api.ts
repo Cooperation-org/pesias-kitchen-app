@@ -154,6 +154,15 @@ export const recordActivity = (
 /**
  * Mint an NFT for an activity
  */
+export const mintLearningActivityNFT = (
+  data: Partial<Activity>
+): Promise<AxiosResponse<Activity>> => {
+  return api.post(`/activity/mint-learning`, data);
+};
+
+/**
+ * Mint an NFT for an activity
+ */
 export const mintActivityNFT = (
   activityId: string
 ): Promise<AxiosResponse<Activity>> => {

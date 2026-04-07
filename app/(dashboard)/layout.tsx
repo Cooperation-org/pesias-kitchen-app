@@ -1,10 +1,10 @@
 "use client"
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
-import { usePathname } from "next/navigation";
-import "../globals.css";
+import { usePathname, useRouter } from "next/navigation";
 import { useAppKit } from '@reown/appkit/react';
 import { useAccount, useDisconnect } from 'wagmi';
+import { useLearningEvent } from '@/hooks/useLearningEvent';
 import { motion } from "framer-motion";
 import Image from "next/image";
 
@@ -16,6 +16,7 @@ export default function DashboardLayout({
   children,
 }: DashboardLayoutProps) {
   const pathname = usePathname();
+  const router = useRouter();
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
 
   // Direct Reown/Wagmi hooks
@@ -25,6 +26,8 @@ export default function DashboardLayout({
 
   const [shouldShowBackButton, setShouldShowBackButton] = useState(false);
   const [pageTitle, setPageTitle] = useState("Dashboard");
+
+  const { learningEventId, isLoading } = useLearningEvent();
 
   const navigationItems = [
     {
@@ -39,6 +42,16 @@ export default function DashboardLayout({
           strokeLinejoin="round"
         />
       )
+    },
+    {
+      href: learningEventId
+        ? `/dashboard/events/${learningEventId}/learning`
+        : "#",
+      label: "Start Learning",
+      icon: (
+        <path d="M508 916.8c-49.6 0-92.8-16-124-45.6l-0.8-0.8H133.6c-38.4 0-69.6-31.2-69.6-69.6V172c0-38.4 31.2-69.6 69.6-69.6h238.4c52 0 100.8 23.2 133.6 64l3.2 3.2 3.2-3.2c32.8-40.8 81.6-64 133.6-64h238.4c38.4 0 69.6 31.2 69.6 69.6v629.6c0 38.4-31.2 69.6-69.6 69.6H632.8l-0.8 0.8c-31.2 29.6-74.4 44.8-124 44.8z m136-772.8c-72 8.8-110.4 40-110.4 89.6v639.2l4-0.8c21.6-4.8 40.8-15.2 55.2-31.2l2.4-3.2c4-6.4 9.6-10.4 12-10.4h301.6l-1.6-683.2H644z m-220.8 697.6c14.4 15.2 33.6 25.6 57.6 30.4l4 0.8V233.6c0-62.4-60.8-86.4-112.8-88.8H106.4v683.2H408c1.6 0 9.6 5.6 12.8 10.4l2.4 3.2z" />
+      ),
+      hidden: !learningEventId || isLoading,
     },
     {
       href: "/dashboard/events",
@@ -148,7 +161,17 @@ export default function DashboardLayout({
             </div>
 
             {/* Right side with hamburger menu */}
-            <div className="flex items-center">
+            <div className="flex items-center gap-3">
+              {!isLoading && learningEventId && (
+                <button
+                  onClick={() =>
+                    router.push(`/dashboard/events/${learningEventId}/learning`)
+                  }
+                  className="hidden sm:inline-flex items-center px-3 py-2 rounded-full bg-yellow-400 text-gray-900 text-sm font-medium shadow hover:bg-yellow-500 transition-colors"
+                >
+                  Start Learning
+                </button>
+              )}
               <button
                 onClick={toggleHamburgerMenu}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -243,61 +266,64 @@ export default function DashboardLayout({
 
                 {/* Navigation Items */}
                 <nav className="p-4">
-                  {navigationItems.map((item) => (
-                    item.external ? (
-                      <a
-                        key={item.href}
-                        href={item.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={closeHamburgerMenu}
-                        className="flex items-center gap-4 p-4 rounded-lg mb-2 transition-colors text-gray-700 hover:bg-gray-100"
-                      >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="flex-shrink-0"
+                  {navigationItems
+                    .filter(item => !item.hidden)
+                    .map((item) => (
+                      item.external ? (
+                        <a
+                          key={item.href}
+                          href={item.href}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={closeHamburgerMenu}
+                          className="flex items-center gap-4 p-4 rounded-lg mb-2 transition-colors text-gray-700 hover:bg-gray-100"
                         >
-                          {item.icon}
-                        </svg>
-                        <span>{item.label}</span>
-                      </a>
-                    ) : (
-                      <Link
-                        key={item.href}
-                        href={item.href}
-                        onClick={closeHamburgerMenu}
-                        className={`flex items-center gap-4 p-4 rounded-lg mb-2 transition-colors ${
-                          pathname === item.href
-                            ? "bg-yellow-100 text-yellow-700 font-medium"
-                            : "text-gray-700 hover:bg-gray-100"
-                        }`}
-                      >
-                        <svg
-                          width="24"
-                          height="24"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          className="flex-shrink-0"
+                          <svg
+                            width="24"
+                            height="24"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="flex-shrink-0"
+                          >
+                            {item.icon}
+                          </svg>
+                          <span>{item.label}</span>
+                        </a>
+                      ) : (
+                        <Link
+                          key={item.href}
+                          href={item.href}
+                          onClick={closeHamburgerMenu}
+                          className={`flex items-center gap-4 p-4 rounded-lg mb-2 transition-colors ${
+                            pathname === item.href
+                              ? "bg-yellow-100 text-yellow-700 font-medium"
+                              : "text-gray-700 hover:bg-gray-100"
+                          }`}
                         >
-                          {item.icon}
-                        </svg>
-                        <span>{item.label}</span>
-                        {pathname === item.href && (
-                          <div className="w-2 h-2 bg-yellow-400 rounded-full ml-auto"></div>
-                        )}
-                      </Link>
-                    )
+                          <svg
+                            width="24"
+                            height="24"
+                            // implementing easy fix for now
+                            viewBox={ item.label === "Start Learning" ? "0 0 1024 1024" : "0 0 24 24"}
+                            fill={ item.label === "Start Learning" ? "#000" : "none"}
+                            stroke="currentColor"
+                            strokeWidth="1.5"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            className="flex-shrink-0"
+                          >
+                            {item.icon}
+                          </svg>
+                          <span>{item.label}</span>
+                          {pathname === item.href && (
+                            <div className="w-2 h-2 bg-yellow-400 rounded-full ml-auto"></div>
+                          )}
+                        </Link>
+                      )
                   ))}
                 </nav>
               </div>

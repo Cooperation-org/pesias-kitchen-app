@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { getUser, getToken, clearAuthData, setWalletConnectionStatus } from '@/services/authServices';
 import { toast } from 'sonner';
 import { useEffect, useCallback } from 'react';
+import { getCurrentUser } from '@/services/api';
 
 // Fetcher function for SWR
 const authFetcher = async () => {
@@ -80,21 +81,42 @@ export function useAuth() {
 
   // Load initial auth data when wallet changes
   useEffect(() => {
-    if (isConnected && address) {
+    const syncAuthWithBackend = async () => {
+      if (!isConnected || !address) return;
+
       const storedToken = getToken();
       const storedUser = getUser();
 
-      if (storedToken && storedUser) {
-        if (address.toLowerCase() === storedUser.walletAddress?.toLowerCase()) {
-          // Trigger a revalidation of the auth data
-          mutateAuth({ token: storedToken, user: storedUser }, { revalidate: true });
-        } else {
-          clearAuthData();
-          logout();
-        }
+      if (!storedToken || !storedUser) return;
+
+      // Wallet mismatch → logout
+      if (address.toLowerCase() !== storedUser.walletAddress?.toLowerCase()) {
+        clearAuthData();
+        logout();
+        return;
       }
-    }
-  }, [address, isConnected, logout]);
+
+      // Fetch canonical user from backend
+      const res = await getCurrentUser();
+      const backendUser = res.data;
+
+      // If role differs, update local storage + cookie from backend
+      if (backendUser.role !== storedUser.role) {
+        const updatedUser = { ...storedUser, role: backendUser.role };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        document.cookie = `userRole=${backendUser.role}; path=/; max-age=2592000`;
+      }
+
+      // Ensure SWR state uses backend user
+      mutateAuth(
+        { token: storedToken, user: { ...storedUser, role: backendUser.role } },
+        { revalidate: true }
+      );
+
+    };
+
+    syncAuthWithBackend();
+  }, [address, isConnected, logout, mutateAuth]);
 
   return {
     // Auth state

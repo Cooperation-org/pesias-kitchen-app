@@ -64,11 +64,11 @@ const QuizPage = () => {
   const [showResult, setShowResult] = useState(false);
 
   const handlePass = () => {
-    router.push("/learning/impact");
+    router.push("impact");
   };
 
   const handleFail = () => {
-    router.push("/learning"); // back to learning module
+    router.push("../learning"); // back to learning module
   };
 
   const handleSelect = (idx: number) => {
@@ -139,7 +139,7 @@ const QuizPage = () => {
           <span className="text-sm font-display font-bold text-muted-foreground">
             Question {currentQ + 1}/{questions.length}
           </span>
-          <span className="text-sm font-display font-semibold text-eat-orange">
+          <span className="text-sm font-display font-semibold text-chart-4">
             {Math.round(((currentQ) / questions.length) * 100)}% complete
           </span>
         </div>
@@ -168,12 +168,12 @@ const QuizPage = () => {
             {q.options.map((opt, idx) => {
               const isSelected = selected === idx;
               const isCorrect = idx === q.correct;
-              let optionStyle = "border-border bg-card hover:border-primary/40";
+              let optionStyle = "border-border bg-card hover:border-chart-5";
               
               if (selected !== null) {
-                if (isSelected && isCorrect) optionStyle = "border-eat-green bg-eat-green/10";
-                else if (isSelected && !isCorrect) optionStyle = "border-eat-red bg-eat-red/10";
-                else if (isCorrect) optionStyle = "border-eat-green/50 bg-eat-green/5";
+                if (isSelected && isCorrect) optionStyle = "border-chart-2 bg-chart-2/10";
+                else if (isSelected && !isCorrect) optionStyle = "border-chart-1 bg-chart-1/10";
+                else if (isCorrect) optionStyle = "border-chart-2/50 bg-chart-2/5";
               }
 
               return (

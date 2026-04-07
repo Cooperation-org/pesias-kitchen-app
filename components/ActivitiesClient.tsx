@@ -7,6 +7,7 @@ import { Activity as ApiActivity, Participant, Reward, NFT } from '@/types/api'
 import useSWR from 'swr'
 import { toast } from 'sonner'
 import { SWR_ENDPOINTS } from '@/types/api'
+import { useUserActivities } from "@/hooks/useUserActivities"
 
 // Types
 interface EventType {
@@ -49,159 +50,8 @@ interface ProcessedActivity {
   nftTokenId?: string;
 }
 
-// Custom hooks
-const useActivitiesData = () => {
-  // Fetch activities
-  const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities } = useSWR<ApiActivity[]>(
-    [SWR_ENDPOINTS.USER_ACTIVITIES.key],
-    async () => {
-      const response = await getUserActivities();
-      return response.data;
-    },
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 5000,
-      refreshInterval: 30000, // Refresh every 30 seconds
-      onError: (err) => {
-        console.error('Error fetching activities:', err);
-        toast.error('Failed to load activities. Please try again later.');
-      }
-    }
-  );
-
-  // Fetch rewards
-  const { data: rewardsData, error: rewardsError } = useSWR<Reward[]>(
-    [SWR_ENDPOINTS.REWARDS.key],
-    async () => {
-      const response = await getRewardsHistory();
-      return response.rewards || [];
-    },
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 5000,
-      refreshInterval: 30000,
-      onError: (err) => {
-        console.error('Error fetching rewards:', err);
-        toast.error('Failed to load rewards. Please try again later.');
-      }
-    }
-  );
-
-  // Fetch NFTs
-  const { data: nftsData, error: nftsError } = useSWR<NFT[]>(
-    [SWR_ENDPOINTS.NFTS.key],
-    async () => {
-      const response = await getUserNFTs();
-      return response.nfts || [];
-    },
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 5000,
-      refreshInterval: 30000,
-      onError: (err) => {
-        console.error('Error fetching NFTs:', err);
-        toast.error('Failed to load NFTs. Please try again later.');
-      }
-    }
-  );
-
-  // Add mutate function for activities
-  const { mutate: mutateActivities } = useSWR([SWR_ENDPOINTS.USER_ACTIVITIES.key]);
-  const { mutate: mutateNFTs } = useSWR([SWR_ENDPOINTS.NFTS.key]);
-
-  // Function to handle NFT minting
-  const handleMintNFT = useCallback(async (activityId: string) => {
-    try {
-      toast.loading('Claiming G$ and minting NFT...', { id: 'mint-nft' });
-      await mintActivityNFT(activityId);
-      
-      // Revalidate both activities and NFTs data
-      await Promise.all([
-        mutateActivities(),
-        mutateNFTs()
-      ]);
-
-      toast.success('G$ claimed and NFT minted successfully!', { id: 'mint-nft' });
-    } catch (error) {
-      console.error('Error minting NFT:', error);
-      toast.error('Failed to claim G$ and mint NFT. Please try again.', { id: 'mint-nft' });
-    }
-  }, [mutateActivities, mutateNFTs]);
-
-  // Process activities data
-  const processedActivities = useMemo(() => {
-    if (!activitiesData) return [];
-
-    // Create maps for quick lookups
-    const activityRewardsMap = (rewardsData || []).reduce((map, reward) => {
-      map[reward.activityId] = reward;
-      return map;
-    }, {} as Record<string, Reward>);
-
-    const activityNFTMap = (nftsData || []).reduce((map, nft) => {
-      const activityId = nft.id.split('-').length > 1 ? nft.id.split('-')[1] : '';
-      if (activityId) map[activityId] = nft;
-      return map;
-    }, {} as Record<string, NFT>);
-
-    // Process each activity
-    return activitiesData.map(activity => {
-      const eventDetails = typeof activity.event === 'object' ? activity.event : null;
-      const activityType = eventDetails?.activityType || 'default';
-      
-      // Get reward amount - use actual reward amount from activity or QR code
-      const activityId = activity._id;
-      const reward = activityRewardsMap[activityId];
-      const rewardAmount = reward ? reward.rewardAmount : (
-        // Use actual reward amount from activity (should always be available now)
-        (activity as any).rewardAmount || 1 // Default to 1 if somehow missing
-      );
-      
-      // Format date/time
-      const timestamp = new Date(activity.timestamp);
-      const formattedDate = timestamp.toLocaleDateString('en-GB', { 
-        day: '2-digit', 
-        month: 'short', 
-        year: 'numeric' 
-      });
-      const formattedTime = timestamp.toLocaleTimeString('en-GB', {
-        hour: '2-digit',
-        minute: '2-digit'
-      });
-      
-      // Check NFT status
-      const hasNFT = !!activity.nftId || !!activityNFTMap[activityId];
-      
-      return {
-        ...activity,
-        title: eventDetails?.title || 'Activity',
-        activityType: activityType,
-        location: eventDetails?.location || 'Unknown Location',
-        date: formattedDate,
-        time: formattedTime,
-        timestamp: activity.timestamp,
-        amount: `${rewardAmount}`,
-        hasNFT: hasNFT
-      } as ProcessedActivity;
-    });
-  }, [activitiesData, rewardsData, nftsData]);
-
-  const isLoading = isLoadingActivities;
-  const error = activitiesError || rewardsError || nftsError;
-
-  return {
-    activities: processedActivities,
-    isLoading,
-    error: error?.message || null,
-    handleMintNFT
-  };
-};
-
 export default function ActivitiesClient() {
-  const { activities, isLoading, error, handleMintNFT } = useActivitiesData();
+  const { activities, isLoading, error, handleMintNFT } = useUserActivities();
   const [showEventModal, setShowEventModal] = useState(false);
   const [selectedActivity, setSelectedActivity] = useState<ProcessedActivity | null>(null);
   const [sortBy, setSortBy] = useState("date");

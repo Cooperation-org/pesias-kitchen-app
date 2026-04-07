@@ -5,6 +5,7 @@ import { SWRProvider } from '@/providers/SWRProvider'
 import ReownProvider from '@/providers/ReownProvider'
 import { Toaster } from 'sonner'
 import { headers } from 'next/headers'
+import { AppProvider } from '@/providers/web3Provider'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -69,7 +70,9 @@ export default async function RootLayout({
       >
         <SWRProvider>
           <ReownProvider cookies={cookies}>
+            <AppProvider>
               {children}
+            </AppProvider>
           </ReownProvider>
         </SWRProvider>
         <Toaster position="top-right" richColors />

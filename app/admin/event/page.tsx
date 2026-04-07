@@ -12,7 +12,6 @@ const Page = () => {
   const fetchActivities = async () => {
     try {
       const response = await getallActivities()
-      console.log(response.data, 'fucked')
       return response.data
     } catch (error) {
       console.error('Error fetching activities:', error)
