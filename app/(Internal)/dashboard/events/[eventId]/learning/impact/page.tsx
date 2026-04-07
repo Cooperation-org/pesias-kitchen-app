@@ -3,8 +3,8 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from "react";
 import { useAccount } from 'wagmi';
 import { eventServices } from '@/services/eventServices';
-import type { ProcessedEvent, Participant } from '@/app/(dashboard)/dashboard/events/types';
-import { mapServerEventToProcessedEvent } from "@/app/(dashboard)/dashboard/events/utils";
+import type { ProcessedEvent, Participant } from '@/app/(Internal)/dashboard/events/types';
+import { mapServerEventToProcessedEvent } from "@/app/(Internal)/dashboard/events/utils";
 import api, { mintLearningActivityNFT } from '@/services/api';
 import { AxiosResponse } from 'axios'
 import { useAuthContext } from '@/providers/web3Provider';

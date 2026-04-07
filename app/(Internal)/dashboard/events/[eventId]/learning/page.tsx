@@ -5,8 +5,8 @@ import { useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import EducationCard from "@/components/learning/EducationCard";
 import { eventServices } from '@/services/eventServices';
-import type { ProcessedEvent, Participant } from '@/app/(dashboard)/dashboard/events/types';
-import { mapServerEventToProcessedEvent } from "@/app/(dashboard)/dashboard/events/utils";
+import type { ProcessedEvent, Participant } from '@/app/(Internal)/dashboard/events/types';
+import { mapServerEventToProcessedEvent } from "@/app/(Internal)/dashboard/events/utils";
 import { useAuthContext } from '@/providers/web3Provider';
 
 const LearningPage = () => {

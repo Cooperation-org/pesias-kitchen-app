@@ -2,7 +2,7 @@
 import React from "react"
 
 
-export default function DashboardLayout({
+export default function ScanLayout({
   children,
 }: {
   children: React.ReactNode

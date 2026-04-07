@@ -1,4 +1,3 @@
-// app/(dashboard)/dashboard/page.tsx
 import { Metadata } from 'next'
 import DashboardClient from '@/components/DashboardClient'
 

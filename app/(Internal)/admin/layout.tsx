@@ -8,7 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { useLearningEvent } from '@/hooks/useLearningEvent';
 import CreateEventModal from '@/components/CreateEventModal';
 import Image from "next/image";
-import "../globals.css";
 
 
 export default function AdminLayout({
