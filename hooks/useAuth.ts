@@ -1,6 +1,6 @@
 import useSWR, { mutate } from 'swr';
 import { useAccount } from 'wagmi';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { getUser, getToken, clearAuthData, setWalletConnectionStatus } from '@/services/authServices';
 import { toast } from 'sonner';
 import { useEffect, useCallback } from 'react';
@@ -12,7 +12,7 @@ const authFetcher = async () => {
   const user = getUser();
   
   if (!token || !user) {
-    throw new Error('Not authenticated');
+    return undefined;
   }
   
   return { token, user };
@@ -20,22 +20,21 @@ const authFetcher = async () => {
 
 export function useAuth() {
   const router = useRouter();
+  const pathname = usePathname();
   const { address, isConnected } = useAccount();
   
   // Use SWR to manage auth state with automatic revalidation
   const { data, error, isLoading, mutate: mutateAuth } = useSWR(
-    isConnected ? '/api/auth' : null,
+    isConnected ? '/api/auth' : undefined,
     authFetcher,
     {
       revalidateOnFocus: false, // Don't revalidate on window focus
       revalidateOnReconnect: false, // Avoid reconnect-triggered loops
       dedupingInterval: 5000, // Dedupe requests within 5 seconds
       errorRetryCount: 0, // Do not auto-retry to avoid multiple redirects
-      onError: (err) => {
-        if (err.message === 'Not authenticated') {
-          clearAuthData();
-          router.replace('/');
-        }
+      onError: () => {
+        clearAuthData();
+        router.replace('/')
       },
     }
   );
@@ -70,14 +69,21 @@ export function useAuth() {
 
   // Update wallet connection status and handle disconnection
   useEffect(() => {
+    const isProtected = pathname !== '/';
+
+    if (!isProtected) {
+      setWalletConnectionStatus(isConnected);
+      return;
+    }
+
     const wasConnected = document.cookie.includes('walletConnected=true');
     setWalletConnectionStatus(isConnected);
     
     // Only trigger logout if we were previously connected
-    if (!isConnected && wasConnected) {
+    if (!isConnected && wasConnected && data?.token) {
       logout();
     }
-  }, [isConnected]);
+  }, [isConnected, pathname, data?.token, logout]);
 
   // Load initial auth data when wallet changes
   useEffect(() => {
@@ -110,7 +116,7 @@ export function useAuth() {
       // Ensure SWR state uses backend user
       mutateAuth(
         { token: storedToken, user: { ...storedUser, role: backendUser.role } },
-        { revalidate: true }
+        { revalidate: false }
       );
 
     };
@@ -120,10 +126,12 @@ export function useAuth() {
 
   return {
     // Auth state
+    isConnected,
     isAuthenticated: !!data?.token && !!data?.user && isConnected,
     user: data?.user ?? null,
     token: data?.token ?? null,
-    isLoading: isLoading || (!isConnected && !error),
+    address,
+    isLoading,
     error,
 
     // Actions
@@ -132,4 +140,4 @@ export function useAuth() {
     redirectToDashboard,
     mutateAuth,
   };
-} 
+}

@@ -10,7 +10,7 @@ interface NonceResponse {
 }
 
 // Interface for user data
-interface UserData {
+export interface UserData {
   id: string;
   walletAddress: string;
   role: string;
@@ -28,7 +28,6 @@ interface AuthResponse {
  * @param walletAddress Ethereum wallet address
  */
 export const getNonce = async (walletAddress: string) => {
-  console.log("Requesting nonce for wallet:", walletAddress);
   return apiPost<NonceResponse>('/auth/nonce', { walletAddress });
 };
 
@@ -39,12 +38,6 @@ export const getNonce = async (walletAddress: string) => {
  * @param message Optional message that was signed (for backend verification)
  */
 export const verifySignature = async (walletAddress: string, signature: string, message?: string) => {
-  console.log("Verifying signature:", { 
-    walletAddress, 
-    signature: signature.substring(0, 20) + "...",
-    hasMessage: !!message,
-    messagePreview: message ? message.substring(0, 50) + "..." : "none"
-  });
   
   // Check if both parameters are present
   if (!walletAddress || !signature) {

@@ -11,12 +11,6 @@ export const metadata: Metadata = {
   },
 }
 
-// Force dynamic rendering since we're using client-side data fetching
-export const dynamic = 'force-dynamic'
-
-// Disable static page generation since we need real-time data
-export const revalidate = 0
-
 export default function DashboardPage() {
   return (
     <main className="min-h-screen bg-gray-50">

@@ -44,12 +44,12 @@ createAppKit({
   }
 })
 
-interface ReownProviderProps {
+interface Web3BaseProviderProps {
   children: ReactNode
   cookies: string | null
 }
 
-function ReownProvider({ children, cookies }: ReownProviderProps) {
+function Web3BaseProvider({ children, cookies }: Web3BaseProviderProps) {
   const initialState = cookieToInitialState(config as Config, cookies)
 
   return (
@@ -61,4 +61,4 @@ function ReownProvider({ children, cookies }: ReownProviderProps) {
   )
 }
 
-export default ReownProvider
+export default Web3BaseProvider

@@ -8,7 +8,7 @@ import useSWR from 'swr';
 import { getUserNFTs } from '@/services/api';
 import { SWR_ENDPOINTS } from '@/types/api';
 import type { NFT, NFTsResponse } from '@/types/api';
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/AppProvider';
 
 import NFTCard from './NFTCard';
 import NFTModal from './NFTModal';

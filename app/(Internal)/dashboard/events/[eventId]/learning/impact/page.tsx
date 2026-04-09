@@ -7,7 +7,7 @@ import type { ProcessedEvent, Participant } from '@/app/(Internal)/dashboard/eve
 import { mapServerEventToProcessedEvent } from "@/app/(Internal)/dashboard/events/utils";
 import api, { mintLearningActivityNFT } from '@/services/api';
 import { AxiosResponse } from 'axios'
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/AppProvider';
 import { useUserActivities } from '@/hooks/useUserActivities';
 import { motion } from 'framer-motion';
 import { Activity } from '@/types/api';
@@ -56,18 +56,12 @@ const ImpactPage = () => {
         const quizQrRes = await api.post(`/qrquiz/quiz/${processed.id}`);
         const quizQr = quizQrRes.data.qrCode;
 
-        console.log("QUIZ QR", quizQr)
-
         const activityData = {
           eventId: quizQr.event.id,
           qrCodeId: quizQr.id,
           quantity: quizQr.event.defaultQuantity || 1,
           notes: 'Completed learning module quiz',
         }
-
-        console.log("ACTIVITY DATA EVENT ID: ", activityData.eventId)
-
-        console.log("ACTIVITY DATA: ", activityData)
 
         const activityRes = await mintLearningActivityNFT(activityData) as unknown as AxiosResponse<ActivityResponse>;
         const newActivity = activityRes.data.activity;

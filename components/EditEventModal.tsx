@@ -47,7 +47,6 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
 
   useEffect(() => {
     if (isOpen && eventId) {
-      console.log('EditEventModal - Fetching event with ID:', eventId); // Debug log
       fetchEvent();
     } else if (isOpen && !eventId) {
       console.error('EditEventModal opened without an eventId');
@@ -59,10 +58,8 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
   const fetchEvent = async () => {
     try {
       setIsLoading(true);
-      console.log(`Fetching event with ID: ${eventId}`); // Debug log
       
       const response = await getEventById(eventId);
-      console.log('API Response:', response); // Debug log
       
       // Handle different API response structures
       let eventData: Event;
@@ -79,8 +76,6 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
       if (!eventData || !eventData._id) {
         throw new Error('Invalid event data structure');
       }
-
-      console.log('Parsed event data:', eventData); // Debug log
 
       // Parse the ISO date string to separate date and time
       const eventDate = new Date(eventData.date || '');
@@ -120,8 +115,6 @@ export default function EditEventModal({ isOpen, onClose, eventId, onEventUpdate
         ...restData,
         date: combinedDateTime,
       };
-
-      console.log(`Updating event with ID: ${eventId}`, requestData); // Debug log
 
       // Send update request
       await updateEvent(eventId, requestData);

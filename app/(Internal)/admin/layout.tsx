@@ -1,13 +1,11 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
-import { useAppKit } from '@reown/appkit/react';
-import { useAccount, useDisconnect } from 'wagmi';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from "@/hooks/useAuth";
-import { useLearningEvent } from '@/hooks/useLearningEvent';
+import { usePathname } from 'next/navigation';
 import CreateEventModal from '@/components/CreateEventModal';
 import Image from "next/image";
+import { useAuthContext } from "@/providers/AppProvider";
+import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton";
 
 
 export default function AdminLayout({
@@ -16,20 +14,11 @@ export default function AdminLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const router = useRouter();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
-  const { user } = useAuth();
-
-
-  // Direct Reown/Wagmi hooks
-  const { open } = useAppKit();
-  const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
+  const { user, address, isAuthenticated, enhancedLogout, isLoading: authHookLoading, error: authHookError } = useAuthContext();
 
   const userRole = user?.role || null;
-
-  const { learningEventId, isLoading } = useLearningEvent();
 
   // Fetch user role when wallet is connected
 
@@ -40,15 +29,9 @@ export default function AdminLayout({
     window.location.reload();
   };
 
-  // Handlers
-  const handleConnect = () => {
-    console.log('Admin - Connect button clicked'); // Debug log
-    open();
-  };
-
   const handleDisconnect = () => {
     console.log('Admin - Disconnect button clicked'); // Debug log
-    disconnect();
+    enhancedLogout();
   };
 
   const toggleHamburgerMenu = () => {
@@ -58,8 +41,6 @@ export default function AdminLayout({
   const closeHamburgerMenu = () => {
     setShowHamburgerMenu(false);
   };
-
-  console.log('Admin Layout - Current state:', { isConnected, address, userRole }); // Debug log
 
   const navigationItems = [
     {
@@ -113,6 +94,10 @@ export default function AdminLayout({
     }
   ];
 
+  if (!user || !address || !isAuthenticated) {
+    return <LoadingSkeleton />;
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Header with hamburger menu and wallet connection */}
@@ -133,17 +118,7 @@ export default function AdminLayout({
         </div>
 
         {/* Right side with hamburger menu */}
-        <div className="flex items-center gap-3">
-          {!isLoading && learningEventId && (
-            <button
-              onClick={() =>
-                router.push(`/dashboard/events/${learningEventId}/learning`)
-              }
-              className="hidden sm:inline-flex items-center px-3 py-2 rounded-full bg-yellow-400 text-gray-900 text-sm font-medium shadow hover:bg-yellow-500 transition-colors"
-            >
-              Start Learning
-            </button>
-          )}
+        <div className="flex items-center">
           <button
             onClick={toggleHamburgerMenu}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
@@ -204,7 +179,11 @@ export default function AdminLayout({
 
               {/* Wallet Connection Section */}
               <div className="flex flex-col gap-2">
-                {isConnected && address ? (
+                {authHookLoading ? (
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-gray-500">Checking wallet…</span>
+                  </div>
+                ) : isAuthenticated && address ? (
                   <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -221,17 +200,18 @@ export default function AdminLayout({
                     >
                       Logout
                     </button>
+                    {authHookError && (
+                      <p className="mt-1 text-xs text-red-500">
+                        {authHookError.message ?? "Authentication failed. Try reconnecting."}
+                      </p>
+                    )}
                   </div>
                 ) : (
-                  <button
-                    onClick={() => {
-                      handleConnect();
-                      closeHamburgerMenu();
-                    }}
-                    className="w-full px-4 py-2 bg-yellow-400 text-gray-800 rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors"
-                  >
-                    Connect Wallet
-                  </button>
+                  <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <span className="text-sm text-red-500">
+                      Session expired. Please go back to the home page to reconnect.
+                    </span>
+                  </div>
                 )}
               </div>
             </div>
@@ -320,7 +300,7 @@ export default function AdminLayout({
               </button>
 
               {/* Settings Button - Only for SuperAdmin */}
-              {userRole === 'superadmin' && (
+              {user?.role === 'superadmin' && (
                 <>
                   <div className="border-t border-gray-200 my-4"></div>
                   <Link

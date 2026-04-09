@@ -123,12 +123,12 @@ export function useActivities(filter?: string) {
   //   }
   // );
 
-  console.log('SWR state:', { 
-    hasData: !!activitiesData,
-    isArray: Array.isArray(activitiesData),
-    length: activitiesData?.length,
-    firstActivity: activitiesData?.[0]
-  });
+  // console.log('SWR state:', { 
+  //   hasData: !!activitiesData,
+  //   isArray: Array.isArray(activitiesData),
+  //   length: activitiesData?.length,
+  //   firstActivity: activitiesData?.[0]
+  // });
 
   const activities = activitiesData || [];
   // const isLoading = isLoadingActivities || isLoadingAnalytics;
@@ -141,12 +141,12 @@ export function useActivities(filter?: string) {
     ? activities.filter(activity => activity.event.activityType === filter)
     : activities;
   
-  console.log('Filtered activities:', {
-    filter,
-    isArray: Array.isArray(filteredActivities),
-    length: filteredActivities.length,
-    firstActivity: filteredActivities[0]
-  });
+  // console.log('Filtered activities:', {
+  //   filter,
+  //   isArray: Array.isArray(filteredActivities),
+  //   length: filteredActivities.length,
+  //   firstActivity: filteredActivities[0]
+  // });
 
   // Sort activities by date (newest first)
   const sortedActivities = [...filteredActivities].sort((a, b) => 
@@ -264,8 +264,8 @@ export function useActivities(filter?: string) {
     calculationTime: "0ms"
   };
 
-  console.log('Final metrics being used:', metrics);
-  console.log('totalGDollars value:', metrics.totalGDollars);
+  // console.log('Final metrics being used:', metrics);
+  // console.log('totalGDollars value:', metrics.totalGDollars);
 
   // Get recent activities (last 3)
   const recentActivities = processedActivities.slice(0, 3);

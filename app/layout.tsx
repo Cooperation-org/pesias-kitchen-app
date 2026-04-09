@@ -1,10 +1,10 @@
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
-import { SWRProvider } from '@/providers/SWRProvider'
-import ReownProvider from '@/providers/ReownProvider'
 import { Toaster } from 'sonner'
 import { headers } from 'next/headers'
-import { AppProvider } from '@/providers/web3Provider'
+import SWRProvider from '@/providers/SWRProvider'
+import Web3BaseProvider from '@/providers/Web3BaseProvider'
+import AppProvider from '@/providers/AppProvider'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -29,11 +29,11 @@ export default async function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans h-full`}
       >
         <SWRProvider>
-          <ReownProvider cookies={cookies}>
+          <Web3BaseProvider cookies={cookies}>
             <AppProvider>
               {children}
             </AppProvider>
-          </ReownProvider>
+          </Web3BaseProvider>
         </SWRProvider>
         <Toaster position="top-right" richColors />
       </body>

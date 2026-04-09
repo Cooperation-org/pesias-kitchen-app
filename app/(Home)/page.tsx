@@ -1,8 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { useAccount, useSignMessage } from "wagmi";
-import { useAuth } from "@/hooks/useAuth";
-import { useAppKit } from '@reown/appkit/react';
+import { useSignMessage } from "wagmi";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,11 +8,13 @@ import {
   verifySignature,
   storeAuthData,
 } from "@/services/authServices";
+import { useAuthContext } from "@/providers/AppProvider";
+// borrowing these from dashboard
+import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton";
+import { ErrorState } from "@/components/dashboard/ErrorState";
 
 export default function LandingPage() {
-  const { isConnected, address } = useAccount();
-  const auth = useAuth();
-  const { open: openAppKit } = useAppKit();
+  const { isAuthenticated, isConnected, address, openAppKit, redirectToDashboard, isLoading: authHookLoading, error: authHookError  } = useAuthContext();
   const { signMessageAsync } = useSignMessage();
 
   const [authLoading, setAuthLoading] = useState(false);
@@ -54,7 +54,7 @@ export default function LandingPage() {
         }
 
         storeAuthData(authResponse.data.token, authResponse.data.user);
-        auth.redirectToDashboard();
+        redirectToDashboard();
       } catch (signError) {
         const errorMessage =
           signError instanceof Error
@@ -84,15 +84,15 @@ export default function LandingPage() {
         !isProcessing.current
       ) {
         await authenticate();
-      } else if (isConnected && localStorage.getItem("token")) {
-        auth.redirectToDashboard();
+      } else if (isAuthenticated) {
+        redirectToDashboard();
       }
     };
 
     checkAndAuthenticate();
     // Do not reset hasAttemptedAuth on cleanup to avoid repeat prompts
     return () => {};
-  }, [isConnected, address, auth.redirectToDashboard]);
+  }, [isAuthenticated, isConnected, address, redirectToDashboard]);
 
   // Handle connect wallet click
   const handleConnectClick = () => {
@@ -103,6 +103,14 @@ export default function LandingPage() {
       openAppKit();
     }
   };
+
+  if (authHookLoading) {
+    return <LoadingSkeleton />;
+  }
+  
+  if (authHookError) {
+    return <ErrorState error={authHookError.message} />;
+  }
 
   return (
     <div className="min-h-screen bg-white">

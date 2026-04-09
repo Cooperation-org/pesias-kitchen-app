@@ -2,18 +2,16 @@
 import { motion } from "framer-motion";
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
 import EducationCard from "@/components/learning/EducationCard";
 import { eventServices } from '@/services/eventServices';
 import type { ProcessedEvent, Participant } from '@/app/(Internal)/dashboard/events/types';
 import { mapServerEventToProcessedEvent } from "@/app/(Internal)/dashboard/events/utils";
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/AppProvider';
 
 const LearningPage = () => {
   const router = useRouter()
   const { eventId } = useParams<{ eventId: string }>();
-  const { address, isConnected } = useAccount();
-  const { user } = useAuthContext();
+  const { user, address, isAuthenticated, isLoading: authHookLoading, error: authHookError } = useAuthContext();
   const [event, setEvent] = useState<ProcessedEvent | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -29,9 +27,9 @@ const LearningPage = () => {
     load();
   }, [eventId]);
 
-  if (!isConnected || !address) {
+  if (!isAuthenticated || !address) {
     // require wallet / auth
-    router.replace('/dashboard/events'); // or login
+    router.replace('/'); // or login
     return null;
   }
 

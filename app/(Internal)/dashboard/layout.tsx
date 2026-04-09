@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation";
-import { useAppKit } from '@reown/appkit/react';
-import { useAccount, useDisconnect } from 'wagmi';
 import { useLearningEvent } from '@/hooks/useLearningEvent';
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { useAuthContext } from "@/providers/AppProvider";
+import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -19,15 +19,12 @@ export default function DashboardLayout({
   const router = useRouter();
   const [showHamburgerMenu, setShowHamburgerMenu] = useState(false);
 
-  // Direct Reown/Wagmi hooks
-  const { open } = useAppKit();
-  const { address, isConnected } = useAccount();
-  const { disconnect } = useDisconnect();
+  const { address, isAuthenticated, enhancedLogout, isLoading: authHookLoading, error: authHookError } = useAuthContext();
 
   const [shouldShowBackButton, setShouldShowBackButton] = useState(false);
   const [pageTitle, setPageTitle] = useState("Dashboard");
 
-  const { learningEventId, isLoading } = useLearningEvent();
+  const { learningEventId, isLoading: learningHookLoading } = useLearningEvent();
 
   const navigationItems = [
     {
@@ -51,7 +48,7 @@ export default function DashboardLayout({
       icon: (
         <path d="M508 916.8c-49.6 0-92.8-16-124-45.6l-0.8-0.8H133.6c-38.4 0-69.6-31.2-69.6-69.6V172c0-38.4 31.2-69.6 69.6-69.6h238.4c52 0 100.8 23.2 133.6 64l3.2 3.2 3.2-3.2c32.8-40.8 81.6-64 133.6-64h238.4c38.4 0 69.6 31.2 69.6 69.6v629.6c0 38.4-31.2 69.6-69.6 69.6H632.8l-0.8 0.8c-31.2 29.6-74.4 44.8-124 44.8z m136-772.8c-72 8.8-110.4 40-110.4 89.6v639.2l4-0.8c21.6-4.8 40.8-15.2 55.2-31.2l2.4-3.2c4-6.4 9.6-10.4 12-10.4h301.6l-1.6-683.2H644z m-220.8 697.6c14.4 15.2 33.6 25.6 57.6 30.4l4 0.8V233.6c0-62.4-60.8-86.4-112.8-88.8H106.4v683.2H408c1.6 0 9.6 5.6 12.8 10.4l2.4 3.2z" />
       ),
-      hidden: !learningEventId || isLoading,
+      hidden: !learningEventId || learningHookLoading,
     },
     {
       href: "/dashboard/events",
@@ -114,18 +111,14 @@ export default function DashboardLayout({
     }
   }, [pathname]);
 
-  // Handlers
-  const handleConnect = () => {
-    console.log('Connect button clicked'); // Debug log
-    open();
-  };
-
   const handleDisconnect = () => {
     console.log('Disconnect button clicked'); // Debug log
-    disconnect();
+    enhancedLogout();
   };
 
-  console.log('Dashboard Layout - Current state:', { isConnected, address }); // Debug log
+  if (!address || !isAuthenticated) {
+    return <LoadingSkeleton />;
+  }
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -162,7 +155,7 @@ export default function DashboardLayout({
 
             {/* Right side with hamburger menu */}
             <div className="flex items-center gap-3">
-              {!isLoading && learningEventId && (
+              {!learningHookLoading && learningEventId && (
                 <button
                   onClick={() =>
                     router.push(`/dashboard/events/${learningEventId}/learning`)
@@ -232,7 +225,11 @@ export default function DashboardLayout({
 
                   {/* Wallet Connection Section */}
                   <div className="flex flex-col gap-2">
-                    {isConnected && address ? (
+                    {authHookLoading ? (
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-gray-500">Checking wallet…</span>
+                      </div>
+                    ) : isAuthenticated && address ? (
                       <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-green-400 rounded-full"></div>
@@ -249,17 +246,18 @@ export default function DashboardLayout({
                         >
                           Logout
                         </button>
+                        {authHookError && (
+                          <p className="mt-1 text-xs text-red-500">
+                            {authHookError.message ?? "Authentication failed. Try reconnecting."}
+                          </p>
+                        )}
                       </div>
                     ) : (
-                      <button
-                        onClick={() => {
-                          handleConnect();
-                          closeHamburgerMenu();
-                        }}
-                        className="w-full px-4 py-2 bg-yellow-400 text-gray-800 rounded-lg text-sm font-medium hover:bg-yellow-500 transition-colors"
-                      >
-                        Connect Wallet
-                      </button>
+                      <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                        <span className="text-sm text-red-500">
+                          Session expired. Please go back to the home page to reconnect.
+                        </span>
+                      </div>
                     )}
                   </div>
                 </div>

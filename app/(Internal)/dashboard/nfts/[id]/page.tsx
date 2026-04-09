@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/AppProvider';
 
 type PageParams = {
   id: string;

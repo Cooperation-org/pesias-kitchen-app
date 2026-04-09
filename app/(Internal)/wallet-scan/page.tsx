@@ -1,16 +1,16 @@
 "use client";
 
 import React, { useState, useEffect, Suspense } from 'react';
-import dynamic from 'next/dynamic';
+// import dynamic from 'next/dynamic';
 
 // Lazy load Dynamic SDK to avoid performance impact on main app
-const DynamicWalletProvider = dynamic(
-  () => import('../wallet-scan/components/DynamicWalletProvider'),
-  { 
-    ssr: false,
-    loading: () => <div className="flex justify-center p-8">Loading wallet system...</div>
-  }
-);
+// const DynamicWalletProvider = dynamic(
+//   () => import('../wallet-scan/components/DynamicWalletProvider'),
+//   { 
+//     ssr: false,
+//     loading: () => <div className="flex justify-center p-8">Loading wallet system...</div>
+//   }
+// );
 
 interface QRData {
   eventId: string;
@@ -142,7 +142,7 @@ export default function WalletScanPage() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F4cf6A]"></div>
         </div>
       }>
-        <DynamicWalletProvider qrData={qrData} />
+        {/* <DynamicWalletProvider qrData={qrData} /> */}
       </Suspense>
     </div>
   );

@@ -4,7 +4,7 @@ import { SWRConfig } from 'swr';
 import { swrConfig } from '@/utils/swr-config';
 import { toast } from 'sonner';
 
-export function SWRProvider({ children }: { children: React.ReactNode }) {
+function SWRProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleSWRError = (event: CustomEvent<{ message: string; code?: string }>) => {
       const { message, code } = event.detail;
@@ -45,3 +45,5 @@ export function SWRProvider({ children }: { children: React.ReactNode }) {
     </SWRConfig>
   );
 }
+
+export default SWRProvider

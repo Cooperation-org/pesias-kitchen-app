@@ -9,7 +9,6 @@ import { useActivities } from '@/hooks/useActivities';
 export default function RecentActivitiesPage() {
   const [filter, setFilter] = useState<string>('all');
   const { activities, isLoading, error } = useActivities(filter);
-console.log(activities, 'gotten')
   const getActivityTypeLabel = (type: string) => {
     switch(type) {
       case 'food_sorting':

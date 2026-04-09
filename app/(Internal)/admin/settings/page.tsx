@@ -1,7 +1,7 @@
 // app/admin/settings/page.tsx
 "use client";
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAuthContext } from '@/providers/AppProvider';
 import { getAllUsers, updateUserRoleByWallet } from '@/services/api';
 import { User } from '@/types/api';
 
@@ -13,7 +13,7 @@ const ROLES = [
 ];
 
 export default function SettingsPage() {
-  const { address } = useAccount();
+  const { address } = useAuthContext();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingUser, setUpdatingUser] = useState<string | null>(null);
