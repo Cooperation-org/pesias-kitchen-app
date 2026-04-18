@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useAuthContext } from '@/providers/web3Provider';
+import { useAuthContext } from '@/providers/AppProvider';
 import EditEventModal from '@/components/EditEventModal';
 import EventDetailsModal, { 
   Event, 
@@ -290,7 +290,6 @@ export default function EventsPage({
 
   // UPDATED: Improved QR code generated handler
   const handleQRCodeGenerated = (type?: string) => {
-    console.log(`QR code generated for ${type} type`);
     
     // Just update the events list in the background without triggering a re-render
     mutate(undefined, { 
