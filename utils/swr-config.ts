@@ -1,7 +1,7 @@
 // utils/swr-config.ts
 import { getAuthHeaders } from '@/utils/api-client';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 /**
  * Builds a complete API URL by appending the endpoint to the base URL

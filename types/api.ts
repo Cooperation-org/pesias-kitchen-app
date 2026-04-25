@@ -8,7 +8,7 @@ export interface User {
     walletAddress: string;
     name: string;
     email?: string;
-    role?: 'user' | 'admin' | 'volunteer';
+    role: 'admin' | 'superadmin' | 'volunteer' | 'recipient';
     createdAt: string;
     updatedAt: string;
 }
@@ -104,6 +104,7 @@ export interface NonceResponse {
 export interface VerifySignatureRequest {
     walletAddress: string;
     signature: string;
+    message?: string;
 }
 
 /**

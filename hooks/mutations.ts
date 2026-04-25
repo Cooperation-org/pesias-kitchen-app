@@ -351,7 +351,7 @@ export async function mintNFTMutation(activityId: string) {
     const response = await apiMintActivityNFT(activityId);
     
     // Success notification
-    toast.success('NFT minted successfully!');
+    toast.success('G$ claimed and NFT minted successfully!');
     
     // Revalidate related caches
     mutate(CACHE_KEYS.USER_ACTIVITIES);
@@ -361,7 +361,7 @@ export async function mintNFTMutation(activityId: string) {
     return response.data;
   } catch (error) {
     console.error('Error minting NFT:', error);
-    toast.error('Failed to mint NFT. Please try again.');
+    toast.error('Failed to claim G$ and mint NFT. Please try again.');
     
     return null;
   }
@@ -425,11 +425,11 @@ export async function batchMintNFTsMutation(activityIds: string[]) {
     
     // Show appropriate notification
     if (successCount === activityIds.length) {
-      toast.success(`Successfully minted ${successCount} NFTs!`);
+      toast.success(`Successfully claimed G$ and minted ${successCount} NFTs!`);
     } else if (successCount > 0) {
-      toast.success(`Minted ${successCount} out of ${activityIds.length} NFTs`);
+      toast.success(`Claimed G$ and minted ${successCount} out of ${activityIds.length} NFTs`);
     } else {
-      toast.error('Failed to mint NFTs');
+      toast.error('Failed to claim G$ and mint NFTs');
     }
     
     // Revalidate all related caches
@@ -446,7 +446,7 @@ export async function batchMintNFTsMutation(activityIds: string[]) {
     };
   } catch (error: unknown) {
     console.error('Error batch minting NFTs:', error);
-    toast.error('Failed to batch mint NFTs');
+    toast.error('Failed to claim G$ and mint NFTs');
     
     return {
       total: activityIds.length,

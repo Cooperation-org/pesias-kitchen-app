@@ -1,9 +1,10 @@
 import useSWR, { mutate } from 'swr';
 import { useAccount } from 'wagmi';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { getUser, getToken, clearAuthData, setWalletConnectionStatus } from '@/services/authServices';
 import { toast } from 'sonner';
 import { useEffect, useCallback } from 'react';
+import { getCurrentUser } from '@/services/api';
 
 // Fetcher function for SWR
 const authFetcher = async () => {
@@ -11,7 +12,7 @@ const authFetcher = async () => {
   const user = getUser();
   
   if (!token || !user) {
-    throw new Error('Not authenticated');
+    return undefined;
   }
   
   return { token, user };
@@ -19,22 +20,21 @@ const authFetcher = async () => {
 
 export function useAuth() {
   const router = useRouter();
+  const pathname = usePathname();
   const { address, isConnected } = useAccount();
   
   // Use SWR to manage auth state with automatic revalidation
   const { data, error, isLoading, mutate: mutateAuth } = useSWR(
-    isConnected ? '/api/auth' : null,
+    isConnected ? '/api/auth' : undefined,
     authFetcher,
     {
       revalidateOnFocus: false, // Don't revalidate on window focus
-      revalidateOnReconnect: true, // Revalidate when reconnecting
+      revalidateOnReconnect: false, // Avoid reconnect-triggered loops
       dedupingInterval: 5000, // Dedupe requests within 5 seconds
-      errorRetryCount: 3, // Retry failed requests 3 times
-      onError: (err) => {
-        if (err.message === 'Not authenticated') {
-          clearAuthData();
-          router.replace('/');
-        }
+      errorRetryCount: 0, // Do not auto-retry to avoid multiple redirects
+      onError: () => {
+        clearAuthData();
+        router.replace('/')
       },
     }
   );
@@ -69,39 +69,69 @@ export function useAuth() {
 
   // Update wallet connection status and handle disconnection
   useEffect(() => {
+    const isProtected = pathname !== '/';
+
+    if (!isProtected) {
+      setWalletConnectionStatus(isConnected);
+      return;
+    }
+
     const wasConnected = document.cookie.includes('walletConnected=true');
     setWalletConnectionStatus(isConnected);
     
     // Only trigger logout if we were previously connected
-    if (!isConnected && wasConnected) {
+    if (!isConnected && wasConnected && data?.token) {
       logout();
     }
-  }, [isConnected]);
+  }, [isConnected, pathname, data?.token, logout]);
 
   // Load initial auth data when wallet changes
   useEffect(() => {
-    if (isConnected && address) {
+    const syncAuthWithBackend = async () => {
+      if (!isConnected || !address) return;
+
       const storedToken = getToken();
       const storedUser = getUser();
 
-      if (storedToken && storedUser) {
-        if (address.toLowerCase() === storedUser.walletAddress?.toLowerCase()) {
-          // Trigger a revalidation of the auth data
-          mutateAuth({ token: storedToken, user: storedUser }, { revalidate: true });
-        } else {
-          clearAuthData();
-          logout();
-        }
+      if (!storedToken || !storedUser) return;
+
+      // Wallet mismatch → logout
+      if (address.toLowerCase() !== storedUser.walletAddress?.toLowerCase()) {
+        clearAuthData();
+        logout();
+        return;
       }
-    }
-  }, [address, isConnected, logout]);
+
+      // Fetch canonical user from backend
+      const res = await getCurrentUser();
+      const backendUser = res.data;
+
+      // If role differs, update local storage + cookie from backend
+      if (backendUser.role !== storedUser.role) {
+        const updatedUser = { ...storedUser, role: backendUser.role };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        document.cookie = `userRole=${backendUser.role}; path=/; max-age=2592000`;
+      }
+
+      // Ensure SWR state uses backend user
+      mutateAuth(
+        { token: storedToken, user: { ...storedUser, role: backendUser.role } },
+        { revalidate: false }
+      );
+
+    };
+
+    syncAuthWithBackend();
+  }, [address, isConnected, logout, mutateAuth]);
 
   return {
     // Auth state
+    isConnected,
     isAuthenticated: !!data?.token && !!data?.user && isConnected,
     user: data?.user ?? null,
     token: data?.token ?? null,
-    isLoading: isLoading || (!isConnected && !error),
+    address,
+    isLoading,
     error,
 
     // Actions
@@ -110,4 +140,4 @@ export function useAuth() {
     redirectToDashboard,
     mutateAuth,
   };
-} 
+}

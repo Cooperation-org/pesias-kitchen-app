@@ -99,9 +99,14 @@ export const getNonce = (
  */
 export const verifySignature = (
   walletAddress: string,
-  signature: string
+  signature: string,
+  message?: string
 ): Promise<AxiosResponse<VerifySignatureResponse>> => {
-  return api.post("/auth/verify", { walletAddress, signature });
+  const requestBody: any = { walletAddress, signature };
+  if (message) {
+    requestBody.message = message;
+  }
+  return api.post("/auth/verify", requestBody);
 };
 
 // ===== QR Code Endpoints =====
@@ -144,6 +149,15 @@ export const recordActivity = (
   data: Partial<Activity>
 ): Promise<AxiosResponse<Activity>> => {
   return api.post("/activity/record", data);
+};
+
+/**
+ * Mint an NFT for an activity
+ */
+export const mintLearningActivityNFT = (
+  data: Partial<Activity>
+): Promise<AxiosResponse<Activity>> => {
+  return api.post(`/activity/mint-learning`, data);
 };
 
 /**

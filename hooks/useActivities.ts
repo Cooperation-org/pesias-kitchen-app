@@ -1,6 +1,6 @@
 // hooks/useActivities.ts
 import useSWR from 'swr';
-import { buildApiUrl, fetcher } from '@/utils/swr-config';
+import { buildApiUrl, fetcher, swrConfig } from '@/utils/swr-config';
 import { getFoodHeroesImpact } from '@/services/api';
 import { ActivityMetrics } from '@/types/api';
 
@@ -65,6 +65,7 @@ export function useActivities(filter?: string) {
     url,
     fetcher,
     {
+      ...swrConfig,
       revalidateOnFocus: true,
       revalidateOnReconnect: true,
       dedupingInterval: 5000, // 5 seconds
@@ -78,72 +79,74 @@ export function useActivities(filter?: string) {
   );
 
   // Fetch analytics data
-  const { data: analyticsData, error: analyticsError, isLoading: isLoadingAnalytics } = useSWR<ActivityMetrics>(
-    'food-heroes-impact',
-    async () => {
-      const response = await getFoodHeroesImpact();
-      console.log('Analytics API Response:', response);
+  // const { data: analyticsData, error: analyticsError, isLoading: isLoadingAnalytics } = useSWR<ActivityMetrics>(
+  //   'food-heroes-impact',
+  //   async () => {
+  //     const response = await getFoodHeroesImpact();
+  //     console.log('Analytics API Response:', response);
       
-      // Map the API response to our metrics format using only the needed data
-      const apiData = response.data;
-      const mappedMetrics: ActivityMetrics = {
-        // Core Impact Metrics
-        totalGDollars: apiData.foodHeroesImpact.totalGDollarsDistributed,
-        totalNFTs: apiData.foodHeroesImpact.totalNFTsMinted,
-        totalFoodDistributed: apiData.foodHeroesImpact.totalFoodRescued,
-        totalWasteReduced: apiData.foodHeroesImpact.totalFoodRescued,
-        uniqueVolunteers: apiData.foodHeroesImpact.totalVolunteers,
-        uniqueRecipients: apiData.foodHeroesImpact.totalRecipients,
-        totalUniqueParticipants: apiData.foodHeroesImpact.totalUniqueParticipants,
-        totalActivities: apiData.foodHeroesImpact.totalActivities,
-        totalEvents: apiData.foodHeroesImpact.totalEvents,
-        avgFoodPerEvent: apiData.foodHeroesImpact.avgFoodPerEvent,
-        avgRewardsPerEvent: apiData.foodHeroesImpact.avgRewardsPerEvent,
+  //     // Map the API response to our metrics format using only the needed data
+  //     const apiData = response.data;
+  //     const mappedMetrics: ActivityMetrics = {
+  //       // Core Impact Metrics
+  //       totalGDollars: apiData.foodHeroesImpact.totalGDollarsDistributed,
+  //       totalNFTs: apiData.foodHeroesImpact.totalNFTsMinted,
+  //       totalFoodDistributed: apiData.foodHeroesImpact.totalFoodRescued,
+  //       totalWasteReduced: apiData.foodHeroesImpact.totalFoodRescued,
+  //       uniqueVolunteers: apiData.foodHeroesImpact.totalVolunteers,
+  //       uniqueRecipients: apiData.foodHeroesImpact.totalRecipients,
+  //       totalUniqueParticipants: apiData.foodHeroesImpact.totalUniqueParticipants,
+  //       totalActivities: apiData.foodHeroesImpact.totalActivities,
+  //       totalEvents: apiData.foodHeroesImpact.totalEvents,
+  //       avgFoodPerEvent: apiData.foodHeroesImpact.avgFoodPerEvent,
+  //       avgRewardsPerEvent: apiData.foodHeroesImpact.avgRewardsPerEvent,
         
-        // QR Code Statistics
-        qrStats: apiData.qrStats,
+  //       // QR Code Statistics
+  //       qrStats: apiData.qrStats,
         
-        // Metadata
-        generatedAt: apiData.generatedAt,
-        fromCache: apiData.fromCache,
-        calculationTime: apiData.calculationTime
-      };
+  //       // Metadata
+  //       generatedAt: apiData.generatedAt,
+  //       fromCache: apiData.fromCache,
+  //       calculationTime: apiData.calculationTime
+  //     };
       
-      console.log('Mapped metrics:', mappedMetrics);
-      return mappedMetrics;
-    },
-    {
-      revalidateOnFocus: true,
-      revalidateOnReconnect: true,
-      dedupingInterval: 5000,
-      onError: (error) => {
-        console.error('Error fetching analytics:', error);
-      }
-    }
-  );
+  //     console.log('Mapped metrics:', mappedMetrics);
+  //     return mappedMetrics;
+  //   },
+  //   {
+  //     revalidateOnFocus: true,
+  //     revalidateOnReconnect: true,
+  //     dedupingInterval: 5000,
+  //     onError: (error) => {
+  //       console.error('Error fetching analytics:', error);
+  //     }
+  //   }
+  // );
 
-  console.log('SWR state:', { 
-    hasData: !!activitiesData,
-    isArray: Array.isArray(activitiesData),
-    length: activitiesData?.length,
-    firstActivity: activitiesData?.[0]
-  });
+  // console.log('SWR state:', { 
+  //   hasData: !!activitiesData,
+  //   isArray: Array.isArray(activitiesData),
+  //   length: activitiesData?.length,
+  //   firstActivity: activitiesData?.[0]
+  // });
 
   const activities = activitiesData || [];
-  const isLoading = isLoadingActivities || isLoadingAnalytics;
-  const error = activitiesError || analyticsError;
+  // const isLoading = isLoadingActivities || isLoadingAnalytics;
+  // const error = activitiesError || analyticsError;
+  const isLoading = isLoadingActivities
+  const error = activitiesError
 
   // Filter activities if filter is provided
   const filteredActivities = filter && filter !== 'all'
     ? activities.filter(activity => activity.event.activityType === filter)
     : activities;
   
-  console.log('Filtered activities:', {
-    filter,
-    isArray: Array.isArray(filteredActivities),
-    length: filteredActivities.length,
-    firstActivity: filteredActivities[0]
-  });
+  // console.log('Filtered activities:', {
+  //   filter,
+  //   isArray: Array.isArray(filteredActivities),
+  //   length: filteredActivities.length,
+  //   firstActivity: filteredActivities[0]
+  // });
 
   // Sort activities by date (newest first)
   const sortedActivities = [...filteredActivities].sort((a, b) => 
@@ -207,7 +210,34 @@ export function useActivities(filter?: string) {
   });
 
   // Use analytics data from the API instead of calculating metrics
-  const metrics = analyticsData || {
+  // const metrics = analyticsData || {
+  //   // Core Impact Metrics
+  //   totalGDollars: 0,
+  //   totalNFTs: 0,
+  //   totalFoodDistributed: 0,
+  //   totalWasteReduced: 0,
+  //   uniqueVolunteers: 0,
+  //   uniqueRecipients: 0,
+  //   totalUniqueParticipants: 0,
+  //   totalActivities: 0,
+  //   totalEvents: 0,
+  //   avgFoodPerEvent: 0,
+  //   avgRewardsPerEvent: 0,
+    
+  //   // QR Code Statistics
+  //   qrStats: {
+  //     totalCodes: 0,
+  //     totalScans: 0,
+  //     avgScansPerCode: 0
+  //   },
+    
+  //   // Metadata
+  //   generatedAt: new Date().toISOString(),
+  //   fromCache: false,
+  //   calculationTime: "0ms"
+  // };
+
+  const metrics = {
     // Core Impact Metrics
     totalGDollars: 0,
     totalNFTs: 0,
@@ -234,8 +264,8 @@ export function useActivities(filter?: string) {
     calculationTime: "0ms"
   };
 
-  console.log('Final metrics being used:', metrics);
-  console.log('totalGDollars value:', metrics.totalGDollars);
+  // console.log('Final metrics being used:', metrics);
+  // console.log('totalGDollars value:', metrics.totalGDollars);
 
   // Get recent activities (last 3)
   const recentActivities = processedActivities.slice(0, 3);
