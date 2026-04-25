@@ -5,10 +5,10 @@ import useSWR from 'swr'
 import { Activity, NFT, Reward } from '@/types/api'
 import { getUserActivities, getRewardsHistory, getUserNFTs, mintActivityNFT } from "@/services/api"
 import { swrConfig } from '@/utils/swr-config'
-import { StatsCard } from './dashboard/StatsCard'
-import { RecentActivities } from './RecentActivities'
-import { LoadingSkeleton } from './dashboard/LoadingSkeleton'
-import { ErrorState } from './dashboard/ErrorState'
+import { StatsCard } from '../stats/StatsCard'
+import { RecentActivities } from '../RecentActivities'
+import { LoadingSkeleton } from './LoadingSkeleton'
+import { ErrorState } from '../ErrorState'
 import { toast } from 'sonner'
 
 // Memoized activity transformer

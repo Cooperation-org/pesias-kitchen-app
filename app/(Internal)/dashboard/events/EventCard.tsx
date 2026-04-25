@@ -15,7 +15,7 @@ import {
   CheckCircleIcon,
   ChartBarIcon
 } from '@heroicons/react/24/outline';
-import EventImpactModal from '@/components/EventImpactModal';
+import EventImpactModal from '@/components/stats/EventImpactModal';
 
 import { ProcessedEvent, ACTIVITY_TYPE_COLORS, ACTIVITY_TYPE_GRADIENTS, ACTIVITY_TYPE_LABELS } from './types';
 import { formatDate, formatTime, isEventPast } from './utils';

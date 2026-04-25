@@ -3,17 +3,17 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { useAuthContext } from '@/providers/AppProvider';
-import EditEventModal from '@/components/EditEventModal';
+import EditEventModal from '@/components/events/EditEventModal';
 import EventDetailsModal, { 
   Event, 
   Participant,
   ACTIVITY_TYPE_LABELS 
-} from '@/components/EventDetailsModal';
+} from '@/components/events/EventDetailsModal';
 import { useEvents, TimeFilter } from '@/hooks/useEvents';
 import { useRouter } from 'next/navigation';
 import { buildApiUrl } from '@/utils/swr-config';
 import QRCodeModal from '@/components/QRCodeModal';
-import EventImpactModal from '@/components/EventImpactModal';
+import EventImpactModal from '@/components/stats/EventImpactModal';
 import { 
   ChartBarIcon,
   CalendarIcon,

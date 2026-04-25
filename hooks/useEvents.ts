@@ -2,7 +2,7 @@
 import useSWR, { mutate } from 'swr';
 import { buildApiUrl, fetcher } from '@/utils/swr-config';
 import { toast } from 'sonner';
-import { Event } from '@/components/EventDetailsModal';
+import { Event } from '@/components/events/EventDetailsModal';
 
 export type TimeFilter = 'upcoming' | 'past' | 'all';
 
