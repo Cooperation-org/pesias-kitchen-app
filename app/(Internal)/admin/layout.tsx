@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from 'next/navigation';
-import CreateEventModal from '@/components/CreateEventModal';
+import CreateEventModal from '@/components/events/CreateEventModal';
 import Image from "next/image";
 import { useAuthContext } from "@/providers/AppProvider";
 import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton";

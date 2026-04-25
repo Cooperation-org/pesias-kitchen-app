@@ -1,5 +1,5 @@
 import { Metadata } from 'next'
-import DashboardClient from '@/components/DashboardClient'
+import DashboardClient from '@/components/dashboard/DashboardClient'
 
 export const metadata: Metadata = {
   title: 'Dashboard | Persias Kitchen',

@@ -11,7 +11,7 @@ import {
 import { useAuthContext } from "@/providers/AppProvider";
 // borrowing these from dashboard
 import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton";
-import { ErrorState } from "@/components/dashboard/ErrorState";
+import { ErrorState } from "@/components/ErrorState";
 
 export default function LandingPage() {
   const { isAuthenticated, isConnected, address, openAppKit, redirectToDashboard, isLoading: authHookLoading, error: authHookError  } = useAuthContext();
