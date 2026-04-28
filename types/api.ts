@@ -8,7 +8,7 @@ export interface User {
     walletAddress: string;
     name: string;
     email?: string;
-    role?: 'user' | 'admin' | 'volunteer';
+    role: 'admin' | 'superadmin' | 'volunteer' | 'recipient';
     createdAt: string;
     updatedAt: string;
 }
@@ -104,6 +104,7 @@ export interface NonceResponse {
 export interface VerifySignatureRequest {
     walletAddress: string;
     signature: string;
+    message?: string;
 }
 
 /**
@@ -525,4 +526,18 @@ export interface FoodHeroesImpactResponse {
   fromCache: boolean;
   calculationTime: string;
   cachedAt: string;
+}
+
+interface DonateResult {
+  tokenId: string | null;
+  txHash: string;
+  rewardAmount: number;
+  fromPool: boolean;
+}
+
+export interface DonateResponse {
+  success: boolean;
+  message: string;
+  donateResult?: DonateResult;
+  error?: string;
 }

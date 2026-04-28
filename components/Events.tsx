@@ -2,18 +2,18 @@
 
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { useAuthContext } from '@/providers/web3Provider';
-import EditEventModal from '@/components/EditEventModal';
+import { useAuthContext } from '@/providers/AppProvider';
+import EditEventModal from '@/components/events/EditEventModal';
 import EventDetailsModal, { 
   Event, 
   Participant,
   ACTIVITY_TYPE_LABELS 
-} from '@/components/EventDetailsModal';
+} from '@/components/events/EventDetailsModal';
 import { useEvents, TimeFilter } from '@/hooks/useEvents';
 import { useRouter } from 'next/navigation';
 import { buildApiUrl } from '@/utils/swr-config';
 import QRCodeModal from '@/components/QRCodeModal';
-import EventImpactModal from '@/components/EventImpactModal';
+import EventImpactModal from '@/components/stats/EventImpactModal';
 import { 
   ChartBarIcon,
   CalendarIcon,
@@ -290,7 +290,6 @@ export default function EventsPage({
 
   // UPDATED: Improved QR code generated handler
   const handleQRCodeGenerated = (type?: string) => {
-    console.log(`QR code generated for ${type} type`);
     
     // Just update the events list in the background without triggering a re-render
     mutate(undefined, { 

@@ -1,8 +1,6 @@
 "use client";
 import React, { useEffect, useState, useRef } from "react";
-import { useAccount, useSignMessage } from "wagmi";
-import { useAuth } from "@/hooks/useAuth";
-import { useAppKit } from '@reown/appkit/react';
+import { useSignMessage } from "wagmi";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -10,11 +8,15 @@ import {
   verifySignature,
   storeAuthData,
 } from "@/services/authServices";
+import { useAuthContext } from "@/providers/AppProvider";
+import { useLearningEvent } from '@/hooks/useLearningEvent';
+// borrowing these from dashboard
+import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton";
+import { ErrorState } from "@/components/ErrorState";
 
 export default function LandingPage() {
-  const { isConnected, address } = useAccount();
-  const auth = useAuth();
-  const { open: openAppKit } = useAppKit();
+  const { isAuthenticated, isConnected, address, openAppKit, redirectToDashboard, isLoading: authHookLoading, error: authHookError  } = useAuthContext();
+  const { learningEvent, isLoading: learningHookLoading } = useLearningEvent();
   const { signMessageAsync } = useSignMessage();
 
   const [authLoading, setAuthLoading] = useState(false);
@@ -24,6 +26,8 @@ export default function LandingPage() {
   // Use refs to prevent infinite loops
   const hasAttemptedAuth = useRef(false);
   const isProcessing = useRef(false);
+
+  const learningDisabled = learningHookLoading || !learningEvent._id;
 
   // Handle authentication process
   const authenticate = async () => {
@@ -40,7 +44,7 @@ export default function LandingPage() {
       }
 
       const nonce = nonceResponse.data.nonce;
-      const message = `Sign this message to authenticate with Pesia's Kitchen EAT Initiative: ${nonce}`;
+      const message = `Welcome to Pesia's Kitchen! Please confirm your identity: ${nonce}`;
 
       try {
         const signature = await signMessageAsync({ message });
@@ -48,13 +52,13 @@ export default function LandingPage() {
           throw new Error("Missing wallet address or signature");
         }
 
-        const authResponse = await verifySignature(address, signature);
+        const authResponse = await verifySignature(address, signature, message);
         if (authResponse.error || !authResponse.data) {
           throw new Error(authResponse.error || "Verification failed");
         }
 
         storeAuthData(authResponse.data.token, authResponse.data.user);
-        auth.redirectToDashboard();
+        redirectToDashboard();
       } catch (signError) {
         const errorMessage =
           signError instanceof Error
@@ -84,16 +88,15 @@ export default function LandingPage() {
         !isProcessing.current
       ) {
         await authenticate();
-      } else if (isConnected && localStorage.getItem("token")) {
-        auth.redirectToDashboard();
+      } else if (isAuthenticated) {
+        redirectToDashboard();
       }
     };
 
     checkAndAuthenticate();
-    return () => {
-      hasAttemptedAuth.current = false;
-    };
-  }, [isConnected, address, auth.redirectToDashboard]);
+    // Do not reset hasAttemptedAuth on cleanup to avoid repeat prompts
+    return () => {};
+  }, [isAuthenticated, isConnected, address, redirectToDashboard]);
 
   // Handle connect wallet click
   const handleConnectClick = () => {
@@ -104,6 +107,14 @@ export default function LandingPage() {
       openAppKit();
     }
   };
+
+  if (authHookLoading || learningHookLoading) {
+    return <LoadingSkeleton />;
+  }
+  
+  if (authHookError) {
+    return <ErrorState error={authHookError.message} />;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -302,22 +313,34 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
 
-                <button
-                  onClick={handleConnectClick}
-                  disabled={authLoading}
+                <Link
+                  href="/volunteer"
+                  aria-disabled={authLoading}
                   className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[black] hover:bg-[black]/90 text-white w-full sm:w-auto">
 
 
-                  {isConnected
+                  {/* {isConnected
                     ? (authLoading ? 'Authenticating...' : 'Enter Dashboard')
                     : ' Volunteer Now'
-                  }
-                </button>
+                  } */}
+                  Volunteer Now
+                </Link>
 
                 <Link href="https://www.pesiaskitchen.org/eatschoolprogram" target="_blank" rel="noopener noreferrer">
                   <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background h-10 px-4 py-2 border-[black] text-[black] hover:bg-[black] hover:text-white w-full sm:w-auto">
                     Learn More
                   </button>
+                </Link>
+
+                <Link
+                  href={
+                    learningDisabled
+                      ? "#"
+                      : `/dashboard/events/${learningEvent._id}/learning`
+                  }
+                  aria-disabled={learningDisabled}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[black] hover:bg-[black]/90 text-white w-full sm:w-auto">
+                  Start Learning
                 </Link>
 
               </div>

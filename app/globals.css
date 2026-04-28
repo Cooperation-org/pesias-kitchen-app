@@ -37,6 +37,12 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-eat-red: var(--eat-red);
+  --color-eat-orange: var(--eat-orange);
+  --color-eat-yellow: var(--eat-yellow);
+  --color-eat-green: var(--eat-green);
+  --color-eat-blue: var(--eat-blue);
+  --color-eat-purple: var(--eat-purple);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -76,6 +82,24 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* EAT brand rainbow */
+  --eat-red: oklch(60.61% 0.2187 26.78);
+  --eat-orange: oklch(71.54% 0.1802 49.52);
+  --eat-yellow: oklch(84.23% 0.1667 87.56);
+  --eat-green: oklch(69.19% 0.1648 152.38);
+  --eat-blue: oklch(60% 0.1774 253.58);
+  --eat-purple: oklch(55.15% 0.2042 303.24);
+  /* Shadows */
+  --shadow-card: 0 4px 20px -4px hsl(220 20% 15% / 0.08);
+  --shadow-elevated: 0 8px 30px -6px hsl(220 20% 15% / 0.12);
+  --shadow-rainbow: 0 4px 20px -4px hsl(25 95% 55% / 0.3);
+
+  /* Gradients */
+  --gradient-rainbow: linear-gradient(135deg, hsl(0 80% 55%), hsl(25 95% 55%), hsl(45 95% 55%), hsl(145 60% 45%), hsl(210 80% 50%), hsl(270 60% 55%));
+  --gradient-warm: linear-gradient(135deg, hsl(25 95% 55%), hsl(45 95% 55%));
+  --gradient-cool: linear-gradient(135deg, hsl(210 80% 50%), hsl(270 60% 55%));
+  --gradient-nature: linear-gradient(135deg, hsl(145 60% 45%), hsl(210 80% 50%));
 }
 
 .dark {
@@ -118,5 +142,35 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .gradient-rainbow {
+    background: var(--gradient-rainbow);
+  }
+  .gradient-warm {
+    background: var(--gradient-warm);
+  }
+  .gradient-cool {
+    background: var(--gradient-cool);
+  }
+  .gradient-nature {
+    background: var(--gradient-nature);
+  }
+  .text-gradient-rainbow {
+    background: var(--gradient-rainbow);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
+  }
+  .shadow-elevated {
+    box-shadow: var(--shadow-elevated);
+  }
+  .shadow-rainbow {
+    box-shadow: var(--shadow-rainbow);
   }
 }

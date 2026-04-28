@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { XMarkIcon } from '@heroicons/react/24/outline';
-import { QRCode as QRCodeType } from '@/components/EventDetailsModal';
+import { QRCode as QRCodeType } from '@/components/events/EventDetailsModal';
 
 interface QRCodeViewerProps {
   isOpen: boolean;

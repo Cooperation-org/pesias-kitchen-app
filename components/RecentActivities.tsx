@@ -33,6 +33,7 @@ interface ProcessedActivity {
   quantity: number;
   hasNFT: boolean;
   timestamp: string;
+  rewardClaimed?: boolean;
 }
 
 export function RecentActivities({ 
@@ -51,6 +52,13 @@ export function RecentActivities({
   const processedActivities = activities.map(activity => {
     const eventDetails = typeof activity.event === 'object' ? activity.event : null;
     const activityType = eventDetails?.activityType || 'default';
+    const normalizedActivityType = (activityType || '').toLowerCase().replace(/\s+/g, '_');
+    const rawRewardAmount = Number((activity as any)?.rewardAmount) || 0;
+    const computedAmount = (() => {
+      if (Number.isFinite(rawRewardAmount) && rawRewardAmount > 0) return rawRewardAmount;
+      // Default to 1 if no actual reward amount (should not happen with new backend)
+      return 1;
+    })();
     
     // Format date/time
     const timestamp = new Date(activity.timestamp);
@@ -72,8 +80,9 @@ export function RecentActivities({
       date: formattedDate,
       time: formattedTime,
       timestamp: activity.timestamp,
-      amount: `${activity.rewardAmount || 0}`,
-      hasNFT: !!activity.nftId || !!activity.nftMinted
+      amount: `${computedAmount}`,
+      hasNFT: !!activity.nftId || !!activity.nftMinted,
+      rewardClaimed: (activity as any).rewardClaimed === true
     } as ProcessedActivity;
   });
 
@@ -81,6 +90,8 @@ export function RecentActivities({
     setSelectedActivity(activity);
     setShowEventModal(true);
   }, []);
+
+  
 
   const closeEventModal = useCallback(() => {
     setShowEventModal(false);
@@ -161,7 +172,7 @@ export function RecentActivities({
                   </div>
                   <div className="flex flex-col items-end">
                     <div className="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-sm font-semibold">
-                      {activity.amount} G$
+                      {activity.rewardClaimed || activity.hasNFT ? `${activity.amount} G$` : 'G$'}
                     </div>
                     {activity.hasNFT && (
                       <span className="text-xs text-green-600 mt-1 flex items-center">
@@ -199,34 +210,30 @@ export function RecentActivities({
             exit={{ opacity: 0, scale: 0.95 }}
             className="bg-white rounded-xl max-w-md w-full relative overflow-hidden shadow-xl"
           >
-            <div className={`bg-gradient-to-r ${
-              selectedActivity.activityType === 'food_sorting' ? 'from-green-500 to-green-600' : 
-              selectedActivity.activityType === 'food_distribution' ? 'from-blue-500 to-blue-600' : 
-              'from-purple-500 to-purple-600'
-            } h-32 p-6`}>
+            <div className={`bg-gradient-to-r from-[#F2D166]/12 to-white h-32 p-6 border-b border-gray-100`}>
               <button 
                 onClick={closeEventModal}
-                className="absolute top-4 right-4 bg-white/20 rounded-full p-2 hover:bg-white/30 transition-colors"
+                className="absolute top-4 right-4 bg-black/10 rounded-full p-2 hover:bg-black/20 transition-colors"
               >
-                <svg className="w-6 h-6 text-white" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <svg className="w-6 h-6 text-black" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                   <path d="M6 18L18 6M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </button>
-              <h3 className="text-xl font-bold text-white mt-6">{selectedActivity.title}</h3>
+              <h3 className="text-xl font-bold text-gray-900 mt-6">{selectedActivity.title}</h3>
             </div>
             
             <div className="p-6">
               <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center">
-                  <div className="bg-blue-100 p-2 rounded-full">
-                    <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <div className="bg-[#F4cf6A]/20 p-2 rounded-full">
+                    <svg className="w-5 h-5 text-[#F4cf6A]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                       <path d="M12 8V12L15 15M12 3C7.03 3 3 7.03 3 12C3 16.97 7.03 21 12 21C16.97 21 21 16.97 21 12C21 7.03 16.97 3 12 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                     </svg>
                   </div>
                   <span className="ml-2 text-sm">{selectedActivity.date} • {selectedActivity.time}</span>
                 </div>
-                <div className="px-3 py-1 bg-yellow-100 text-yellow-700 rounded-full text-sm font-medium">
-                  {selectedActivity.amount} G$
+                <div className="px-3 py-1 bg-[#F4cf6A]/20 text-[#F4cf6A] rounded-full text-sm font-medium">
+                  {selectedActivity.rewardClaimed || selectedActivity.hasNFT ? `${selectedActivity.amount} G$` : 'G$'}
                 </div>
               </div>
               
@@ -246,8 +253,8 @@ export function RecentActivities({
                     <span className="font-medium capitalize">{selectedActivity.activityType.replace('_', ' ')}</span>
                   </div>
                   <div className="flex justify-between mb-2">
-                    <span className="text-gray-500">Quantity</span>
-                    <span className="font-medium">{selectedActivity.quantity}</span>
+                    <span className="text-gray-500">{(selectedActivity.rewardClaimed || selectedActivity.hasNFT) ? 'Claimed' : 'G$ to claim'}</span>
+                    <span className="font-medium">{selectedActivity.amount} G$</span>
                   </div>
                   <div className="flex justify-between mb-2">
                     <span className="text-gray-500">NFT Status</span>
@@ -259,43 +266,49 @@ export function RecentActivities({
                   </div>
                 </div>
 
-                {/* Add Mint NFT Button */}
-                {!selectedActivity.hasNFT && onMintNFT && (
-                  <div className="flex space-x-3">
-                    <button
-                      onClick={() => handleMintClick(selectedActivity)}
-                      disabled={isMinting}
-                      className={`flex-1 bg-blue-500 text-white py-3 rounded-lg font-medium flex items-center justify-center ${
-                        isMinting ? 'opacity-75 cursor-not-allowed' : 'hover:bg-blue-600'
-                      } transition-colors`}
-                    >
-                      {isMinting ? (
-                        <>
-                          <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Minting...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M2 17L12 22L22 17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                            <path d="M2 12L12 17L22 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                          </svg>
-                          Mint NFT
-                        </>
-                      )}
-                    </button>
-                    <button 
-                      onClick={closeEventModal}
-                      className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
-                    >
-                      Close
-                    </button>
-                  </div>
-                )}
+                {/* Primary action */}
+                <div className="flex space-x-3">
+                  <button
+                    onClick={() => onMintNFT ? handleMintClick(selectedActivity) : undefined}
+                    disabled={
+                      isMinting ||
+                      selectedActivity.rewardClaimed ||
+                      Number(selectedActivity.amount) <= 0 ||
+                      selectedActivity.hasNFT
+                    }
+                    aria-disabled={
+                      isMinting ||
+                      selectedActivity.rewardClaimed ||
+                      Number(selectedActivity.amount) <= 0 ||
+                      selectedActivity.hasNFT
+                    }
+                    className={`flex-1 py-3 rounded-lg font-medium flex items-center justify-center transition-colors ${
+                      (isMinting || selectedActivity.rewardClaimed || Number(selectedActivity.amount) <= 0 || selectedActivity.hasNFT)
+                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                        : 'bg-[#F4cf6A] text-black hover:bg-[#F4cf6A]/90'
+                    }`}
+                  >
+                    {isMinting ? (
+                      <>
+                        <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-black" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        {selectedActivity.rewardClaimed || Number(selectedActivity.amount) <= 0 || selectedActivity.hasNFT ? 'Claimed' : 'Claim Rewards'}
+                      </>
+                    )}
+                  </button>
+                  <button 
+                    onClick={closeEventModal}
+                    className="flex-1 border border-gray-300 text-gray-700 py-3 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </motion.div>
