@@ -313,17 +313,18 @@ export default function LandingPage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
 
-                <button
-                  onClick={handleConnectClick}
-                  disabled={authLoading}
+                <Link
+                  href="/volunteer"
+                  aria-disabled={authLoading}
                   className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[black] hover:bg-[black]/90 text-white w-full sm:w-auto">
 
 
-                  {isConnected
+                  {/* {isConnected
                     ? (authLoading ? 'Authenticating...' : 'Enter Dashboard')
                     : ' Volunteer Now'
-                  }
-                </button>
+                  } */}
+                  Volunteer Now
+                </Link>
 
                 <Link href="https://www.pesiaskitchen.org/eatschoolprogram" target="_blank" rel="noopener noreferrer">
                   <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background h-10 px-4 py-2 border-[black] text-[black] hover:bg-[black] hover:text-white w-full sm:w-auto">
