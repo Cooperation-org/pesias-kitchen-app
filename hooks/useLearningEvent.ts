@@ -7,7 +7,7 @@ export function useLearningEvent() {
   );
 
   return {
-    learningEventId: data?._id || null,
+    learningEvent: data || null,
     isLoading,
     error,
     mutate,

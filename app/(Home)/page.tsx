@@ -9,12 +9,14 @@ import {
   storeAuthData,
 } from "@/services/authServices";
 import { useAuthContext } from "@/providers/AppProvider";
+import { useLearningEvent } from '@/hooks/useLearningEvent';
 // borrowing these from dashboard
 import { LoadingSkeleton } from "@/components/dashboard/LoadingSkeleton";
 import { ErrorState } from "@/components/ErrorState";
 
 export default function LandingPage() {
   const { isAuthenticated, isConnected, address, openAppKit, redirectToDashboard, isLoading: authHookLoading, error: authHookError  } = useAuthContext();
+  const { learningEvent, isLoading: learningHookLoading } = useLearningEvent();
   const { signMessageAsync } = useSignMessage();
 
   const [authLoading, setAuthLoading] = useState(false);
@@ -24,6 +26,8 @@ export default function LandingPage() {
   // Use refs to prevent infinite loops
   const hasAttemptedAuth = useRef(false);
   const isProcessing = useRef(false);
+
+  const learningDisabled = learningHookLoading || !learningEvent._id;
 
   // Handle authentication process
   const authenticate = async () => {
@@ -104,7 +108,7 @@ export default function LandingPage() {
     }
   };
 
-  if (authHookLoading) {
+  if (authHookLoading || learningHookLoading) {
     return <LoadingSkeleton />;
   }
   
@@ -325,6 +329,17 @@ export default function LandingPage() {
                   <button className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border bg-background h-10 px-4 py-2 border-[black] text-[black] hover:bg-[black] hover:text-white w-full sm:w-auto">
                     Learn More
                   </button>
+                </Link>
+
+                <Link
+                  href={
+                    learningDisabled
+                      ? "#"
+                      : `/dashboard/events/${learningEvent._id}/learning`
+                  }
+                  aria-disabled={learningDisabled}
+                  className="inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 h-10 px-4 py-2 bg-[black] hover:bg-[black]/90 text-white w-full sm:w-auto">
+                  Start Learning
                 </Link>
 
               </div>
