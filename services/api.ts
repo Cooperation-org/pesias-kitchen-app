@@ -18,7 +18,8 @@ import {
   QRCodeVerifyResponse,
   QRCodeVerifyAndMintResponse,
   FoodHeroesImpactResponse,
-  EventImpactResponse
+  EventImpactResponse,
+  DonateResponse
 } from "@/types/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://pesias-kitchen-api-git-main-agneskoinanges-projects.vercel.app/api";
@@ -458,6 +459,37 @@ export const updateUserRoleByWallet = (
   role: string
 ): Promise<AxiosResponse<User>> => {
   return api.put(`/user/wallet/${walletAddress}/role`, { role });
+};
+
+export const donateFromPool = async (pesiaWallet: string, rewardAmount: number): Promise<DonateResponse> => {
+  try {
+    const res = await api.post("/anonymous-scan/donate", {
+      pseudonymousId: process.env.NEXT_PUBLIC_DONATION_PSEUDONYMOUS_ID,
+      pesiaWallet,
+      rewardAmount,
+    });
+    return res.data;
+  } catch (err: unknown) {
+    if (axios.isAxiosError<DonateResponse>(err)) {
+      const data = err.response?.data;
+      if (data) {
+        return {
+          success: false,
+          message: data.message || "Donation failed",
+          error: data.error,
+        };
+      }
+      return {
+        success: false,
+        message: "Network error. Please try again.",
+      };
+    }
+
+    return {
+      success: false,
+      message: "Unexpected error. Please try again.",
+    };
+  }
 };
 
 export default api;

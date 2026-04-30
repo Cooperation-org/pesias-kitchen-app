@@ -3,53 +3,46 @@ import { motion } from "framer-motion";
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import EducationCard from "@/components/learning/EducationCard";
-import { eventServices } from '@/services/eventServices';
 import type { ProcessedEvent, Participant } from '@/app/(Internal)/dashboard/events/types';
 import { mapServerEventToProcessedEvent } from "@/app/(Internal)/dashboard/events/utils";
 import { useAuthContext } from '@/providers/AppProvider';
+import { useLearningEvent } from '@/hooks/useLearningEvent';
 
 const LearningPage = () => {
   const router = useRouter()
   const { eventId } = useParams<{ eventId: string }>();
   const { user, address, isAuthenticated, isLoading: authHookLoading, error: authHookError } = useAuthContext();
+  const { learningEvent, isLoading: learningHookLoading } = useLearningEvent();
   const [event, setEvent] = useState<ProcessedEvent | null>(null);
   const [loading, setLoading] = useState(true);
 
+
   useEffect(() => {
     async function load() {
-      if (!eventId) return;
-
-      const response = await eventServices.getEventById(eventId);
-      const processed: ProcessedEvent = mapServerEventToProcessedEvent(response);
-      setEvent(processed);
+      if (!learningEvent) return;
+      const processed: ProcessedEvent = mapServerEventToProcessedEvent(learningEvent);
+      setEvent(processed)
       setLoading(false);
     }
     load();
-  }, [eventId]);
+  }, [learningEvent]);
 
-  if (!isAuthenticated || !address) {
-    // require wallet / auth
-    router.replace('/'); // or login
-    return null;
-  }
+  // if (!isAuthenticated || !address) {
+  //   // require wallet / auth
+  //   router.replace('/'); // or login
+  //   return null;
+  // }
 
-  if (loading || !event) return /* spinner */;
+  if (loading || learningHookLoading || !event) return /* spinner */;
 
-  const participant = event.participants.find(
-    (p: Participant) =>
-      p._id === user?.id
-      // p.role === 'volunteer' &&
-      // p.status !== 'cancelled'
-  );
-
-  if (!participant) {
-    // Not eligible for this event's learning
-    return <div>You must be a registered or attended volunteer for this event.</div>;
-  }
+  const isVolunteerParticipant = !!user && event.participants.some(
+  (p: Participant) =>
+    p._id === user.id // or p._id.toString() === user.id if ObjectId string mismatch
+);
 
   const handleQuizClick = () => {
-    router.push('learning/quiz')
-  }
+    router.push(`/dashboard/events/${eventId}/learning/quiz`);
+  };
   return (
     <section className="px-5 py-10 max-w-lg mx-auto space-y-6">
       <motion.h2

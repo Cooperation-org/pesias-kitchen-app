@@ -527,3 +527,17 @@ export interface FoodHeroesImpactResponse {
   calculationTime: string;
   cachedAt: string;
 }
+
+interface DonateResult {
+  tokenId: string | null;
+  txHash: string;
+  rewardAmount: number;
+  fromPool: boolean;
+}
+
+export interface DonateResponse {
+  success: boolean;
+  message: string;
+  donateResult?: DonateResult;
+  error?: string;
+}

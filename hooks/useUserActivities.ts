@@ -44,10 +44,10 @@ interface ProcessedActivity {
   nftTokenId?: string;
 }
 
-export const useUserActivities = () => {
+export const useUserActivities = (enabled: boolean) => {
   // Fetch activities
   const { data: activitiesData, error: activitiesError, isLoading: isLoadingActivities, mutate: mutateActivities } = useSWR<ApiActivity[]>(
-    [SWR_ENDPOINTS.USER_ACTIVITIES.key],
+    enabled ? [SWR_ENDPOINTS.USER_ACTIVITIES.key] : null,
     async () => {
       const response = await getUserActivities();
       return response.data;
@@ -66,7 +66,7 @@ export const useUserActivities = () => {
 
   // Fetch rewards
   const { data: rewardsData, error: rewardsError, mutate: mutateRewards } = useSWR<Reward[]>(
-    [SWR_ENDPOINTS.REWARDS.key],
+    enabled ? [SWR_ENDPOINTS.REWARDS.key] : null,
     async () => {
       const response = await getRewardsHistory();
       return response.rewards || [];
@@ -85,7 +85,7 @@ export const useUserActivities = () => {
 
   // Fetch NFTs
   const { data: nftsData, error: nftsError, mutate: mutateNFTs } = useSWR<NFT[]>(
-    [SWR_ENDPOINTS.NFTS.key],
+    enabled ? [SWR_ENDPOINTS.NFTS.key] : null,
     async () => {
       const response = await getUserNFTs();
       return response.nfts || [];
@@ -184,8 +184,8 @@ export const useUserActivities = () => {
 
   return {
     activities: processedActivities,
-    isLoading,
-    error: error?.message || null,
+    isLoading: enabled ? isLoading : false,
+    error: enabled ? error?.message : null,
     handleMintNFT,
     mutateActivities,
     mutateRewards,
